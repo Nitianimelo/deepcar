@@ -1,0 +1,163 @@
+@import "tailwindcss";
+
+/* ── Deepcar tokens ─────────────────────────────────────────────
+   Mundo: bancada de oficina à noite, painel de instrumentos,
+   placa de circuito. Uma cor de acento (azul elétrico), o resto
+   é estrutura em tons de grafite azulado.                        */
+@theme {
+  --font-ui: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* superfícies: base → elevação, saltos de poucos pontos */
+  --color-pit: #0a0d12;        /* fundo da tela */
+  --color-bench-1: #0e1218;    /* painéis, sidebar */
+  --color-bench-2: #131922;    /* cards */
+  --color-bench-3: #19212c;    /* hover / dropdown */
+  --color-well: #080b0f;       /* inputs (rebaixados) */
+
+  /* texto */
+  --color-ink-1: #f1f4f9;
+  --color-ink-2: #b4bdcb;
+  --color-ink-3: #7b8697;
+  --color-ink-4: #4b5464;
+
+  /* marca e acento */
+  --color-navy: #0e3a76;       /* azul do logo */
+  --color-navy-deep: #082353;
+  --color-trace: #4a8dff;      /* azul elétrico: trilha energizada */
+  --color-trace-hi: #8ab8ff;
+
+  /* semânticos (dessaturados p/ dark) */
+  --color-ok: #3fd18f;
+  --color-warn: #f0b64a;
+  --color-fault: #ff6262;
+}
+
+:root {
+  --seam-1: rgba(255, 255, 255, 0.07);
+  --seam-2: rgba(255, 255, 255, 0.045);
+  --seam-3: rgba(255, 255, 255, 0.14);
+  --seam-focus: rgba(74, 141, 255, 0.55);
+  --glow: 0 0 0 1px rgba(74, 141, 255, 0.35), 0 0 24px rgba(74, 141, 255, 0.18);
+  color-scheme: dark;
+}
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-pit);
+  color: var(--color-ink-1);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* grade de papel de esquema, quase invisível */
+.schematic-grid {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.028) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.seam { border-color: var(--seam-1); }
+.seam-soft { border-color: var(--seam-2); }
+.seam-strong { border-color: var(--seam-3); }
+
+@layer components {
+/* controles */
+.field {
+  background: var(--color-well);
+  border: 1px solid var(--seam-1);
+  color: var(--color-ink-1);
+  border-radius: 10px;
+  height: 48px;
+  padding: 0 14px;
+  font: inherit;
+  width: 100%;
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.field::placeholder { color: var(--color-ink-4); }
+.field:hover { border-color: var(--seam-3); }
+.field:focus { border-color: var(--seam-focus); box-shadow: var(--glow); }
+
+.btn-primary {
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #2b6df0 0%, #1d55c7 100%);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 8px 24px rgba(29,85,199,0.28);
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-primary:active { transform: translateY(1px); }
+.btn-primary:focus-visible { outline: none; box-shadow: var(--glow); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-ghost {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--seam-1);
+  color: var(--color-ink-2);
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.btn-ghost:hover { background: var(--color-bench-3); border-color: var(--seam-3); color: var(--color-ink-1); }
+
+/* item de navegação */
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 46px;
+  padding: 0 14px 0 18px;
+  border-radius: 10px;
+  color: var(--color-ink-2);
+  font-weight: 500;
+  transition: background 120ms ease, color 120ms ease;
+  user-select: none;
+}
+.nav-item:hover { background: var(--color-bench-3); color: var(--color-ink-1); }
+.nav-item.nav-active {
+  color: var(--color-ink-1);
+  background: linear-gradient(90deg, rgba(74,141,255,0.14) 0%, rgba(74,141,255,0.04) 60%, transparent 100%);
+}
+.nav-item.nav-active .nav-icon { color: var(--color-trace); }
+.nav-icon { color: var(--color-ink-3); flex: none; }
+
+/* assinatura: trilha de circuito + pad, como no logo */
+.trace-pad {
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.code { font-family: var(--font-code); font-variant-numeric: tabular-nums; }
+}
+
+@keyframes trace-flow {
+  from { stroke-dashoffset: 400; }
+  to   { stroke-dashoffset: 0; }
+}
+.trace-anim { stroke-dasharray: 400; animation: trace-flow 2.4s cubic-bezier(.2,.7,.2,1) forwards; }
+
+@keyframes pulse-pad {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.pad-pulse { animation: pulse-pad 2.2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .trace-anim, .pad-pulse { animation: none; }
+}
