@@ -47,14 +47,14 @@ export default function Login() {
         <div className="relative max-w-md">
           <p className="code text-[11px] tracking-[0.22em] uppercase text-ink-3 mb-4">Plataforma técnica</p>
           <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight text-ink-1">
-            Esquemas elétricos automotivos, na bancada.
+            Inteligência automotiva para a sua oficina.
           </h1>
           <p className="mt-5 text-ink-2 text-base leading-relaxed">
-            Injeção leve e diesel, ABS, elétrica e câmbio. Desenhos completos, navegação por
-            componente e impressão, para quem está com o multímetro na mão.
+            Injeção eletrônica, elétrica, ABS e câmbio de mais de 15 mil modelos, do leve ao diesel.
+            Digite a placa e encontre o que precisa no celular, no tablet ou no computador.
           </p>
         </div>
-        <p className="relative code text-xs text-ink-4">© {new Date().getFullYear()} Deepcar · Grupo Arcco</p>
+        <p className="relative code text-xs text-ink-4">© {new Date().getFullYear()} Deepcar</p>
       </section>
 
       {/* Formulário */}

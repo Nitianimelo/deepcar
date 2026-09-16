@@ -248,7 +248,7 @@ function Footer() {
       <div className="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
         <div className="flex items-center gap-4">
           <img src="/brand/logo-h-light.png" alt="Deepcar" className="h-6 opacity-80" draggable={false} />
-          <span className="code text-[12px] text-ink-4">© {new Date().getFullYear()} Deepcar · Grupo Arcco</span>
+          <span className="code text-[12px] text-ink-4">© {new Date().getFullYear()} Deepcar</span>
         </div>
         <div className="flex flex-wrap gap-3">
           <AppStoreBadge />

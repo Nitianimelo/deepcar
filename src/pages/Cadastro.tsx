@@ -125,7 +125,7 @@ export default function Cadastro() {
             ))}
           </ul>
         </div>
-        <p className="relative code text-xs text-ink-4">© {new Date().getFullYear()} Deepcar · Grupo Arcco</p>
+        <p className="relative code text-xs text-ink-4">© {new Date().getFullYear()} Deepcar</p>
       </section>
 
       {/* Formulário */}

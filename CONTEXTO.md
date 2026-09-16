@@ -29,7 +29,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `b45e2fe`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `24a8509`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -56,6 +56,19 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Nova copy da tela de login e "Grupo Arcco" fora dos rodapés
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** trocar a copy do painel lateral do login ("Esquemas elétricos automotivos, na bancada." / "…para quem está
+  com o multímetro na mão."), sem "esquemas elétricos" nem "bancada"; tirar "Grupo Arcco" do rodapé.
+- **O que mudou:**
+  - `src/pages/Login.tsx`: título "Inteligência automotiva para a sua oficina."; texto "Injeção eletrônica, elétrica, ABS e
+    câmbio de mais de 15 mil modelos, do leve ao diesel. Digite a placa e encontre o que precisa no celular, no tablet ou
+    no computador." (mesmo tom da página de vendas).
+  - Rodapé "© ano Deepcar · Grupo Arcco" virou "© ano Deepcar" em `Landing.tsx`, `Login.tsx` e `Cadastro.tsx`.
+  - Não mudou: o painel lateral do cadastro ainda diz "Abra o esquema certo antes de encostar o multímetro."
+- **Verificação:** build ok; captura do login 1440×900; rodapé da landing conferido no navegador.
+- **Pendências:** nenhuma.
 
 ### 2026-09-16 · Título da aba e metadados de SEO/compartilhamento
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
