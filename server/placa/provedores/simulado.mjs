@@ -2,11 +2,11 @@
 import { erro, montarVeiculo } from '../veiculo.mjs'
 
 const PLACAS = {
-  AAA0000: { marca: 'CHEVROLET', modelo: 'ONIX 1.0 TURBO', anoFabricacao: 2021, anoModelo: 2022, combustivel: 'FLEX', cor: 'BRANCA', motor: 'B10XFT', cilindradas: 999, potencia: 116 },
-  ABC1D23: { marca: 'VOLKSWAGEN', modelo: 'GOL 1.6 MSI', anoFabricacao: 2015, anoModelo: 2016, combustivel: 'FLEX', cor: 'PRATA', motor: 'CWS', cilindradas: 1598, potencia: 120 },
-  BRA2E19: { marca: 'TOYOTA', modelo: 'HILUX CD SRX 2.8 4X4', anoFabricacao: 2020, anoModelo: 2020, combustivel: 'DIESEL', cor: 'PRETA', motor: '1GD-FTV', cilindradas: 2755, potencia: 204 },
-  FIA1T23: { marca: 'FIAT', modelo: 'ARGO DRIVE 1.3', anoFabricacao: 2019, anoModelo: 2020, combustivel: 'FLEX', cor: 'VERMELHA', motor: 'FIREFLY', cilindradas: 1332, potencia: 109 },
-  HON2C24: { marca: 'HONDA', modelo: 'CIVIC EXL 2.0 CVT', anoFabricacao: 2018, anoModelo: 2018, combustivel: 'FLEX', cor: 'CINZA', motor: 'R20Z', cilindradas: 1997, potencia: 155 },
+  AAA0000: { marca: 'CHEVROLET', modelo: 'ONIX 1.0 TURBO', anoFabricacao: 2021, anoModelo: 2022, combustivel: 'FLEX', cor: 'BRANCA', motor: 'B10XFT', cilindradas: 999, potencia: 116, chassi: '9BGEB48H0NG******', importado: 'N' },
+  ABC1D23: { marca: 'VOLKSWAGEN', modelo: 'GOL 1.6 MSI', anoFabricacao: 2015, anoModelo: 2016, combustivel: 'FLEX', cor: 'PRATA', motor: 'CWS', cilindradas: 1598, potencia: 120, chassi: '9BWAB45U0GT******', importado: 'N' },
+  BRA2E19: { marca: 'TOYOTA', modelo: 'HILUX CD SRX 2.8 4X4', anoFabricacao: 2020, anoModelo: 2020, combustivel: 'DIESEL', cor: 'PRETA', motor: '1GD-FTV', cilindradas: 2755, potencia: 204, chassi: '8AJHA3CD5L4******', importado: 'N' },
+  FIA1T23: { marca: 'FIAT', modelo: 'ARGO DRIVE 1.3', anoFabricacao: 2019, anoModelo: 2020, combustivel: 'FLEX', cor: 'VERMELHA', motor: 'FIREFLY', cilindradas: 1332, potencia: 109, chassi: '9BD358A1NLY******', importado: 'N' },
+  HON2C24: { marca: 'HONDA', modelo: 'CIVIC EXL 2.0 CVT', anoFabricacao: 2018, anoModelo: 2018, combustivel: 'FLEX', cor: 'CINZA', motor: 'R20Z', cilindradas: 1997, potencia: 155, chassi: '93HFC2630JZ******', importado: 'S' },
 }
 
 export const configurado = () => true

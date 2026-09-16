@@ -116,7 +116,7 @@ Banco Postgres no Neon. Esquema em `db/*.sql`, aplicado em ordem por `node scrip
 
 ## Consulta por placa
 
-Campo de placa na barra superior → `/app/veiculo/:placa` mostra marca, modelo, ano, motor e os sistemas
+Campo de placa na barra superior → `/app/veiculo/:placa` mostra marca, modelo, ano, motor, procedência (importado/nacional), chassi e os sistemas
 do catálogo compatíveis (regra em `sistemasDisponiveis()`, `src/pages/VeiculoPage.tsx`, ponto de extensão):
 marca (com apelidos VW/GM…) + modelo + ano dentro da produção; por sistema, prefere os esquemas que citam a
 cilindrada da placa e os que informam ano.

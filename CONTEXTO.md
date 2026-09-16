@@ -23,9 +23,10 @@ Regras de trabalho estão em `AGENTE.md`.
   - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → modo simulado, com cache de 24 h em memória.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
+    Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `f5373bb`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `d3954f1`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -40,7 +41,8 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
 - [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado).
-- [ ] Testar uma placa real em produção (token já no cofre). Confirmar com o Falcon se o endereço
+- [ ] Conferir numa placa real se chassi e procedência aparecem (nomes dos campos não estão na documentação pública
+      do Falcon; se não aparecerem, mandar a resposta bruta para ajustar `achar()` em `provedores/falcon.mjs`). Confirmar com o Falcon se o endereço
       `beta.falcon-server.com.br/data-hub` é o definitivo. Plano grátis = 10 consultas/hora para todos os usuários juntos.
 - [ ] Limpar variáveis antigas na Vercel que não são mais lidas ou ficam por baixo do cofre: `FALCON_TOKEN` (o valor do
       cofre tem prioridade), `CONSULTARPLACA_EMAIL` e `CONSULTARPLACA_API_KEY` (provedor removido).
@@ -51,6 +53,27 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Procedência (importado/nacional) e chassi na consulta por placa
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** a consulta real pelo Falcon funcionou; mostrar também se o veículo é importado e o chassi, que a API devolve.
+- **Observação:** o exemplo público da documentação do Falcon não lista esses campos (e diz que o chassi não é exposto por
+  LGPD/CONTRAN, então pode vir mascarado). Para não gastar cota com teste, a leitura aceita vários nomes.
+- **O que mudou:**
+  - `server/placa/veiculo.mjs`: `montarVeiculo()` ganha `chassi` (texto) e `importado` (true/false/null); nova função
+    `importado()` que entende true/false, 1/0, S/N, SIM/NÃO, IMPORTADO/NACIONAL, ESTRANGEIRO.
+  - `server/placa/provedores/falcon.mjs`: `achar()` procura, sem diferenciar maiúsculas e também um nível abaixo
+    (ex.: `data.veiculo`, `data.extra`): chassi em `chassi`, `chassis`, `numero_chassi`, `num_chassi`, `chassi_mascarado`;
+    importado em `importado`, `procedencia`, `nacionalidade`, `is_importado`.
+  - `server/placa/provedores/simulado.mjs`: placas de teste com chassi mascarado; HON2C24 é importada.
+  - `src/lib/placa.ts`: tipo `Veiculo` com `chassi` e `importado`.
+  - `src/pages/VeiculoPage.tsx`: ficha mostra "Procedência: Importado/Nacional" (só quando a base informa) e "Chassi"
+    (fonte monoespaçada, linha inteira no celular para não quebrar no meio). Textos longos da ficha quebram linha.
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** teste do provedor (cenários anteriores + 7 de chassi/importado: nomes variados, aninhados, vazio, valor
+  desconhecido, simulado); `node --check`; `npm run build` ok; oxlint com os mesmos 13 avisos; capturas da ficha em
+  390×844 e 1280×720. Nenhuma consulta real ao Falcon foi feita.
+- **Pendências:** usuário testa numa placa real se os dois campos aparecem.
 
 ### 2026-09-16 · Token do Falcon gravado no cofre do banco de produção
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

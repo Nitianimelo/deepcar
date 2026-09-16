@@ -10,6 +10,10 @@ export type Veiculo = {
   cilindradas: number | null
   potencia: number | null
   segmento: string | null
+  /** Pode vir mascarado pela base (ex.: 9BWAB45U0GT******). */
+  chassi: string | null
+  /** true = importado, false = nacional, null = a base não informou. */
+  importado: boolean | null
   municipio: string | null
   uf: string | null
   origem: 'falcon' | 'simulado'

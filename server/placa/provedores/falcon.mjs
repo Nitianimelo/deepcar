@@ -1,7 +1,8 @@
 // Falcon Data Hub — consulta de veículo pela placa (datahub.falcon-server.com.br).
 //
 //   GET {FALCON_BASE_URL}/private/v1/vehicles/{placa}/search     Authorization: Bearer <FALCON_TOKEN>
-//   200 → { data: { placa, marca, modelo, ano, ano_modelo, cor, municipio, uf, combustivel, tipo } }
+//   200 → { data: { placa, marca, modelo, ano, ano_modelo, cor, municipio, uf, combustivel, tipo, ... } }
+//         chassi e importado não estão no exemplo público da documentação: são lidos por vários nomes (campo())
 //   404 → { error: "Placa não encontrada" }
 //   429 → limite do plano (grátis: 10 consultas/hora), com x-ratelimit-limit / x-ratelimit-reset
 import { erro, montarVeiculo } from '../veiculo.mjs'
@@ -37,6 +38,7 @@ export async function consultar(placa, env) {
 
   const d = corpo.data ?? corpo
   if (!d || (!d.marca && !d.modelo)) throw erro('Placa não encontrada na base.', 404)
+  const campo = (...nomes) => achar(d, nomes)
 
   return montarVeiculo({
     placa,
@@ -50,9 +52,28 @@ export async function consultar(placa, env) {
     cilindradas: d.cilindradas,
     potencia: d.potencia,
     segmento: d.tipo ?? d.segmento,
+    chassi: campo('chassi', 'chassis', 'numero_chassi', 'num_chassi', 'chassi_mascarado'),
+    importado: campo('importado', 'procedencia', 'nacionalidade', 'is_importado'),
     municipio: d.municipio,
     uf: d.uf,
   }, 'falcon')
+}
+
+/**
+ * Primeiro valor preenchido entre os nomes, sem diferenciar maiúsculas, procurando também
+ * um nível abaixo (ex.: data.veiculo.chassi, data.extra.importado).
+ */
+function achar(obj, nomes) {
+  const alvos = nomes.map((n) => n.toLowerCase())
+  const fontes = [obj, ...Object.values(obj).filter((v) => v && typeof v === 'object' && !Array.isArray(v))]
+  for (const alvo of alvos) {
+    for (const fonte of fontes) {
+      const chave = Object.keys(fonte).find((k) => k.toLowerCase() === alvo)
+      const v = chave === undefined ? undefined : fonte[chave]
+      if (v !== undefined && v !== null && typeof v !== 'object' && String(v).trim() !== '') return v
+    }
+  }
+  return null
 }
 
 /** "Limite do plano Falcon atingido (10 consultas/hora). Libera em 42 min." */

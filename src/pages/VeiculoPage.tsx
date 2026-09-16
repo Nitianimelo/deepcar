@@ -180,24 +180,29 @@ function ListaSistema({ esquemas }: { esquemas: Esquema[] }) {
 }
 
 // Só mostra o que o provedor retornou; campos vazios não ocupam espaço.
-function campos(v: Veiculo): { k: string; v: string; mono?: boolean }[] {
-  const todos: { k: string; v: string | null | undefined; mono?: boolean }[] = [
+type CampoVeiculo = { k: string; v: string; mono?: boolean; largo?: boolean }
+
+function campos(v: Veiculo): CampoVeiculo[] {
+  const todos: (Omit<CampoVeiculo, 'v'> & { v: string | null | undefined })[] = [
     { k: 'Combustível', v: v.combustivel },
     { k: 'Motor', v: v.motor, mono: true },
     { k: 'Cilindrada', v: v.cilindradas ? `${v.cilindradas} cm³` : null, mono: true },
     { k: 'Potência', v: v.potencia ? `${v.potencia} cv` : null, mono: true },
     { k: 'Cor', v: v.cor },
     { k: 'Tipo', v: v.segmento },
+    { k: 'Procedência', v: v.importado === null ? null : v.importado ? 'Importado' : 'Nacional' },
     { k: 'Município', v: v.municipio && v.uf ? `${v.municipio} · ${v.uf}` : v.municipio },
+    // 17 caracteres: no celular ocupa a linha inteira para não quebrar no meio
+    { k: 'Chassi', v: v.chassi, mono: true, largo: true },
   ]
-  return todos.filter((c): c is { k: string; v: string; mono?: boolean } => !!c.v)
+  return todos.filter((c): c is CampoVeiculo => !!c.v)
 }
 
-function Campo({ k, v, mono = false }: { k: string; v: string; mono?: boolean }) {
+function Campo({ k, v, mono = false, largo = false }: CampoVeiculo) {
   return (
-    <div>
+    <div className={largo ? 'col-span-2 sm:col-span-1' : ''}>
       <dt className="text-[12px] text-ink-4">{k}</dt>
-      <dd className={`mt-0.5 text-ink-1 ${mono ? 'code' : ''}`}>{v}</dd>
+      <dd className={`mt-0.5 text-ink-1 ${mono ? 'code break-all' : 'break-words'}`}>{v}</dd>
     </div>
   )
 }
