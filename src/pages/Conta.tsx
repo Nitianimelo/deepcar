@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOut, ShieldCheck, UserRound } from 'lucide-react'
 import { getSession, logout } from '../lib/auth'
+import { mmss, restanteFree } from '../lib/plano'
 
 // Preferências reais, guardadas neste navegador (as mesmas chaves que o visualizador e o layout leem).
 const PREFS = [
@@ -12,6 +13,7 @@ const PREFS = [
 export default function Conta() {
   const nav = useNavigate()
   const s = getSession()
+  const restante = restanteFree(s)
   if (!s) return null
 
   async function sair() {
@@ -37,8 +39,15 @@ export default function Conta() {
           <h2 className="font-medium">Oficina</h2>
           <dl className="mt-3 space-y-2 text-[14px]">
             <Row k="Nome" v={s.oficina} />
-            <Row k="Plano" v={s.plano} />
+            <Row k="Plano" v={s.plano === 'pro' ? 'Profissional' : 'Free'} />
+            {s.whatsapp && <Row k="WhatsApp" v={s.whatsapp.replace(/^55(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')} />}
           </dl>
+          {restante !== null && (
+            <p className="mt-3 border-t seam-soft pt-3 text-[13px] text-ink-3">
+              {restante > 0 ? <>Restam <b className="font-medium text-ink-1">{mmss(restante)}</b> de acesso gratuito.</> : 'Seu acesso gratuito terminou.'}{' '}
+              <a href="/#planos" className="text-trace hover:text-trace-hi">Ver planos</a>
+            </p>
+          )}
         </section>
 
         <section className="rounded-xl border seam bg-bench-2 p-5">

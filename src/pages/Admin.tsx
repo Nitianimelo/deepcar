@@ -2,8 +2,10 @@
 // Toda a autorização é do servidor (api/admin/*): aqui a checagem só evita mostrar a tela.
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { KeyRound, Loader2, Plus, RefreshCw, Search, Trash2, Users } from 'lucide-react'
+import { KeyRound, Loader2, Plus, RefreshCw, Search, Timer, Trash2, Users } from 'lucide-react'
 import { useSessao } from '../lib/auth'
+import { mmss } from '../lib/plano'
+import { mascararWhatsapp } from '../lib/validacao'
 
 type Usuario = {
   id: string
@@ -15,6 +17,8 @@ type Usuario = {
   ativo: boolean
   criado_em: string
   visto_em: string | null
+  whatsapp: string | null
+  free_expira_em: string | null
   sessoes?: number
 }
 
@@ -32,6 +36,13 @@ async function api(url: string, init?: RequestInit) {
 }
 
 const data = (s: string | null) => (s ? new Date(s).toLocaleDateString('pt-BR') : '—')
+
+/** Situação do teste gratuito, do jeito que o administrador precisa ler de relance. */
+function teste(ate: string | null) {
+  if (!ate) return 'teste não começou'
+  const falta = new Date(ate).getTime() - Date.now()
+  return falta > 0 ? `teste: ${mmss(falta)}` : 'teste encerrado'
+}
 
 export default function Admin() {
   const { session, conferindo } = useSessao()
@@ -92,7 +103,7 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
     return () => clearTimeout(t)
   }, [q, buscar])
 
-  async function mudar(u: Usuario, campos: Partial<Usuario> & { senha?: string }) {
+  async function mudar(u: Usuario, campos: Partial<Usuario> & { senha?: string; liberarFree?: boolean }) {
     const antes = lista
     setLista((l) => l.map((x) => (x.id === u.id ? { ...x, ...campos } : x))) // resposta imediata
     try {
@@ -164,12 +175,38 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
                 <td className="px-5 py-3">
                   <span className="block font-medium text-ink-1">{u.nome}{u.email === meuEmail && <span className="ml-2 text-[11px] text-ink-4">você</span>}</span>
                   <span className="code block text-[12px] text-ink-4">{u.email} · {u.oficina}</span>
+                  {u.whatsapp && (
+                    <a
+                      href={`https://wa.me/${u.whatsapp.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="code text-[12px] text-ink-3 hover:text-trace"
+                    >
+                      {mascararWhatsapp(u.whatsapp)}
+                    </a>
+                  )}
                 </td>
                 <td className="px-3 py-3">
-                  <select className="field h-9 py-0 text-[13px]" value={u.plano} onChange={(e) => void mudar(u, { plano: e.target.value as Usuario['plano'] })}>
+                  <select className="field h-9 py-0 text-[13px]" value={u.plano} onChange={(e) => void mudar(u, { plano: e.target.value as Usuario['plano'], free_expira_em: null })}>
                     <option value="free">Free</option>
                     <option value="pro">Pro</option>
                   </select>
+                  {u.plano === 'free' && u.papel !== 'admin' && (
+                    <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-ink-4">
+                      <Timer size={12} className="flex-none" />
+                      {teste(u.free_expira_em)}
+                      {u.free_expira_em && (
+                        <button
+                          type="button"
+                          onClick={() => void mudar(u, { liberarFree: true, free_expira_em: null })}
+                          data-tip="Zera o relógio: a pessoa ganha um teste novo no próximo acesso"
+                          className="text-trace hover:text-trace-hi"
+                        >
+                          liberar
+                        </button>
+                      )}
+                    </span>
+                  )}
                 </td>
                 <td className="px-3 py-3">
                   <select className="field h-9 py-0 text-[13px]" value={u.papel} disabled={u.email === meuEmail}
@@ -211,7 +248,7 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
 }
 
 function FormaNovoUsuario({ onPronto, onErro }: { onPronto: (u: Usuario) => void; onErro: (m: string) => void }) {
-  const [d, setD] = useState({ nome: '', email: '', senha: '', oficina: '', plano: 'free' as const })
+  const [d, setD] = useState({ nome: '', email: '', senha: '', oficina: '', whatsapp: '', plano: 'free' as const })
   const [salvando, setSalvando] = useState(false)
 
   async function enviar(e: FormEvent) {
@@ -231,6 +268,8 @@ function FormaNovoUsuario({ onPronto, onErro }: { onPronto: (u: Usuario) => void
       <input className="field" placeholder="Nome" value={d.nome} onChange={(e) => setD({ ...d, nome: e.target.value })} required />
       <input className="field" type="email" placeholder="E-mail" value={d.email} onChange={(e) => setD({ ...d, email: e.target.value })} required />
       <input className="field" placeholder="Oficina" value={d.oficina} onChange={(e) => setD({ ...d, oficina: e.target.value })} />
+      <input className="field" type="tel" inputMode="numeric" placeholder="WhatsApp (11) 98765-4321" maxLength={16}
+        value={d.whatsapp} onChange={(e) => setD({ ...d, whatsapp: mascararWhatsapp(e.target.value) })} />
       <input className="field" type="password" placeholder="Senha (8+ caracteres)" minLength={8} value={d.senha} onChange={(e) => setD({ ...d, senha: e.target.value })} required />
       <div className="sm:col-span-2">
         <button type="submit" className="btn-primary" disabled={salvando}>{salvando ? 'Criando…' : 'Criar conta'}</button>

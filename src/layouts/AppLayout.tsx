@@ -3,13 +3,16 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import { PlateSearch } from '../components/PlateSearch'
 import { Sidebar } from '../components/Sidebar'
+import { BloqueioFree, ContadorFree } from '../components/LimiteFree'
 import { useSessao } from '../lib/auth'
+import { useLimiteFree } from '../lib/plano'
 
 const COLLAPSE_KEY = 'deepcar.sidebar.collapsed'
 
 export default function AppLayout() {
   const loc = useLocation()
   const { session, conferindo } = useSessao()
+  const limite = useLimiteFree(session)
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem(COLLAPSE_KEY) === '1' } catch { return false }
   })
@@ -50,12 +53,15 @@ export default function AppLayout() {
 
           <PlateSearch className="flex-1 max-w-md" />
 
+          <ContadorFree restante={limite.restante} />
         </header>
 
         <main className="schematic-grid min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>
+
+      {limite.bloqueado && <BloqueioFree />}
     </div>
   )
 }

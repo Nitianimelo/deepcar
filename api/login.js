@@ -1,6 +1,6 @@
 // POST /api/login  { email, senha }  → sessão em cookie httpOnly.
 import { sql, um } from './_lib/db.js'
-import { conferirSenha, corpo, criarSessao, porCookie, publico } from './_lib/sessao.js'
+import { abrirJanelaFree, conferirSenha, corpo, criarSessao, porCookie, publico } from './_lib/sessao.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -17,10 +17,12 @@ export default async function handler(req, res) {
     if (!u || !u.ativo || !(await conferirSenha(String(senha ?? ''), u.senha))) {
       return res.status(401).json({ erro: 'E-mail ou senha incorretos.' })
     }
+    // quem entra pela primeira vez no plano free começa a contar os minutos agora
+    const comJanela = await abrirJanelaFree(u)
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])
     await sql`update usuarios set visto_em = now() where id = ${u.id}`
     porCookie(res, token, expira)
-    return res.status(200).json(publico(u))
+    return res.status(200).json(publico(comJanela))
   } catch (err) {
     return res.status(err.status ?? 500).json({ erro: err.message ?? 'Falha no login.' })
   }

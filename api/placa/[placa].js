@@ -11,8 +11,9 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'GET')
     return res.status(405).json({ erro: 'Use GET.' })
   }
-  // consulta de placa custa cota do provedor: só para quem está logado
-  if (!(await exigir(req, res))) return
+  // consulta de placa custa cota do provedor: só para quem está logado e com acesso
+  // em dia — free com os minutos vencidos recebe 402 e a tela pede a assinatura
+  if (!(await exigir(req, res, { acesso: true }))) return
   try {
     const env = await ambienteCom('FALCON_TOKEN', 'FALCON_BASE_URL', 'CONSULTARPLACA_EMAIL', 'CONSULTARPLACA_API_KEY')
     const veiculo = await consultarPlaca(req.query.placa, env)

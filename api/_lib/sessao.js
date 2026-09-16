@@ -11,6 +11,24 @@ const scryptAsync = promisify(scrypt)
 const COOKIE = 'deepcar_sessao'
 const DIAS = 30
 
+/** Quanto tempo de acesso o plano free da. Trocar aqui muda o produto inteiro. */
+export const MINUTOS_FREE = 5
+
+/**
+ * Comeca a contar o teste gratuito na primeira entrada (nao na criacao da conta):
+ * quem cadastra hoje e so volta amanha nao perde o teste. Idempotente.
+ */
+export async function abrirJanelaFree(u) {
+  if (!u || u.plano !== 'free' || u.free_expira_em) return u
+  const ate = new Date(Date.now() + MINUTOS_FREE * 60_000)
+  await sql`update usuarios set free_expira_em = ${ate} where id = ${u.id} and free_expira_em is null`
+  return { ...u, free_expira_em: ate }
+}
+
+/** Teste gratuito ja vencido? Plano pago nunca vence. */
+export const freeAcabou = (u) =>
+  u.plano === 'free' && !!u.free_expira_em && new Date(u.free_expira_em) <= new Date()
+
 export async function cifrarSenha(senha) {
   const sal = randomBytes(16)
   const hash = await scryptAsync(senha, sal, 64)
@@ -66,7 +84,7 @@ export async function usuarioDaSessao(req) {
   const token = tokenDe(req)
   if (!token) return null
   const linha = await um(sql`
-    select u.id, u.email, u.nome, u.oficina, u.plano, u.papel, u.ativo
+    select u.id, u.email, u.nome, u.oficina, u.plano, u.papel, u.ativo, u.whatsapp, u.free_expira_em
       from sessoes s join usuarios u on u.id = s.usuario_id
      where s.token = ${digerir(token)} and s.expira_em > now()`)
   if (!linha || !linha.ativo) return null
@@ -78,8 +96,11 @@ export async function encerrarSessao(req) {
   if (token) await sql`delete from sessoes where token = ${digerir(token)}`
 }
 
-/** Devolve o usuario ou responde 401/403 e devolve null. */
-export async function exigir(req, res, { admin = false } = {}) {
+/**
+ * Devolve o usuario ou responde 401/403/402 e devolve null.
+ * `acesso: true` nas rotas que entregam conteudo: ai o teste gratuito vencido barra.
+ */
+export async function exigir(req, res, { admin = false, acesso = false } = {}) {
   const u = await usuarioDaSessao(req)
   if (!u) {
     res.status(401).json({ erro: 'Faca login para continuar.' })
@@ -89,10 +110,27 @@ export async function exigir(req, res, { admin = false } = {}) {
     res.status(403).json({ erro: 'Area restrita ao administrador.' })
     return null
   }
+  if (acesso && u.papel !== 'admin' && freeAcabou(u)) {
+    res.status(402).json({
+      erro: `Seus ${MINUTOS_FREE} minutos de acesso gratuito terminaram.`,
+      expirado: true,
+      plano: u.plano,
+    })
+    return null
+  }
   return u
 }
 
 /** So o que o navegador pode ver. */
-export const publico = (u) => ({ nome: u.nome, email: u.email, oficina: u.oficina, plano: u.plano, papel: u.papel })
+export const publico = (u) => ({
+  nome: u.nome,
+  email: u.email,
+  oficina: u.oficina,
+  plano: u.plano,
+  papel: u.papel,
+  whatsapp: u.whatsapp ?? null,
+  // nulo = teste ainda nao comecou, ou plano pago (ai nao ha relogio nenhum)
+  freeExpiraEm: u.plano === 'free' && u.free_expira_em ? new Date(u.free_expira_em).toISOString() : null,
+})
 
 export const corpo = (req) => (typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body ?? {}))

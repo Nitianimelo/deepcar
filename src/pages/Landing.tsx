@@ -7,6 +7,7 @@ import { CarBlueprint } from '../components/CarBlueprint'
 import { MarcasStrip } from '../components/MarcasStrip'
 import { formatarPlaca, placaValida } from '../lib/placa'
 import { carregarIndice, fmt, resumoAcervo, useCarga } from '../lib/acervo'
+import { linkSuporte, MINUTOS_FREE } from '../lib/plano'
 
 export default function Landing() {
   const indice = useCarga(() => carregarIndice(), [])
@@ -35,7 +36,7 @@ function Header() {
         </nav>
         <div className="ml-auto flex items-center gap-2.5">
           <Link to="/login" className="btn-ghost hidden items-center sm:inline-flex">Entrar</Link>
-          <Link to="/login" className="btn-primary inline-flex h-10 items-center px-4 text-[14px]">Testar gratuitamente</Link>
+          <Link to="/cadastro" className="btn-primary inline-flex h-10 items-center px-4 text-[14px]">Criar conta grátis</Link>
         </div>
       </div>
     </header>
@@ -67,8 +68,8 @@ function Hero({ esquemas }: { esquemas: number }) {
             pela placa do carro que está no elevador. No celular, no tablet ou no computador da bancada.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link to="/login" className="btn-primary inline-flex items-center gap-2 px-6">
-              Testar gratuitamente <ArrowRight size={17} />
+            <Link to="/cadastro" className="btn-primary inline-flex items-center gap-2 px-6">
+              Criar conta grátis <ArrowRight size={17} />
             </Link>
             <a href="#cobertura" className="btn-ghost inline-flex h-12 items-center px-5">Ver cobertura</a>
           </div>
@@ -101,7 +102,8 @@ function Cobertura({ esquemas, montadoras, sistemas }: { esquemas: number; monta
   function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (!ok) return
-    nav('/login', { state: { from: `/app/veiculo/${placa.replace('-', '')}` } })
+    // quem chega pela placa ainda não tem conta: cria e cai direto no veículo
+    nav('/cadastro', { state: { from: `/app/veiculo/${placa.replace('-', '')}` } })
   }
 
   return (
@@ -174,14 +176,16 @@ function Planos() {
       nome: 'Oficina',
       para: 'Para quem está começando a consultar esquemas digitalmente.',
       itens: ['1 usuário', 'Consulta por placa', 'Injeção leve e elétrica', 'Acesso pelo app'],
-      cta: 'Testar gratuitamente',
+      cta: 'Criar conta grátis',
+      destino: '/cadastro',
       destaque: false,
     },
     {
       nome: 'Profissional',
       para: 'Para a oficina que atende de tudo, do popular ao diesel.',
       itens: ['Até 5 usuários', 'Todos os sistemas', 'Injeção diesel e câmbio', 'Navegação por componente e minimapa', 'Modo leitura e impressão'],
-      cta: 'Testar gratuitamente',
+      cta: 'Criar conta grátis',
+      destino: '/cadastro',
       destaque: true,
     },
     {
@@ -189,6 +193,7 @@ function Planos() {
       para: 'Para redes, concessionárias e centros de formação.',
       itens: ['Usuários ilimitados', 'Várias unidades', 'Gestão centralizada', 'Suporte dedicado'],
       cta: 'Falar com a equipe',
+      destino: linkSuporte('Olá! Quero falar sobre o plano Rede do Deepcar.'),
       destaque: false,
     },
   ]
@@ -197,7 +202,10 @@ function Planos() {
       <div className="mx-auto max-w-[1200px] px-5 py-20 sm:px-8 lg:py-28">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <h2 className="text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">Planos</h2>
-          <p className="max-w-[40ch] text-[15px] text-ink-3">Valores em breve. Todos os planos começam com um período de teste gratuito.</p>
+          <p className="max-w-[46ch] text-[15px] text-ink-3">
+            Valores em breve. A conta gratuita abre na hora e dá {MINUTOS_FREE} minutos de acesso para você
+            conhecer o acervo por dentro.
+          </p>
         </div>
 
         <div className="mt-12 grid gap-4 md:grid-cols-3">
@@ -217,12 +225,23 @@ function Planos() {
                   <li key={i} className="flex items-start gap-2.5 text-ink-2"><Check size={16} className="mt-[3px] flex-none text-trace" /> {i}</li>
                 ))}
               </ul>
-              <Link
-                to="/login"
-                className={`mt-8 inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-primary' : 'btn-ghost !h-12'}`}
-              >
-                {p.cta}
-              </Link>
+              {p.destino.startsWith('/') ? (
+                <Link
+                  to={p.destino}
+                  className={`mt-8 inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-primary' : 'btn-ghost !h-12'}`}
+                >
+                  {p.cta}
+                </Link>
+              ) : (
+                <a
+                  href={p.destino}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`mt-8 inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-primary' : 'btn-ghost !h-12'}`}
+                >
+                  {p.cta}
+                </a>
+              )}
             </div>
           ))}
         </div>

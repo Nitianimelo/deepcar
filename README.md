@@ -59,6 +59,7 @@ O front é estático; só o login e a consulta de placa precisam de servidor, e 
 | `LOGIN_USUARIO` / `LOGIN_SENHA` | login de um usuário; `LOGIN_NOME` e `LOGIN_OFICINA` são opcionais |
 | `LOGIN_USUARIOS` | alternativa: JSON com a lista de usuários (mesmo formato do `config.json` do executável) |
 | `FALCON_TOKEN` | consulta de placa real; sem ele a rota responde em modo simulado |
+| `VITE_SUPORTE_WHATSAPP` | número (só dígitos, com DDI) do botão "Falar no WhatsApp" quando o teste grátis acaba |
 
 3. As rotas do React Router dependem do rewrite em `vercel.json` (tudo que não é `/api` cai no `index.html`).
 
@@ -68,14 +69,23 @@ por `E:\ferramentas\rclone\Enviar-Acervo-R2.ps1`. Os JSON sobem compactados com 
 
 ### Contas, sessão e administração (Neon)
 
-Banco Postgres no Neon, criado pela integração da Vercel. Esquema em `db/001_inicial.sql`
-(rodar no editor SQL do Neon; pode rodar de novo sem estragar nada).
+Banco Postgres no Neon. Esquema em `db/*.sql`, aplicado em ordem por `node scripts/migrar.mjs`
+(ou colado no editor SQL do Neon). Pode rodar de novo sem estragar nada: é tudo `if not exists`.
 
 - **Senha** guardada com scrypt do próprio Node (`scrypt$<sal>$<hash>`), nunca em texto.
 - **Sessão** num cookie httpOnly de 30 dias; no banco fica só o sha-256 do token. O navegador
   guarda apenas um retrato do perfil (`deepcar.perfil`), que serve para desenhar a tela e não
   libera nada: `api/admin/*` e a consulta de placa conferem o cookie no servidor.
 - **Cadastro aberto** em `/cadastro` (plano free). Login em `/login`.
+- **Plano free = 5 minutos de acesso** (`MINUTOS_FREE` em `api/_lib/sessao.js`, espelhado em `src/lib/plano.ts`).
+  O relógio começa no **primeiro acesso**, não na criação da conta (`usuarios.free_expira_em`; nulo = ainda não
+  começou). Acabou o tempo: a barra superior mostra o contador zerado, a tela do app é coberta por
+  `BloqueioFree` (assinar, falar com o suporte ou sair) e o servidor responde **402** nas rotas de conteúdo
+  (`exigir(req, res, { acesso: true })`). O front reconfere a sessão de minuto em minuto, então virar `pro`
+  no `/admin` libera o acesso sem recarregar a página. Administrador nunca é barrado.
+- **Cadastro pede nome, e-mail, WhatsApp e senha**, validados nos dois lados (`src/lib/validacao.ts` e
+  `api/_lib/validar.js`). O WhatsApp é guardado só em dígitos com DDI (`5511987654321`) e aparece no `/admin`
+  como link do WhatsApp.
 - **`/admin`** (só para `papel = admin`): lista de usuários com busca, plano free/pro no dropdown,
   papel, bloquear, trocar senha, apagar; e o cofre de chaves de API.
 - **Primeiro administrador**: configure `ADMIN_EMAIL` e `ADMIN_SENHA` na Vercel e chame

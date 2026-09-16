@@ -11,6 +11,9 @@ export type Session = {
   oficina: string
   plano: 'free' | 'pro'
   papel: 'usuario' | 'admin'
+  whatsapp: string | null
+  /** Fim dos minutos gratuitos (ISO). Nulo = teste ainda não começou, ou plano pago. */
+  freeExpiraEm: string | null
 }
 
 function guardarPerfil(s: Session | null) {
@@ -30,6 +33,9 @@ export function getSession(): Session | null {
   }
 }
 
+/** Erro de API com o campo que o servidor apontou — a tela grifa o campo certo. */
+export type ErroApi = Error & { campo?: string; status?: number }
+
 async function json(url: string, init?: RequestInit) {
   let res: Response
   try {
@@ -38,7 +44,13 @@ async function json(url: string, init?: RequestInit) {
     throw new Error('Não foi possível falar com o servidor. Verifique sua conexão.')
   }
   const corpo = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((corpo as { erro?: string })?.erro ?? `Falha (HTTP ${res.status}).`)
+  if (!res.ok) {
+    const dados = corpo as { erro?: string; campo?: string }
+    const err: ErroApi = new Error(dados?.erro ?? `Falha (HTTP ${res.status}).`)
+    err.campo = dados?.campo
+    err.status = res.status
+    throw err
+  }
   return corpo
 }
 
@@ -52,7 +64,13 @@ export async function login(email: string, senha: string): Promise<Session> {
   return s
 }
 
-export async function registrar(dados: { nome: string; email: string; senha: string; oficina?: string }): Promise<Session> {
+export async function registrar(dados: {
+  nome: string
+  email: string
+  whatsapp: string
+  senha: string
+  oficina?: string
+}): Promise<Session> {
   const s = (await post('/api/registrar', dados)) as Session
   guardarPerfil(s)
   return s
