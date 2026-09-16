@@ -2,15 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AlertTriangle, ArrowLeft, ChevronRight, Search, X } from 'lucide-react'
 import { SECTION_META, type SectionKey } from '../data/nav'
-import { carregarCatalogo, useCarga, type Esquema } from '../lib/acervo'
+import { adiantarCatalogo, adiantarEsquema, carregarCatalogo, carregarMarcas, useCarga, type Esquema } from '../lib/acervo'
 import { LogoMarca } from '../components/LogoMarca'
 
 const LOTE = 60
 
 export default function SectionPage({ secao }: { secao: SectionKey }) {
   const meta = SECTION_META[secao]
-  const carga = useCarga(() => carregarCatalogo(secao), [secao])
-  const todos = useMemo(() => (carga.estado === 'ok' ? carga.dados : []), [carga])
 
   // montadora escolhida fica na URL: voltar do navegador retorna à grade
   const [params, setParams] = useSearchParams()
@@ -19,11 +17,18 @@ export default function SectionPage({ secao }: { secao: SectionKey }) {
   const [q, setQ] = useState('')
   useEffect(() => { setQ('') }, [secao, marca])
 
-  const marcas = useMemo(() => {
-    const m = new Map<string, number>()
-    for (const e of todos) m.set(e.marca, (m.get(e.marca) ?? 0) + 1)
-    return [...m].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'))
-  }, [todos])
+  const mostrarGrade = !marca && !q.trim()
+
+  // A grade de montadoras sai do índice (5 KB). O catálogo da seção, que é grande,
+  // só desce quando o mecânico escolhe a montadora ou começa a buscar.
+  const cargaMarcas = useCarga(() => carregarMarcas(secao), [secao])
+  const marcas = useMemo(
+    () => (cargaMarcas.estado === 'ok' ? cargaMarcas.dados.map((m) => [m.nome, m.total] as [string, number]) : []),
+    [cargaMarcas],
+  )
+
+  const carga = useCarga(() => (mostrarGrade ? Promise.resolve([] as Esquema[]) : carregarCatalogo(secao)), [secao, mostrarGrade])
+  const todos = useMemo(() => (carga.estado === 'ok' ? carga.dados : []), [carga])
 
   const lista = useMemo(() => {
     const termos = norm(q).split(' ').filter(Boolean)
@@ -35,7 +40,8 @@ export default function SectionPage({ secao }: { secao: SectionKey }) {
     })
   }, [todos, q, marca])
 
-  const mostrarGrade = !marca && !q.trim()
+  const estado = mostrarGrade ? cargaMarcas.estado : carga.estado
+  const erro = cargaMarcas.estado === 'erro' ? cargaMarcas.msg : carga.estado === 'erro' ? carga.msg : ''
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
@@ -81,6 +87,7 @@ export default function SectionPage({ secao }: { secao: SectionKey }) {
           placeholder={marca ? `Buscar em ${marca}: modelo, motor ou ano` : 'Buscar modelo, motor ou ano'}
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          onFocus={() => adiantarCatalogo(secao)}
           aria-label="Buscar esquema"
         />
         {q && (
@@ -90,24 +97,24 @@ export default function SectionPage({ secao }: { secao: SectionKey }) {
         )}
       </label>
 
-      {carga.estado === 'erro' && (
+      {estado === 'erro' && (
         <div role="alert" className="mt-6 flex items-start gap-3 rounded-xl border border-warn/30 bg-warn/8 p-5 text-[14px]">
           <AlertTriangle size={18} className="mt-0.5 flex-none text-warn" />
           <div>
             <p className="text-ink-1">Não foi possível carregar o catálogo.</p>
-            <p className="mt-1 text-ink-3">{carga.msg}</p>
+            <p className="mt-1 text-ink-3">{erro}</p>
           </div>
         </div>
       )}
 
-      {carga.estado === 'carregando' && (
+      {estado === 'carregando' && (
         <div aria-busy="true" className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {Array.from({ length: 15 }, (_, i) => <div key={i} className="h-[124px] animate-pulse rounded-xl bg-bench-2" />)}
         </div>
       )}
 
-      {carga.estado === 'ok' && (mostrarGrade ? (
-        <GradeMarcas marcas={marcas} onEscolher={escolherMarca} />
+      {estado === 'ok' && (mostrarGrade ? (
+        <GradeMarcas marcas={marcas} onEscolher={escolherMarca} onAdiantar={() => adiantarCatalogo(secao)} />
       ) : (
         <ListaEsquemas lista={lista} mostrarLogo={!marca} />
       ))}
@@ -115,7 +122,7 @@ export default function SectionPage({ secao }: { secao: SectionKey }) {
   )
 }
 
-function GradeMarcas({ marcas, onEscolher }: { marcas: [string, number][]; onEscolher: (m: string) => void }) {
+function GradeMarcas({ marcas, onEscolher, onAdiantar }: { marcas: [string, number][]; onEscolher: (m: string) => void; onAdiantar: () => void }) {
   return (
     <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
       {marcas.map(([m]) => (
@@ -123,6 +130,8 @@ function GradeMarcas({ marcas, onEscolher }: { marcas: [string, number][]; onEsc
           <button
             type="button"
             onClick={() => onEscolher(m)}
+            onPointerEnter={onAdiantar}
+            onFocus={onAdiantar}
             className="tile group flex h-[124px] w-full flex-col items-center justify-between rounded-xl px-3 pb-3 pt-5 text-ink-2 hover:text-ink-1"
           >
             <span className="grid h-12 w-full place-items-center">
@@ -175,6 +184,8 @@ function Linha({ e, primeira, mostrarLogo }: { e: Esquema; primeira: boolean; mo
     <li className={primeira ? '' : 'border-t seam-soft'}>
       <Link
         to={`/app/esquema/${e.id}`}
+        onPointerEnter={() => adiantarEsquema(e.id)}
+        onFocus={() => adiantarEsquema(e.id)}
         className="group grid items-center gap-1 px-5 py-3.5 transition-colors hover:bg-bench-3 md:grid-cols-[1.5fr_1fr_1.3fr_0.9fr_28px] md:gap-4"
       >
         <span className="flex min-w-0 items-center gap-3">

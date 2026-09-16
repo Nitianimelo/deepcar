@@ -6,6 +6,18 @@ import type { SectionKey } from '../data/nav'
 
 export const ACERVO_URL = (import.meta.env.VITE_ACERVO_URL as string | undefined)?.replace(/\/$/, '') || '/acervo'
 
+// O acervo mora em outro domínio (R2). Abrir a conexão junto com a página economiza
+// o DNS e o TLS na primeira imagem, que é onde o atraso aparece.
+if (typeof document !== 'undefined' && /^https?:\/\//.test(ACERVO_URL)) {
+  for (const rel of ['preconnect', 'dns-prefetch']) {
+    const l = document.createElement('link')
+    l.rel = rel
+    l.href = new URL(ACERVO_URL).origin
+    if (rel === 'preconnect') l.crossOrigin = 'anonymous'
+    document.head.appendChild(l)
+  }
+}
+
 export type Esquema = {
   id: string // "<secao>/<marca>/<slug>"
   secao: SectionKey
@@ -64,6 +76,16 @@ function getJson<T>(rel: string): Promise<T> {
 export const carregarIndice = () => getJson<IndiceAcervo>('catalogo/index.json')
 export const carregarCatalogo = (secao: SectionKey) => getJson<Esquema[]>(`catalogo/${secao}.json`)
 export const carregarEsquema = (id: string) => getJson<EsquemaDetalhe>(`esquemas/${id}.json`)
+
+/** Montadoras de uma seção pelo índice (5 KB), sem baixar o catálogo inteiro. */
+export const carregarMarcas = async (secao: SectionKey) => (await carregarIndice()).secoes[secao]?.marcas ?? []
+
+/** Adianta um carregamento em segundo plano (passar o mouse na lista, abrir o menu). O cache é o mesmo. */
+export function adiantar(rel: string) {
+  getJson(rel).catch(() => { /* adiantamento: erro aparece quando a página abrir de fato */ })
+}
+export const adiantarEsquema = (id: string) => adiantar(`esquemas/${id}.json`)
+export const adiantarCatalogo = (secao: SectionKey) => adiantar(`catalogo/${secao}.json`)
 
 export async function carregarTudo(secoes: SectionKey[]) {
   const listas = await Promise.all(secoes.map((s) => carregarCatalogo(s).catch(() => [] as Esquema[])))

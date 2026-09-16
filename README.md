@@ -46,6 +46,36 @@ img/<secao>/<marca>/<slug>/esquema-NN.png, minimapa.png
 - `Iniciar-Local.ps1` sobe tudo (Node portátil em `E:\ferramentas`); `-Exportar` reexporta antes.
 - `scripts/capturar-telas.mjs` tira prints das rotas com o Edge headless (conferência visual).
 
+## Publicar na Vercel
+
+O front é estático; só o login e a consulta de placa precisam de servidor, e viram funções em `api/`.
+
+1. Importar o repositório na Vercel (preset Vite; `vercel.json` já traz build, rewrites e cache).
+2. Variáveis de ambiente do projeto:
+
+| Variável | Para quê |
+| --- | --- |
+| `VITE_ACERVO_URL` | endereço público do bucket R2 (entra no bundle, é lido pelo navegador) |
+| `LOGIN_USUARIO` / `LOGIN_SENHA` | login de um usuário; `LOGIN_NOME` e `LOGIN_OFICINA` são opcionais |
+| `LOGIN_USUARIOS` | alternativa: JSON com a lista de usuários (mesmo formato do `config.json` do executável) |
+| `FALCON_TOKEN` | consulta de placa real; sem ele a rota responde em modo simulado |
+
+3. As rotas do React Router dependem do rewrite em `vercel.json` (tudo que não é `/api` cai no `index.html`).
+
+O acervo **não** vai para a Vercel: fica no R2 (`https://<bucket>.r2.dev` ou domínio próprio) e é enviado
+por `E:\ferramentas\rclone\Enviar-Acervo-R2.ps1`. Os JSON sobem compactados com `Content-Encoding: gzip`
+(o catálogo de injeção leve cai de 1,16 MB para 107 KB); as imagens vão com cache de um ano.
+
+### Peso da primeira visita
+
+- Pacote inicial: ~97 KB comprimidos (só a landing). Login, plataforma, visualizador e impressão são
+  carregados por rota (`lazy` em `src/App.tsx`).
+- A grade de montadoras sai de `catalogo/index.json` (1 KB): o catálogo da seção só desce quando o
+  mecânico escolhe a montadora ou começa a buscar. Passar o mouse já adianta o download.
+- Fontes servidas pelo próprio site (`public/fonts`, geradas por `node scripts/baixar-fontes.mjs`);
+  não há ida ao Google Fonts bloqueando a primeira pintura.
+- `src/lib/acervo.ts` abre a conexão com o R2 (`preconnect`) assim que o app carrega.
+
 ## Consulta por placa
 
 Campo de placa na barra superior → `/app/veiculo/:placa` mostra marca, modelo, ano, motor e os sistemas
