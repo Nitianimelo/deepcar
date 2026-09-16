@@ -13,7 +13,8 @@ Regras de trabalho estão em `AGENTE.md`.
 
 - **Produção:** Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub `Nitianimelo/deepcar`.
 - **Funcionando em produção:**
-  - Landing (`/`) com mockups de celular/tablet, selos das lojas e planos sem valores.
+  - Landing (`/`) com mockups de celular/tablet, selos das lojas e planos sem valores. Textos comerciais fixos:
+    subtítulo "15 mil modelos de veículos" e números "60 montadoras" / "98% da frota nacional".
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
   - Plano **free = 5 minutos de acesso**, contados a partir do primeiro acesso; depois bloqueia a tela e a API responde 402.
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link) e cofre de chaves.
@@ -37,6 +38,24 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Novos textos da página de vendas (subtítulo e números de cobertura)
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** trocar o subtítulo da primeira dobra; na seção de cobertura mostrar só "60 montadoras" e
+  "98% da frota nacional" e tirar "com os módulos que de fato passam pelo seu elevador".
+- **O que mudou (`src/pages/Landing.tsx`):**
+  - Subtítulo do hero: "Informações técnicas de mais de 15 mil modelos de veículos: só precisa digitar a placa do carro.
+    Injeção eletrônica, elétrica, ABS e câmbio. No celular, no tablet ou no computador da sua oficina."
+    (antes: "Mais de N mil esquemas elétricos…", com N calculado do acervo).
+  - Seção Cobertura: parágrafo termina em "…caminhões e importados."; os três números (esquemas elétricos,
+    montadoras e sistemas, calculados do acervo) viraram dois números **fixos**: `60` montadoras e `98%` da frota nacional.
+  - Como a landing não exibe mais números do acervo, deixou de baixar `catalogo/index.json` e de importar `src/lib/acervo`
+    (a página abre sem ir ao R2). Para alterar esses números, editar o texto direto em `Landing.tsx`.
+  - Não mudou: `src/pages/Cadastro.tsx` ainda mostra números calculados do acervo.
+- **Banco:** sem mudança.
+- **Variáveis/infra:** sem mudança.
+- **Verificação:** `npm run build` ok; lint sem erros novos; capturas do build (`vite preview`) em 1440×900 e 390×844 conferidas.
+- **Pendências:** nenhuma.
 
 ### 2026-09-16 · Documentação para trabalho em equipe (AGENTE.md e CONTEXTO.md)
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

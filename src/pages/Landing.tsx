@@ -6,17 +6,14 @@ import { AppStoreBadge, PlayStoreBadge } from '../components/StoreBadges'
 import { CarBlueprint } from '../components/CarBlueprint'
 import { MarcasStrip } from '../components/MarcasStrip'
 import { formatarPlaca, placaValida } from '../lib/placa'
-import { carregarIndice, fmt, resumoAcervo, useCarga } from '../lib/acervo'
 import { linkSuporte, MINUTOS_FREE } from '../lib/plano'
 
 export default function Landing() {
-  const indice = useCarga(() => carregarIndice(), [])
-  const r = resumoAcervo(indice.estado === 'ok' ? indice.dados : null)
   return (
     <div className="min-h-full bg-pit text-ink-1">
       <Header />
-      <Hero esquemas={r.esquemas} />
-      <Cobertura {...r} />
+      <Hero />
+      <Cobertura />
       <Planos />
       <Footer />
     </div>
@@ -44,8 +41,7 @@ function Header() {
 }
 
 /* ── Primeira dobra ────────────────────────────────────────────────── */
-function Hero({ esquemas }: { esquemas: number }) {
-  const milhares = Math.floor(esquemas / 1000)
+function Hero() {
   return (
     <section id="topo" className="relative overflow-hidden">
       <div
@@ -64,8 +60,8 @@ function Hero({ esquemas }: { esquemas: number }) {
             Inteligência automotiva para a sua oficina.
           </h1>
           <p className="mt-6 max-w-[48ch] text-[17px] leading-relaxed text-ink-2">
-            Mais de {milhares} mil esquemas elétricos de injeção, ABS, elétrica e câmbio, encontrados
-            pela placa do carro que está no elevador. No celular, no tablet ou no computador da bancada.
+            Informações técnicas de mais de 15 mil modelos de veículos: só precisa digitar a placa do carro.
+            Injeção eletrônica, elétrica, ABS e câmbio. No celular, no tablet ou no computador da sua oficina.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link to="/cadastro" className="btn-primary inline-flex items-center gap-2 px-6">
@@ -94,7 +90,7 @@ function Hero({ esquemas }: { esquemas: number }) {
 }
 
 /* ── Segunda dobra ─────────────────────────────────────────────────── */
-function Cobertura({ esquemas, montadoras, sistemas }: { esquemas: number; montadoras: number; sistemas: number }) {
+function Cobertura() {
   const nav = useNavigate()
   const [placa, setPlaca] = useState('')
   const ok = placaValida(placa)
@@ -116,13 +112,12 @@ function Cobertura({ esquemas, montadoras, sistemas }: { esquemas: number; monta
             </h2>
             <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-ink-2">
               Uma base construída para a realidade da oficina brasileira: carros populares,
-              picapes, utilitários, caminhões e importados, com os módulos que de fato passam pelo seu elevador.
+              picapes, utilitários, caminhões e importados.
             </p>
 
             <dl className="mt-12 flex flex-wrap gap-x-12 gap-y-8 border-t seam pt-8">
-              <Numero valor={fmt(esquemas)} rotulo="esquemas elétricos" />
-              <Numero valor={String(montadoras)} rotulo="montadoras" />
-              <Numero valor={String(sistemas)} rotulo="sistemas do veículo" />
+              <Numero valor="60" rotulo="montadoras" />
+              <Numero valor="98%" rotulo="da frota nacional" />
             </dl>
           </div>
 
