@@ -23,7 +23,7 @@ Regras de trabalho estão em `AGENTE.md`.
   - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → Consultar Placa → modo simulado, com cache de 24 h.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `45092b9`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `6372685`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -32,7 +32,7 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] `npm run dev` não suporta o fluxo de contas do Neon (`/api/login` antigo, sem `/api/registrar`, `/api/sessao`, `/api/admin/*`).
       Testar contas via `vercel dev` ou Preview Deployment.
 - [ ] Scripts de acervo e do executável dependem de caminhos Windows (`E:\`).
-- [ ] 5 avisos do oxlint (`set-state-in-effect`/`exhaustive-deps`) em `src/lib/acervo.ts`, `src/pages/Admin.tsx`, `src/pages/SectionPage.tsx`.
+- [ ] 13 avisos do oxlint (0 erros) em `src/`: `set-state-in-effect`, `exhaustive-deps`, `only-export-components`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
 - [ ] Assinatura/pagamento do plano pro não existe: a passagem para `pro` é manual no `/admin`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
@@ -42,6 +42,25 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Dados do esquema legíveis no celular (modelo, motorização, sistema e fabricação)
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** nas telas de celular, ao buscar o modelo, as informações de modelo, fabricação e sistema apareciam cortadas ou ilegíveis.
+- **Causa:** em `SectionPage` (lista de esquemas) o nome do modelo tinha `truncate` e motorização, sistema e fabricação eram
+  juntados numa única linha de 12 px, cinza-escuro, também com `truncate`: textos longos perdiam o final (a fabricação
+  quase nunca aparecia). A lista de esquemas da consulta por placa (`VeiculoPage`) tinha o mesmo padrão em todas as larguras.
+- **O que mudou:**
+  - Novo `src/components/DetalhesEsquema.tsx`: mostra Motorização, Sistema (código do motor · gerenciamento) e Fabricação,
+    um por linha, com rótulo, texto inteiro quebrando linha (`break-words`), 13 px e contraste maior. Campos vazios não aparecem.
+  - `src/pages/SectionPage.tsx`: no celular (< `md`) o nome do modelo quebra linha em vez de cortar e os detalhes usam `DetalhesEsquema`.
+    No desktop a tabela de colunas continua igual; a coluna Motorização ganhou dica (`data-tip`) com o texto completo quando é longo.
+  - `src/pages/VeiculoPage.tsx`: lista de esquemas por sistema usa `DetalhesEsquema` e nome do modelo sem corte.
+  - Documentação: contagem real de avisos do lint corrigida para 13 no `AGENTE.md` e aqui (antes dizia 5, contagem errada).
+- **Banco:** sem mudança.
+- **Variáveis/infra:** sem mudança.
+- **Verificação:** reproduzido e conferido com `vite` dev + acervo de teste com textos longos + sessão e placa simuladas no navegador
+  (390×844 na lista e na consulta por placa; 1280×700 no desktop). `npm run build` ok; oxlint com os mesmos 13 avisos de antes.
+- **Pendências:** nenhuma.
 
 ### 2026-09-16 · Planos Pro e Full com preços na página de vendas
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

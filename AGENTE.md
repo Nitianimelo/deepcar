@@ -185,7 +185,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   no dev. Para testar contas: `npx vercel dev` (com as variáveis puxadas via `vercel env pull`) ou um Preview Deployment.
 - **Acervo local** depende de `ACERVO_DIR` (padrão `E:\deepcar-publicacao`, máquina Windows). Sem ele, catálogo vazio no dev.
 - `Iniciar-Local.ps1`, `exportar-acervo.mjs` e `empacotar-exe.mjs` usam caminhos `E:\` e ferramentas Windows.
-- `npm run lint` já tem 5 avisos `set-state-in-effect`/`exhaustive-deps` (`src/lib/acervo.ts`, `Admin.tsx`, `SectionPage.tsx`). Não são erros; não aumente a lista.
+- `npm run lint` já tem 13 avisos (0 erros), principalmente `set-state-in-effect`, `exhaustive-deps` e `only-export-components`, espalhados por `src/`. Não são erros; não aumente a lista (compare a contagem antes e depois da mudança).
 - Prints do `capturar-telas.mjs` (Edge headless) cortam a largura: não confunda com layout quebrado (ver commit `31b1313`).
 - Pasta local dentro do iCloud Drive pode corromper o `.git` (arquivos duplicados tipo `index 2`). Prefira clonar fora do iCloud.
 - Deploy da Vercel não roda migração nem copia o acervo.

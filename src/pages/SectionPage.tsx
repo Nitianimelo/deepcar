@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft, ChevronRight, Search, X } from 'lucide-react'
 import { SECTION_META, type SectionKey } from '../data/nav'
 import { adiantarCatalogo, adiantarEsquema, carregarCatalogo, carregarMarcas, useCarga, type Esquema } from '../lib/acervo'
 import { LogoMarca } from '../components/LogoMarca'
+import { DetalhesEsquema } from '../components/DetalhesEsquema'
 
 const LOTE = 60
 
@@ -188,20 +189,18 @@ function Linha({ e, primeira, mostrarLogo }: { e: Esquema; primeira: boolean; mo
         onFocus={() => adiantarEsquema(e.id)}
         className="group grid items-center gap-1 px-5 py-3.5 transition-colors hover:bg-bench-3 md:grid-cols-[1.5fr_1fr_1.3fr_0.9fr_28px] md:gap-4"
       >
-        <span className="flex min-w-0 items-center gap-3">
+        <span className="flex min-w-0 items-start gap-3 md:items-center">
           {mostrarLogo && (
-            <span className="grid w-9 flex-none place-items-center text-ink-3 group-hover:text-ink-1">
+            <span className="mt-0.5 grid w-9 flex-none place-items-center text-ink-3 group-hover:text-ink-1 md:mt-0">
               <LogoMarca marca={e.marca} altura={18} larguraMax={36} />
             </span>
           )}
           <span className="min-w-0">
-            <span className="block truncate font-medium text-ink-1">{mostrarLogo ? `${e.marca} ` : ''}{e.modelo}</span>
-            <span className="code block truncate text-[12px] text-ink-4 md:hidden">
-              {[e.motorizacao, gerenc, e.producao].filter(Boolean).join(' · ')}
-            </span>
+            <span className="block break-words font-medium text-ink-1 md:truncate">{mostrarLogo ? `${e.marca} ` : ''}{e.modelo}</span>
+            <DetalhesEsquema e={e} className="mt-1.5 md:hidden" />
           </span>
         </span>
-        <span className="code hidden truncate text-[13px] text-ink-2 md:block">{e.motorizacao ?? '—'}</span>
+        <span className="code hidden truncate text-[13px] text-ink-2 md:block" data-tip={(e.motorizacao?.length ?? 0) > 22 ? e.motorizacao! : undefined}>{e.motorizacao ?? '—'}</span>
         <span className="hidden truncate text-[13.5px] text-ink-2 md:block" data-tip={gerenc.length > 34 ? gerenc : undefined}>{gerenc || '—'}</span>
         <span className="code hidden truncate text-[13px] text-ink-3 md:block">{e.producao ?? '—'}</span>
         <ChevronRight size={17} className="hidden text-ink-4 transition-transform group-hover:translate-x-0.5 group-hover:text-trace md:block" />

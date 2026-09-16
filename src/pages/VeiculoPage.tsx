@@ -6,6 +6,7 @@ import { carregarTudo, useCarga, type Esquema } from '../lib/acervo'
 import { NAV, SECTION_META, type SectionKey } from '../data/nav'
 import { TracePad } from '../components/TracePad'
 import { LogoMarca } from '../components/LogoMarca'
+import { DetalhesEsquema } from '../components/DetalhesEsquema'
 import MARCAS from '../data/marcas.json'
 
 type Estado = { fase: 'carregando' } | { fase: 'ok'; veiculo: Veiculo } | { fase: 'erro'; msg: string }
@@ -155,14 +156,12 @@ function ListaSistema({ esquemas }: { esquemas: Esquema[] }) {
       <ul>
         {lista.map((e) => (
           <li key={e.id} className="border-t seam-soft first:border-t-0">
-            <Link to={`/app/esquema/${e.id}`} className="group flex items-center gap-3 px-4 py-2.5 hover:bg-bench-3">
+            <Link to={`/app/esquema/${e.id}`} className="group flex items-center gap-3 px-4 py-3 hover:bg-bench-3">
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] text-ink-1">{e.marca} {e.modelo}</span>
-                <span className="code block truncate text-[12px] text-ink-4">
-                  {[e.motorizacao, e.codigoMotor, e.gerenciamento, e.producao].filter(Boolean).join(' · ')}
-                </span>
+                <span className="block break-words text-[14px] font-medium text-ink-1">{e.marca} {e.modelo}</span>
+                <DetalhesEsquema e={e} className="mt-1.5" />
               </span>
-              <ChevronRight size={16} className="text-ink-4 group-hover:text-trace" />
+              <ChevronRight size={16} className="flex-none text-ink-4 group-hover:text-trace" />
             </Link>
           </li>
         ))}
