@@ -54,7 +54,9 @@ function dividir(sqlTexto) {
     atual += linha + '\n'
     if (!dentroDeCorpo && /;\s*(--.*)?$/.test(linha)) {
       const limpo = atual.trim()
-      if (limpo && !/^--/.test(limpo)) comandos.push(limpo)
+      // só descarta o trecho se ele for *só* comentário: um comando quase sempre
+      // vem precedido do comentário que o explica, e testar o começo o perdia calado
+      if (limpo.split('\n').some((l) => l.trim() && !l.trim().startsWith('--'))) comandos.push(limpo)
       atual = ''
     }
   }
