@@ -36,6 +36,8 @@ export default function AppLayout() {
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="Abrir menu"
+            data-tip="Abrir menu"
+            data-tip-side="bottom"
             className="grid h-10 w-10 place-items-center rounded-md text-ink-2 hover:bg-bench-3 lg:hidden"
           >
             <Menu size={20} />
@@ -43,11 +45,6 @@ export default function AppLayout() {
 
           <PlateSearch className="flex-1 max-w-md" />
 
-          <div className="ml-auto flex items-center gap-2">
-            <span className="code hidden items-center gap-2 rounded-full border seam px-3 py-1 text-[11px] text-ink-3 sm:flex">
-              <span className="h-1.5 w-1.5 rounded-full bg-ok" /> Catálogo sincronizado
-            </span>
-          </div>
         </header>
 
         <main className="schematic-grid min-h-0 flex-1 overflow-y-auto">

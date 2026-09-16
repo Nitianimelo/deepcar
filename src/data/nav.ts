@@ -26,7 +26,7 @@ export const SECTION_META: Record<SectionKey, { titulo: string; trilha: string[]
   'injecao-leve': {
     titulo: 'Injeção Eletrônica · Leve',
     trilha: ['Injeção Eletrônica', 'Leve'],
-    descricao: 'Módulos de gerenciamento de motor ciclo Otto e flex.',
+    descricao: 'Módulos de injeção e ignição de motores ciclo Otto e flex.',
   },
   'injecao-diesel': {
     titulo: 'Injeção Eletrônica · Diesel',

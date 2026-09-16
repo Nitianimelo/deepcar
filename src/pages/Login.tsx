@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
+import { Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react'
 import { login } from '../lib/auth'
 import { CircuitArt } from '../components/CircuitArt'
 import { TracePad } from '../components/TracePad'
@@ -9,7 +9,7 @@ import { CarBlueprint } from '../components/CarBlueprint'
 export default function Login() {
   const nav = useNavigate()
   const loc = useLocation()
-  const [email, setEmail] = useState('')
+  const [usuario, setUsuario] = useState('')
   const [senha, setSenha] = useState('')
   const [mostrar, setMostrar] = useState(false)
   const [lembrar, setLembrar] = useState(true)
@@ -21,7 +21,7 @@ export default function Login() {
     setErro(null)
     setCarregando(true)
     try {
-      await login(email.trim(), senha)
+      await login(usuario, senha, lembrar)
       const dest = (loc.state as { from?: string } | null)?.from ?? '/app'
       nav(dest, { replace: true })
     } catch (err) {
@@ -51,8 +51,8 @@ export default function Login() {
             Esquemas elétricos automotivos, na bancada.
           </h1>
           <p className="mt-5 text-ink-2 text-base leading-relaxed">
-            Injeção leve e diesel, ABS, elétrica e câmbio. Pinagem, conectores e trilhas
-            organizados para quem está com o multímetro na mão.
+            Injeção leve e diesel, ABS, elétrica e câmbio. Desenhos completos, navegação por
+            componente e impressão, para quem está com o multímetro na mão.
           </p>
         </div>
         <p className="relative code text-xs text-ink-4">© {new Date().getFullYear()} Deepcar · Grupo Arcco</p>
@@ -70,17 +70,19 @@ export default function Login() {
 
             <form onSubmit={onSubmit} className="mt-7 space-y-4" noValidate>
               <label className="block">
-                <span className="mb-1.5 block text-[13px] font-medium text-ink-2">E-mail</span>
+                <span className="mb-1.5 block text-[13px] font-medium text-ink-2">Usuário</span>
                 <span className="relative block">
-                  <Mail size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" />
+                  <UserRound size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" />
                   <input
                     className="field pl-11"
-                    type="email"
-                    inputMode="email"
+                    type="text"
                     autoComplete="username"
-                    placeholder="voce@oficina.com.br"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    placeholder="seu usuário"
+                    value={usuario}
+                    onChange={(e) => setUsuario(e.target.value)}
                     required
                   />
                 </span>
@@ -89,7 +91,7 @@ export default function Login() {
               <label className="block">
                 <span className="mb-1.5 flex items-center justify-between text-[13px] font-medium text-ink-2">
                   Senha
-                  <a href="#" className="text-trace hover:text-trace-hi font-normal">Esqueci a senha</a>
+                  <a href="#" onClick={(e) => e.preventDefault()} data-tip="Peça ao responsável pela oficina para redefinir sua senha" className="text-trace hover:text-trace-hi font-normal">Esqueci a senha</a>
                 </span>
                 <span className="relative block">
                   <LockKeyhole size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" />
@@ -106,6 +108,7 @@ export default function Login() {
                     type="button"
                     onClick={() => setMostrar((v) => !v)}
                     aria-label={mostrar ? 'Ocultar senha' : 'Mostrar senha'}
+                    data-tip={mostrar ? 'Ocultar senha' : 'Mostrar a senha digitada'}
                     className="absolute right-2 top-1/2 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-md text-ink-3 hover:text-ink-1 hover:bg-bench-3"
                   >
                     {mostrar ? <EyeOff size={17} /> : <Eye size={17} />}
@@ -113,7 +116,11 @@ export default function Login() {
                 </span>
               </label>
 
-              <label className="flex items-center gap-2.5 text-sm text-ink-2 select-none cursor-pointer">
+              <label
+                className="flex items-center gap-2.5 text-sm text-ink-2 select-none cursor-pointer"
+                data-tip="Não pedir login de novo neste computador ou celular"
+                data-tip-side="right"
+              >
                 <input
                   type="checkbox"
                   checked={lembrar}
@@ -137,7 +144,7 @@ export default function Login() {
 
           <p className="mt-6 text-center text-sm text-ink-3">
             Ainda não tem acesso?{' '}
-            <a href="#" className="text-trace hover:text-trace-hi">Solicitar conta</a>
+            <a href="#" onClick={(e) => e.preventDefault()} data-tip="Peça ao responsável pela oficina para criar seu acesso" className="text-trace hover:text-trace-hi">Solicitar conta</a>
           </p>
         </div>
       </section>

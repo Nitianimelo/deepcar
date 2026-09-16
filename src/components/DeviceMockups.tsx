@@ -1,6 +1,7 @@
 // Celular e tablet em CSS puro, com réplicas reduzidas das telas do app.
 // As telas internas usam os mesmos tokens do produto (bench/ink/trace).
 import { Car, ChevronRight, CircleDot, Cog, Cpu, ScanLine, Search, Truck, Zap } from 'lucide-react'
+import { LogoMarca } from './LogoMarca'
 
 /* ── Telas internas (renderizadas em tamanho natural, depois escaladas) ── */
 
@@ -31,8 +32,13 @@ function TelaCelular() {
       </div>
       {/* veículo */}
       <div className="mx-5 mt-5 rounded-xl border seam bg-bench-2 p-4">
-        <p className="text-[12px] uppercase tracking-[0.08em] text-ink-3">Toyota</p>
-        <p className="mt-0.5 text-[20px] font-semibold tracking-tight">Hilux CD SRX 2.8 4x4</p>
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-14 place-items-center rounded-lg border seam bg-bench-1 text-ink-1"><LogoMarca marca="Toyota" altura={18} /></span>
+          <div>
+            <p className="text-[12px] uppercase tracking-[0.08em] text-ink-3">Toyota</p>
+            <p className="mt-0.5 text-[19px] font-semibold tracking-tight">Hilux CD SRX 2.8 4x4</p>
+          </div>
+        </div>
         <div className="mt-3 grid grid-cols-3 gap-3 text-[13px]">
           {[['Ano', '2020'], ['Comb.', 'Diesel'], ['Motor', '1GD-FTV']].map(([k, v]) => (
             <div key={k}><p className="text-[11px] text-ink-4">{k}</p><p className="code mt-0.5 text-ink-1">{v}</p></div>
@@ -44,10 +50,10 @@ function TelaCelular() {
         <p className="text-[15px] font-semibold">Sistemas disponíveis</p>
         <ul className="mt-3 space-y-2">
           {[
-            [Truck, 'Injeção Eletrônica · Diesel', 'Denso EDC · 12 pág'],
-            [CircleDot, 'ABS', 'Bosch ABS 9.0 · 4 pág'],
-            [Zap, 'Elétrica', 'Main Body ECU · 26 pág'],
-            [Cog, 'Câmbio', 'AT AC60 · 6 pág'],
+            [Truck, 'Injeção Eletrônica · Diesel', '2.8 · 1GD-FTV · Com i-ART · 2015 a 2020'],
+            [CircleDot, 'ABS', '2.8 · 1GD / FTV · Com VSC · 11/2020 em diante'],
+            [Zap, 'Elétrica', '2.8 Diesel · 2016 a 2022'],
+            [Cog, 'Câmbio', '2.8 · 1GD-FTV · AC60F · 2016 a 2022'],
           ].map(([Icon, t, s]) => {
             const I = Icon as typeof Zap
             return (
@@ -77,12 +83,12 @@ function TelaCelular() {
 
 function TelaTablet() {
   const linhas = [
-    ['Volkswagen Gol G6', 'Bosch ME 7.5.30', '1.6 8V EA111 Flex', '2013–2016'],
-    ['Fiat Argo', 'Magneti Marelli 8GMF', '1.3 Firefly Flex', '2018–2024'],
-    ['Chevrolet Onix', 'Delphi MT35', '1.0 Turbo CSS', '2020–2025'],
-    ['Toyota Corolla', 'Denso 89661', '2.0 Dynamic Force', '2020–2025'],
-    ['Hyundai HB20', 'Kefico GDI', '1.0 TGDI', '2020–2025'],
-    ['Honda Civic G10', 'Keihin PGM-FI', '2.0 i-VTEC', '2017–2021'],
+    ['Gol', '1.0 8V TotalFlex · 53–56 kW', 'CPBA · ME 17.5.24', '08/2013 a 2016'],
+    ['Gol', '1.6 8V', 'CCRA', '2014 a 2018'],
+    ['Polo', '1.0 TSI', 'DHSA · ME 17.5.26', '2018 a 2022'],
+    ['Saveiro', '1.6 MSI', 'CWSA', '2016 a 2020'],
+    ['Virtus', '1.6 MSI', 'CWSB', '2018 a 2022'],
+    ['Amarok', '2.0 TDI Bi-Turbo', 'CNEA · EDC 17', '2016 a 2022'],
   ]
   return (
     <div className="flex h-[800px] w-[1180px] bg-pit text-ink-1" style={{ fontSize: 14 }}>
@@ -110,16 +116,17 @@ function TelaTablet() {
           <div className="flex h-10 w-[360px] items-center rounded-lg border seam bg-well px-3"><ScanLine size={15} className="text-ink-4" /><span className="code ml-3 text-[13px] tracking-[0.12em] text-ink-4">PLACA · ABC1D23</span></div>
         </div>
         <div className="p-7">
-          <p className="code text-[10px] uppercase tracking-[0.2em] text-ink-4">Injeção Eletrônica › Leve</p>
-          <h2 className="mt-1 text-[24px] font-semibold tracking-tight">Injeção Eletrônica · Leve</h2>
-          <div className="mt-5 flex gap-2">
-            {['Todas', 'Chevrolet', 'Fiat', 'Honda', 'Hyundai', 'Toyota', 'Volkswagen'].map((m, i) => (
-              <span key={m} className={`rounded-full border px-3 py-1.5 text-[12px] ${i === 0 ? 'border-trace/50 bg-trace/12 text-trace-hi' : 'seam bg-bench-2 text-ink-2'}`}>{m}</span>
-            ))}
+          <div className="flex items-center gap-4">
+            <span className="grid h-12 w-[72px] place-items-center rounded-lg border seam bg-bench-2 text-ink-1"><LogoMarca marca="Volkswagen" altura={26} /></span>
+            <div>
+              <p className="code text-[10px] uppercase tracking-[0.2em] text-ink-4">Injeção Eletrônica › Leve</p>
+              <h2 className="mt-1 text-[24px] font-semibold tracking-tight">Volkswagen</h2>
+            </div>
+            <span className="code ml-auto rounded-lg border seam bg-bench-2 px-3 py-1.5 text-[12px] text-ink-2"><span className="text-ink-1">380</span> esquemas</span>
           </div>
           <div className="mt-5 overflow-hidden rounded-xl border seam bg-bench-2">
             <div className="code grid grid-cols-[1.5fr_1.2fr_1fr_0.8fr_auto] gap-4 border-b seam-soft px-5 py-2 text-[10px] uppercase tracking-[0.16em] text-ink-4">
-              <span>Veículo</span><span>Módulo</span><span>Motor</span><span>Anos</span><span />
+              <span>Veículo</span><span>Motorização</span><span>Sistema</span><span>Fabricação</span><span />
             </div>
             {linhas.map(([v, m, mo, a], i) => (
               <div key={v} className={`grid grid-cols-[1.5fr_1.2fr_1fr_0.8fr_auto] items-center gap-4 px-5 py-3 ${i > 0 ? 'border-t seam-soft' : ''}`}>

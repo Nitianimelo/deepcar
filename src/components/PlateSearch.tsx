@@ -28,10 +28,15 @@ export function PlateSearch({ className = '' }: { className?: string }) {
         spellCheck={false}
         maxLength={8}
         aria-label="Consultar placa"
+        data-tip="Digite a placa do carro para ver os esquemas compatíveis"
+        data-tip-side="bottom"
       />
       <button
         type="submit"
         disabled={!ok}
+        data-tip={ok ? 'Ver marca, modelo e os esquemas deste veículo' : 'Digite a placa completa, no padrão antigo ou Mercosul'}
+        data-tip-kbd={ok ? 'Enter' : undefined}
+        data-tip-side="bottom"
         className="absolute right-1.5 top-1/2 h-7 -translate-y-1/2 rounded-md bg-trace/15 px-3 text-[12px] font-medium text-trace-hi transition-colors hover:bg-trace/25 disabled:opacity-40 disabled:hover:bg-trace/15"
       >
         Consultar

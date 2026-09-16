@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronsLeft, ChevronsRight, LogOut, UserRound, X } from 'lucide-react'
-import { NAV, type NavGroup, type NavLeaf } from '../data/nav'
+import { NAV, SECTION_META, type NavGroup, type NavLeaf } from '../data/nav'
 import { TracePad } from './TracePad'
 import { getSession, logout } from '../lib/auth'
 
@@ -51,7 +51,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
           ) : (
             <img src="/brand/logo-h-light.png" alt="Deepcar" className="h-7 object-contain" draggable={false} />
           )}
-          <button onClick={onCloseMobile} aria-label="Fechar menu" className="grid h-9 w-9 place-items-center rounded-md text-ink-3 hover:bg-bench-3 hover:text-ink-1 lg:hidden">
+          <button onClick={onCloseMobile} aria-label="Fechar menu" data-tip="Fechar menu" className="grid h-9 w-9 place-items-center rounded-md text-ink-3 hover:bg-bench-3 hover:text-ink-1 lg:hidden">
             <X size={18} />
           </button>
         </div>
@@ -84,7 +84,8 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
         <div className="border-t seam p-3">
           <NavLink
             to="/app/conta"
-            title="Conta"
+            data-tip="Sua conta e preferências"
+            data-tip-side={collapsed ? 'right' : 'top'}
             className={`nav-item h-auto py-2.5 ${collapsed ? 'justify-center px-0' : ''} ${contaAtiva ? 'nav-active' : ''}`}
           >
             {contaAtiva && !collapsed && <TracePad />}
@@ -102,7 +103,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); sair() }}
                 aria-label="Sair"
-                title="Sair"
+                data-tip="Sair da conta neste dispositivo"
                 className="grid h-8 w-8 place-items-center rounded-md text-ink-4 hover:bg-bench-3 hover:text-fault"
               >
                 <LogOut size={16} />
@@ -114,6 +115,8 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
             onClick={onToggleCollapsed}
             className="mt-2 hidden h-9 w-full items-center justify-center gap-2 rounded-md text-[12px] text-ink-4 hover:bg-bench-3 hover:text-ink-2 lg:flex"
             aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
+            data-tip={collapsed ? 'Expandir o menu' : 'Recolher o menu para ganhar espaço na tela'}
+            data-tip-side={collapsed ? 'right' : 'top'}
           >
             {collapsed ? <ChevronsRight size={16} /> : <><ChevronsLeft size={16} /> Recolher</>}
           </button>
@@ -128,7 +131,9 @@ function LeafItem({ leaf, collapsed, nested = false }: { leaf: NavLeaf; collapse
   return (
     <NavLink
       to={leaf.to}
-      title={leaf.label}
+      aria-label={leaf.label}
+      data-tip={collapsed ? `${leaf.label}: ${SECTION_META[leaf.key].descricao}` : SECTION_META[leaf.key].descricao}
+      data-tip-side="right"
       className={({ isActive }) =>
         [
           'nav-item',
@@ -170,6 +175,8 @@ function GroupItem({
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
+        data-tip={isOpen ? 'Recolher opções de injeção' : 'Injeção leve (Otto e flex) e diesel'}
+        data-tip-side="right"
         className={`nav-item w-full ${childActive && !isOpen ? 'nav-active' : ''}`}
       >
         <Icon size={19} className="nav-icon" style={childActive ? { color: 'var(--color-trace)' } : undefined} />

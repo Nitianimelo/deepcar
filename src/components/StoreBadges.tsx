@@ -4,6 +4,7 @@ function Badge({ href, topo, nome, icone }: { href: string; topo: string; nome: 
   return (
     <a
       href={href}
+      data-tip={href === '#' ? `App ${nome === 'App Store' ? 'para iPhone e iPad' : 'para Android'} em breve` : undefined}
       className="inline-flex h-[52px] items-center gap-2.5 rounded-[10px] border border-white/15 bg-[#0b0e13] pl-3 pr-4 text-left transition-colors hover:border-white/30 hover:bg-[#12161d]"
     >
       <span className="grid h-7 w-7 place-items-center">{icone}</span>

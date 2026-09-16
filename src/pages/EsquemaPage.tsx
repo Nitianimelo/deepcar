@@ -1,117 +1,147 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Download, Printer, ZoomIn } from 'lucide-react'
-import { esquemaPorId } from '../data/esquemas'
-import { SECTION_META } from '../data/nav'
+import { AlertTriangle, ArrowLeft, LoaderCircle, Printer } from 'lucide-react'
+import { SECTION_META, type SectionKey } from '../data/nav'
+import { carregarEsquema, rotaSecao, rotulo, subtituloCurto, useCarga } from '../lib/acervo'
+import { EsquemaViewer } from '../components/EsquemaViewer'
+import { LogoMarca } from '../components/LogoMarca'
+import { PrintEsquema } from '../components/PrintEsquema'
+
+/**
+ * Impressão: monta o documento A4, espera as imagens e só então abre a janela do navegador.
+ * Ctrl+P passa pelo mesmo caminho; imprimir pelo menu do navegador monta o documento na hora (sem esperar).
+ */
+function useImpressao() {
+  const [ativo, setAtivo] = useState(false)
+  const modo = useRef<'botao' | 'menu' | null>(null)
+
+  const iniciar = useCallback(() => {
+    if (modo.current) return
+    modo.current = 'botao'
+    setAtivo(true)
+  }, [])
+
+  const pronto = useCallback(() => {
+    if (modo.current !== 'botao') return
+    window.addEventListener('afterprint', () => { modo.current = null; setAtivo(false) }, { once: true })
+    window.print()
+  }, [])
+
+  useEffect(() => {
+    const tecla = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') { e.preventDefault(); iniciar() }
+    }
+    const antes = () => { if (!modo.current) { modo.current = 'menu'; flushSync(() => setAtivo(true)) } }
+    const depois = () => { if (modo.current === 'menu') { modo.current = null; setAtivo(false) } }
+    window.addEventListener('keydown', tecla)
+    window.addEventListener('beforeprint', antes)
+    window.addEventListener('afterprint', depois)
+    return () => {
+      window.removeEventListener('keydown', tecla)
+      window.removeEventListener('beforeprint', antes)
+      window.removeEventListener('afterprint', depois)
+    }
+  }, [iniciar])
+
+  return { ativo, preparando: ativo && modo.current === 'botao', iniciar, pronto }
+}
 
 export default function EsquemaPage() {
-  const { id = '' } = useParams()
-  const e = esquemaPorId(id)
+  const id = useParams()['*'] ?? ''
+  const secao = id.split('/')[0] as SectionKey
+  const meta = SECTION_META[secao]
+  const carga = useCarga(() => carregarEsquema(id), [id])
+  const impressao = useImpressao()
 
-  if (!e) {
-    return (
-      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <p className="text-ink-2">Esquema não encontrado.</p>
-        <Link to="/app" className="mt-4 inline-flex text-trace hover:text-trace-hi">Voltar ao catálogo</Link>
-      </div>
-    )
-  }
-
-  const meta = SECTION_META[e.secao]
-  const voltar = `/app/${e.secao === 'injecao-leve' ? 'injecao/leve' : e.secao === 'injecao-diesel' ? 'injecao/diesel' : e.secao}`
-
-  // pinagem de exemplo; virá do catálogo real
-  const pinos = [
-    ['1', 'Alimentação +30', 'VM', 'Bateria'],
-    ['2', 'Massa de potência', 'MR', 'Chassi'],
-    ['3', 'Sinal do sensor de rotação', 'AZ/BR', 'CKP'],
-    ['4', 'Sinal do sensor de fase', 'VD/PT', 'CMP'],
-    ['5', 'Comando injetor cil. 1', 'AM', 'INJ1'],
-    ['6', 'CAN High', 'LR/VD', 'Rede CAN'],
-    ['7', 'CAN Low', 'LR/BR', 'Rede CAN'],
-    ['8', 'Sinal TPS', 'CZ', 'Borboleta'],
-  ]
+  if (!meta) return <NaoEncontrado />
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
-      <Link to={voltar} className="inline-flex items-center gap-1.5 text-sm text-ink-3 hover:text-ink-1">
-        <ArrowLeft size={15} /> {meta.titulo}
+    <div className="mx-auto max-w-[1280px] px-3 py-6 sm:px-8 sm:py-8">
+      <Link
+        to={carga.estado === 'ok' ? `${rotaSecao(secao)}?marca=${encodeURIComponent(carga.dados.marca)}` : rotaSecao(secao)}
+        className="no-print inline-flex items-center gap-1.5 text-sm text-ink-3 hover:text-ink-1"
+      >
+        <ArrowLeft size={15} /> {meta.titulo}{carga.estado === 'ok' ? ` · ${carga.dados.marca}` : ''}
       </Link>
 
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[26px] font-semibold tracking-tight sm:text-3xl">{e.montadora} {e.modelo}</h1>
-          <p className="code mt-1 text-[13px] text-ink-3">{e.modulo} · {e.motor} · {e.anos}</p>
+      {carga.estado === 'carregando' && (
+        <div aria-busy="true" className="mt-4 space-y-3">
+          <div className="h-8 w-72 animate-pulse rounded bg-bench-3" />
+          <div className="h-4 w-96 max-w-full animate-pulse rounded bg-bench-3" />
+          <div className="mt-6 h-[60vh] animate-pulse rounded-xl bg-bench-2" />
         </div>
-        <div className="flex gap-2">
-          <button className="btn-ghost inline-flex items-center gap-2"><ZoomIn size={16} /> Ampliar</button>
-          <button className="btn-ghost inline-flex items-center gap-2"><Printer size={16} /> Imprimir</button>
-          <button className="btn-ghost inline-flex items-center gap-2"><Download size={16} /> PDF</button>
-        </div>
-      </div>
+      )}
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_360px]">
-        {/* visualizador (placeholder) */}
-        <div className="relative min-h-[420px] overflow-hidden rounded-xl border seam bg-bench-2">
-          <div className="absolute inset-0 schematic-grid opacity-70" />
-          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 800 480" fill="none" aria-hidden="true">
-            <g stroke="rgba(180,189,203,0.55)" strokeWidth="1.5">
-              <rect x="80" y="120" width="180" height="240" rx="6" />
-              <rect x="520" y="90" width="120" height="70" rx="4" />
-              <rect x="520" y="210" width="120" height="70" rx="4" />
-              <rect x="520" y="330" width="120" height="70" rx="4" />
-              <path d="M260 160 H400 V125 H520" />
-              <path d="M260 240 H520 " />
-              <path d="M260 320 H400 V365 H520" />
-              <path d="M170 360 V420 H400" />
-            </g>
-            <g stroke="var(--color-trace)" strokeWidth="2" className="trace-anim">
-              <path d="M40 240 H80" />
-              <path d="M260 240 H520" />
-            </g>
-            <g fill="var(--color-pit)" stroke="rgba(180,189,203,0.7)" strokeWidth="1.5">
-              <circle cx="260" cy="160" r="4" /><circle cx="260" cy="240" r="4" /><circle cx="260" cy="320" r="4" />
-              <circle cx="400" cy="420" r="4" />
-            </g>
-            <g className="code" fill="var(--color-ink-3)" fontSize="11" fontFamily="JetBrains Mono, monospace">
-              <text x="92" y="140">{e.modulo.split(' ')[0].toUpperCase()}</text>
-              <text x="530" y="130">CKP</text><text x="530" y="250">INJ 1–4</text><text x="530" y="370">TPS</text>
-              <text x="40" y="232">+30</text><text x="405" y="438">GND</text>
-            </g>
-          </svg>
-          <div className="absolute bottom-3 left-3 code rounded-md border seam bg-bench-1/90 px-2.5 py-1 text-[11px] text-ink-3">
-            Página 1 de {e.paginas} · pré-visualização
+      {carga.estado === 'erro' && (
+        <div role="alert" className="mt-6 flex items-start gap-3 rounded-xl border border-warn/30 bg-warn/8 p-5 text-[14px]">
+          <AlertTriangle size={18} className="mt-0.5 flex-none text-warn" />
+          <div>
+            <p className="text-ink-1">Não foi possível abrir este esquema.</p>
+            <p className="mt-1 text-ink-3">{carga.msg}</p>
           </div>
         </div>
+      )}
 
-        {/* pinagem */}
-        <aside className="rounded-xl border seam bg-bench-2">
-          <div className="border-b seam-soft px-5 py-3.5">
-            <h2 className="font-medium">Pinagem · Conector A</h2>
-            <p className="code mt-0.5 text-[12px] text-ink-4">{e.conectores} conectores neste módulo</p>
-          </div>
-          <table className="w-full text-[13px]">
-            <thead>
-              <tr className="code text-[11px] uppercase tracking-[0.14em] text-ink-4">
-                <th className="px-5 py-2 text-left font-normal">Pino</th>
-                <th className="py-2 text-left font-normal">Função</th>
-                <th className="py-2 text-left font-normal">Cor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pinos.map(([n, f, c, d]) => (
-                <tr key={n} className="border-t seam-soft">
-                  <td className="code px-5 py-2.5 text-ink-2">{n}</td>
-                  <td className="py-2.5 pr-3">
-                    <span className="block text-ink-1">{f}</span>
-                    <span className="block text-[12px] text-ink-4">{d}</span>
-                  </td>
-                  <td className="code py-2.5 pr-5 text-ink-2">{c}</td>
-                </tr>
+      {carga.estado === 'ok' && (() => {
+        const d = carga.dados
+        return (
+          <>
+            <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-5">
+                <Link
+                  to={`${rotaSecao(secao)}?marca=${encodeURIComponent(d.marca)}`}
+                  data-tip={`Ver todos os esquemas ${d.marca} deste sistema`}
+                  data-tip-side="bottom"
+                  className="no-print hidden h-16 w-24 flex-none place-items-center rounded-xl border seam bg-bench-2 text-ink-1 hover:border-trace/40 sm:grid"
+                >
+                  <LogoMarca marca={d.marca} altura={30} larguraMax={72} />
+                </Link>
+                <div className="min-w-0">
+                  <p className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">{d.marca} · {meta.trilha.join(' · ')}</p>
+                  <h1 className="mt-1.5 text-[26px] font-semibold tracking-tight sm:text-3xl">{d.marca} {d.modelo}</h1>
+                  {d.subtitulo && <p className="mt-1 text-ink-3">{subtituloCurto(d.subtitulo)}</p>}
+                </div>
+              </div>
+              <button
+                onClick={impressao.iniciar}
+                disabled={impressao.preparando}
+                data-tip="Imprimir ou salvar em PDF, em folhas A4 com cabeçalho e numeração"
+                data-tip-kbd="Ctrl,P"
+                data-tip-side="bottom"
+                className="no-print btn-ghost inline-flex items-center gap-2 self-start disabled:cursor-wait disabled:opacity-80 sm:self-auto"
+              >
+                {impressao.preparando
+                  ? <><LoaderCircle size={16} className="animate-spin" /> Preparando…</>
+                  : <><Printer size={16} /> Imprimir</>}
+              </button>
+              {impressao.ativo && <PrintEsquema d={d} onPronto={impressao.pronto} />}
+            </div>
+
+            <dl className={`mt-5 grid grid-cols-2 gap-3 ${d.specs.length ? '' : 'hidden'} md:grid-cols-4`}>
+              {d.specs.map(([k, v]) => (
+                <div key={k} className="min-w-0 rounded-xl border seam bg-bench-2 px-4 py-3">
+                  <dt className="code text-[10.5px] uppercase tracking-[0.14em] text-ink-4">{rotulo(k)}</dt>
+                  <dd className="mt-1 truncate text-[14px] font-medium text-ink-1" data-tip={v.length > 28 ? v : undefined}>{v}</dd>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </aside>
-      </div>
+            </dl>
+
+            <div className="mt-6">
+              <EsquemaViewer key={d.id} d={d} />
+            </div>
+          </>
+        )
+      })()}
+    </div>
+  )
+}
+
+function NaoEncontrado() {
+  return (
+    <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+      <p className="text-ink-2">Esquema não encontrado.</p>
+      <Link to="/app" className="mt-4 inline-flex text-trace hover:text-trace-hi">Voltar ao catálogo</Link>
     </div>
   )
 }

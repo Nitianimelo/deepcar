@@ -19,7 +19,7 @@ export default function App() {
         <Route path="abs" element={<SectionPage secao="abs" />} />
         <Route path="eletrica" element={<SectionPage secao="eletrica" />} />
         <Route path="cambio" element={<SectionPage secao="cambio" />} />
-        <Route path="esquema/:id" element={<EsquemaPage />} />
+        <Route path="esquema/*" element={<EsquemaPage />} />
         <Route path="veiculo/:placa" element={<VeiculoPage />} />
         <Route path="conta" element={<Conta />} />
       </Route>

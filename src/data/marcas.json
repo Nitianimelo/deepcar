@@ -1,0 +1,230 @@
+{
+  "Agrale": {
+    "arquivo": "/marcas/agrale.png",
+    "proporcao": 1.413
+  },
+  "Alfa Romeo": {
+    "arquivo": "/marcas/alfa-romeo.png",
+    "proporcao": 0.994
+  },
+  "Audi": {
+    "arquivo": "/marcas/audi.png",
+    "proporcao": 2.888
+  },
+  "BMW": {
+    "arquivo": "/marcas/bmw.png",
+    "proporcao": 1
+  },
+  "Caterpillar": {
+    "arquivo": "/marcas/caterpillar.png",
+    "proporcao": 1.65
+  },
+  "Chery": {
+    "arquivo": "/marcas/chery.png",
+    "proporcao": 3
+  },
+  "Chevrolet": {
+    "arquivo": "/marcas/chevrolet.png",
+    "proporcao": 3.057
+  },
+  "Chrysler": {
+    "arquivo": "/marcas/chrysler.png",
+    "proporcao": 6.316
+  },
+  "Citroën": {
+    "arquivo": "/marcas/citroen.png",
+    "proporcao": 0.813
+  },
+  "Daewoo": {
+    "arquivo": "/marcas/daewoo.png",
+    "proporcao": 1.581
+  },
+  "DAF": {
+    "arquivo": "/marcas/daf.png",
+    "proporcao": 3.664
+  },
+  "Daihatsu": {
+    "arquivo": "/marcas/daihatsu.png",
+    "proporcao": 2.606
+  },
+  "Dodge": {
+    "arquivo": "/marcas/dodge.png",
+    "proporcao": 5.714
+  },
+  "Fiat": {
+    "arquivo": "/marcas/fiat.png",
+    "proporcao": 1
+  },
+  "Ford": {
+    "arquivo": "/marcas/ford.png",
+    "proporcao": 2.669
+  },
+  "Ford Caminhões": {
+    "arquivo": "/marcas/ford.png",
+    "proporcao": 2.669
+  },
+  "Foton": {
+    "arquivo": "/marcas/foton.png",
+    "proporcao": 3.265
+  },
+  "Honda": {
+    "arquivo": "/marcas/honda.png",
+    "proporcao": 1.225
+  },
+  "Hummer": {
+    "arquivo": "/marcas/hummer.png",
+    "proporcao": 9.796
+  },
+  "Hyundai": {
+    "arquivo": "/marcas/hyundai.png",
+    "proporcao": 1.95
+  },
+  "International": {
+    "arquivo": "/marcas/international.png",
+    "proporcao": 9.412
+  },
+  "Isuzu": {
+    "arquivo": "/marcas/isuzu.png",
+    "proporcao": 5.854
+  },
+  "Iveco": {
+    "arquivo": "/marcas/iveco.png",
+    "proporcao": 6.154
+  },
+  "JAC Motors": {
+    "arquivo": "/marcas/jac.png",
+    "proporcao": 3.967
+  },
+  "Jaguar": {
+    "arquivo": "/marcas/jaguar.png",
+    "proporcao": 1.956
+  },
+  "Jeep": {
+    "arquivo": "/marcas/jeep.png",
+    "proporcao": 2.481
+  },
+  "Kia": {
+    "arquivo": "/marcas/kia.png",
+    "proporcao": 4.211
+  },
+  "Lancia": {
+    "arquivo": "/marcas/lancia.png",
+    "proporcao": 9.796
+  },
+  "Land Rover": {
+    "arquivo": "/marcas/land-rover.png",
+    "proporcao": 1.906
+  },
+  "Lexus": {
+    "arquivo": "/marcas/lexus.png",
+    "proporcao": 5.854
+  },
+  "Lifan": {
+    "arquivo": "/marcas/lifan.png",
+    "proporcao": 5.517
+  },
+  "Mahindra": {
+    "arquivo": "/marcas/mahindra.png",
+    "proporcao": 8
+  },
+  "MAN": {
+    "arquivo": "/marcas/man.png",
+    "proporcao": 1.794
+  },
+  "Marcopolo": {
+    "arquivo": "/marcas/marcopolo.png",
+    "proporcao": 5.647
+  },
+  "Maserati": {
+    "arquivo": "/marcas/maserati.png",
+    "proporcao": 0.706
+  },
+  "Mazda": {
+    "arquivo": "/marcas/mazda.png",
+    "proporcao": 1.25
+  },
+  "Mercedes-Benz": {
+    "arquivo": "/marcas/mercedes-benz.png",
+    "proporcao": 1
+  },
+  "Mercedes-Benz Caminhões": {
+    "arquivo": "/marcas/mercedes-benz.png",
+    "proporcao": 1
+  },
+  "MINI": {
+    "arquivo": "/marcas/mini.png",
+    "proporcao": 2.275
+  },
+  "Mitsubishi": {
+    "arquivo": "/marcas/mitsubishi.png",
+    "proporcao": 1.156
+  },
+  "Nissan": {
+    "arquivo": "/marcas/nissan.png",
+    "proporcao": 1.194
+  },
+  "Peugeot": {
+    "arquivo": "/marcas/peugeot.png",
+    "proporcao": 0.906
+  },
+  "Porsche": {
+    "arquivo": "/marcas/porsche.png",
+    "proporcao": 0.781
+  },
+  "RAM": {
+    "arquivo": "/marcas/ram.png",
+    "proporcao": 0.956
+  },
+  "Renault": {
+    "arquivo": "/marcas/renault.png",
+    "proporcao": 0.762
+  },
+  "Scania": {
+    "arquivo": "/marcas/scania.png",
+    "proporcao": 1.05
+  },
+  "SEAT": {
+    "arquivo": "/marcas/seat.png",
+    "proporcao": 1.119
+  },
+  "Sinotruk": {
+    "arquivo": "/marcas/sinotruk.png",
+    "proporcao": 0.969
+  },
+  "Smart": {
+    "arquivo": "/marcas/smart.png",
+    "proporcao": 1.075
+  },
+  "SsangYong": {
+    "arquivo": "/marcas/ssangyong.png",
+    "proporcao": 1.519
+  },
+  "Subaru": {
+    "arquivo": "/marcas/subaru.png",
+    "proporcao": 1.712
+  },
+  "Suzuki": {
+    "arquivo": "/marcas/suzuki.png",
+    "proporcao": 0.994
+  },
+  "Toyota": {
+    "arquivo": "/marcas/toyota.png",
+    "proporcao": 1.469
+  },
+  "Troller": {
+    "arquivo": "/marcas/troller.png",
+    "proporcao": 1
+  },
+  "Volkswagen": {
+    "arquivo": "/marcas/volkswagen.png",
+    "proporcao": 1
+  },
+  "Volvo": {
+    "arquivo": "/marcas/volvo.png",
+    "proporcao": 1
+  },
+  "Volvo Caminhões": {
+    "arquivo": "/marcas/volvo.png",
+    "proporcao": 1
+  }
+}

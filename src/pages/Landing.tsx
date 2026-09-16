@@ -4,14 +4,18 @@ import { ArrowRight, Check, ScanLine } from 'lucide-react'
 import { Phone, Tablet } from '../components/DeviceMockups'
 import { AppStoreBadge, PlayStoreBadge } from '../components/StoreBadges'
 import { CarBlueprint } from '../components/CarBlueprint'
+import { MarcasStrip } from '../components/MarcasStrip'
 import { formatarPlaca, placaValida } from '../lib/placa'
+import { carregarIndice, fmt, resumoAcervo, useCarga } from '../lib/acervo'
 
 export default function Landing() {
+  const indice = useCarga(() => carregarIndice(), [])
+  const r = resumoAcervo(indice.estado === 'ok' ? indice.dados : null)
   return (
     <div className="min-h-full bg-pit text-ink-1">
       <Header />
-      <Hero />
-      <Cobertura />
+      <Hero esquemas={r.esquemas} />
+      <Cobertura {...r} />
       <Planos />
       <Footer />
     </div>
@@ -39,7 +43,8 @@ function Header() {
 }
 
 /* ── Primeira dobra ────────────────────────────────────────────────── */
-function Hero() {
+function Hero({ esquemas }: { esquemas: number }) {
+  const milhares = Math.floor(esquemas / 1000)
   return (
     <section id="topo" className="relative overflow-hidden">
       <div
@@ -58,8 +63,8 @@ function Hero() {
             Inteligência automotiva para a sua oficina.
           </h1>
           <p className="mt-6 max-w-[48ch] text-[17px] leading-relaxed text-ink-2">
-            Esquemas elétricos de injeção, ABS, elétrica e câmbio, encontrados pela placa do
-            carro que está no elevador. No celular, no tablet ou no computador da bancada.
+            Mais de {milhares} mil esquemas elétricos de injeção, ABS, elétrica e câmbio, encontrados
+            pela placa do carro que está no elevador. No celular, no tablet ou no computador da bancada.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link to="/login" className="btn-primary inline-flex items-center gap-2 px-6">
@@ -88,7 +93,7 @@ function Hero() {
 }
 
 /* ── Segunda dobra ─────────────────────────────────────────────────── */
-function Cobertura() {
+function Cobertura({ esquemas, montadoras, sistemas }: { esquemas: number; montadoras: number; sistemas: number }) {
   const nav = useNavigate()
   const [placa, setPlaca] = useState('')
   const ok = placaValida(placa)
@@ -101,7 +106,7 @@ function Cobertura() {
 
   return (
     <section id="cobertura" className="relative border-t seam">
-      <div className="mx-auto max-w-[1200px] px-5 py-20 sm:px-8 lg:py-28">
+      <div className="mx-auto max-w-[1200px] px-5 pb-12 pt-20 sm:px-8 lg:pt-28">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
           <div>
             <h2 className="text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
@@ -109,18 +114,13 @@ function Cobertura() {
             </h2>
             <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-ink-2">
               Uma base construída para a realidade da oficina brasileira: carros populares,
-              picapes, utilitários e importados, com os módulos que de fato passam pelo seu elevador.
+              picapes, utilitários, caminhões e importados, com os módulos que de fato passam pelo seu elevador.
             </p>
 
-            <dl className="mt-12 grid grid-cols-2 gap-x-8 gap-y-10 border-t seam pt-8">
-              <div>
-                <dd className="code text-[clamp(3rem,6vw,4.6rem)] font-medium leading-none tracking-tight text-ink-1">97<span className="text-trace">%</span></dd>
-                <dt className="mt-3 text-[15px] text-ink-2">da frota nacional coberta</dt>
-              </div>
-              <div>
-                <dd className="code text-[clamp(3rem,6vw,4.6rem)] font-medium leading-none tracking-tight text-ink-1">70</dd>
-                <dt className="mt-3 text-[15px] text-ink-2">montadoras no catálogo</dt>
-              </div>
+            <dl className="mt-12 flex flex-wrap gap-x-12 gap-y-8 border-t seam pt-8">
+              <Numero valor={fmt(esquemas)} rotulo="esquemas elétricos" />
+              <Numero valor={String(montadoras)} rotulo="montadoras" />
+              <Numero valor={String(sistemas)} rotulo="sistemas do veículo" />
             </dl>
           </div>
 
@@ -148,7 +148,22 @@ function Cobertura() {
           </div>
         </div>
       </div>
+
+      {/* montadoras */}
+      <div className="pb-20 pt-8 lg:pb-28">
+        <p className="code mb-8 text-center text-[11px] uppercase tracking-[0.24em] text-ink-4">Montadoras no catálogo</p>
+        <MarcasStrip />
+      </div>
     </section>
+  )
+}
+
+function Numero({ valor, rotulo }: { valor: string; rotulo: string }) {
+  return (
+    <div>
+      <dd className="code whitespace-nowrap text-[clamp(2rem,4vw,3.4rem)] font-medium leading-none tracking-tight text-ink-1">{valor}</dd>
+      <dt className="mt-3 text-[14px] text-ink-2 sm:text-[15px]">{rotulo}</dt>
+    </div>
   )
 }
 
@@ -165,7 +180,7 @@ function Planos() {
     {
       nome: 'Profissional',
       para: 'Para a oficina que atende de tudo, do popular ao diesel.',
-      itens: ['Até 5 usuários', 'Todos os sistemas', 'Injeção diesel e câmbio', 'Pinagem e conectores', 'Impressão e PDF'],
+      itens: ['Até 5 usuários', 'Todos os sistemas', 'Injeção diesel e câmbio', 'Navegação por componente e minimapa', 'Modo leitura e impressão'],
       cta: 'Testar gratuitamente',
       destaque: true,
     },
