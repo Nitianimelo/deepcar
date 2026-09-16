@@ -29,7 +29,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `ea272f3`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `f8bcbab`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -43,7 +43,7 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Assinatura/pagamento do plano pro não existe: a passagem para `pro` é manual no `/admin`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
-- [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado).
+- [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado). No Início não acontece mais (o campo não aparece lá); nas outras telas continua.
 - [ ] Conferir numa placa real se chassi e procedência aparecem (nomes dos campos não estão na documentação pública
       do Falcon; se não aparecerem, mandar a resposta bruta para ajustar `achar()` em `provedores/falcon.mjs`). Confirmar com o Falcon se o endereço
       `beta.falcon-server.com.br/data-hub` é o definitivo. Plano grátis = 10 consultas/hora para todos os usuários juntos.
@@ -56,6 +56,15 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Campo de placa da barra superior escondido no Início
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** a consulta por placa aparecia duas vezes na tela inicial (barra superior e painel da página).
+- **O que mudou:** `src/layouts/AppLayout.tsx` não mostra o `PlateSearch` quando a rota é `/app` (com ou sem barra final);
+  no lugar entra um espaçador, e o contador do plano Free continua à direita. Nas demais telas do app o campo segue na barra.
+- **Verificação:** build ok; oxlint 12 avisos (sem novos); no navegador o campo da barra aparece 0 vez em `/app` e `/app/`
+  e 1 vez em `/app/injecao/leve`, `/app/veiculo/:placa` e `/app/busca`; capturas 1280×800 e 390×844.
+- **Pendências:** nenhuma.
 
 ### 2026-09-16 · Tela inicial com visual mais natural (menos "cara de template")
 - **Quem:** Claude Code (Fable 5.1), a pedido de Nitiani

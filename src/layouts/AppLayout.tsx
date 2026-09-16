@@ -11,6 +11,7 @@ const COLLAPSE_KEY = 'deepcar.sidebar.collapsed'
 
 export default function AppLayout() {
   const loc = useLocation()
+  const naoEInicio = loc.pathname.replace(/\/$/, '') !== '/app'
   const { session, conferindo } = useSessao()
   const limite = useLimiteFree(session)
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -51,7 +52,8 @@ export default function AppLayout() {
             <Menu size={20} />
           </button>
 
-          <PlateSearch className="flex-1 max-w-md" />
+          {/* no início a placa já é o campo principal da tela; aqui seria repetido */}
+          {naoEInicio ? <PlateSearch className="flex-1 max-w-md" /> : <div className="flex-1" />}
 
           <ContadorFree restante={limite.restante} />
         </header>
