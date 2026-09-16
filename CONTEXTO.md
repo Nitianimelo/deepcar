@@ -22,10 +22,10 @@ Regras de trabalho estão em `AGENTE.md`.
   - Plataforma `/app`: seções de injeção leve/diesel, ABS, elétrica e câmbio, com catálogo do acervo no R2.
   - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → modo simulado, com cache de 24 h em memória.
-    **Em produção está no modo simulado** até o `FALCON_TOKEN` ser gravado no `/admin` → Chaves de API.
+    `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `b09b48b`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `f5373bb`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -40,14 +40,33 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
 - [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado).
-- [ ] Gravar `FALCON_TOKEN` no `/admin` → Chaves de API e testar uma placa real. Confirmar com o Falcon se o endereço
+- [ ] Testar uma placa real em produção (token já no cofre). Confirmar com o Falcon se o endereço
       `beta.falcon-server.com.br/data-hub` é o definitivo. Plano grátis = 10 consultas/hora para todos os usuários juntos.
+- [ ] Limpar variáveis antigas na Vercel que não são mais lidas ou ficam por baixo do cofre: `FALCON_TOKEN` (o valor do
+      cofre tem prioridade), `CONSULTARPLACA_EMAIL` e `CONSULTARPLACA_API_KEY` (provedor removido).
+- [ ] Trocar o token do Falcon por um novo no painel deles e regravar no `/admin` (o atual circulou em conversa).
 - [ ] Cache de placas no Neon (modelo e ano não mudam: cada placa seria consultada uma única vez). Precisa de migração.
 - [ ] Coerência de texto: o hero diz "só precisa digitar a placa do carro", mas na tabela a busca pela placa aparece só no Full.
 
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Token do Falcon gravado no cofre do banco de produção
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** colocar a chave do Falcon no cofre do banco para o sistema buscar de lá.
+- **O que foi feito (sem mudança de código):**
+  - Vercel CLI (logada como `nitiani-1296`, time `nitiani-melo`) usada para baixar as variáveis de produção numa pasta
+    temporária fora do repositório; só `DATABASE_URL` e `SEGREDOS_CHAVE` foram usadas.
+  - Gravado com a própria função `guardar()` de `api/_lib/segredos.js`: chave `FALCON_TOKEN`, valor cifrado em AES-256-GCM,
+    descrição "Falcon Data Hub · consulta de placa". Cofre estava vazio antes.
+  - Conferido: o valor no banco está cifrado e `segredo('FALCON_TOKEN')` devolve o token certo. O Falcon **não** foi chamado
+    (para não gastar a cota). Pasta temporária com variáveis e token apagada; nada foi para o Git.
+  - Achado: a Vercel já tinha `FALCON_TOKEN`, `CONSULTARPLACA_EMAIL` e `CONSULTARPLACA_API_KEY` como variáveis sensíveis
+    (valores não legíveis). O cofre tem prioridade sobre elas (`segredo()` lê o banco antes de `process.env`).
+- **Banco:** 1 linha em `segredos` (`FALCON_TOKEN`). Sem migração.
+- **Verificação:** leitura do cofre igual ao token; teste real de placa fica com o usuário.
+- **Pendências:** testar placa real; limpar variáveis antigas na Vercel; trocar o token depois.
 
 ### 2026-09-16 · Volta ao Falcon Data Hub; APIBrasil e Consultar Placa removidos
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
