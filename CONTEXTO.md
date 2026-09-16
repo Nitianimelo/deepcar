@@ -29,7 +29,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `4649ab7`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `ea272f3`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -56,6 +56,24 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Tela inicial com visual mais natural (menos "cara de template")
+- **Quem:** Claude Code (Fable 5.1), a pedido de Nitiani
+- **Pedido:** os cards da tela inicial estavam com cara de IA (ícone em quadradinho, título + descrição + campo + botão,
+  dois cards idênticos). Deixar mais premium e natural, com mudanças pontuais.
+- **O que mudou (`src/pages/Inicio.tsx`):**
+  - Saudação pelo horário ("Bom dia/Boa tarde/Boa noite, Carlos.") e uma linha de apoio; saiu o "Início" em cima.
+  - Os dois cards viraram **um painel** dividido ao meio (placa à esquerda, busca à direita; empilha no celular), sem
+    ícones decorativos. Cada metade tem só o rótulo em mono (padrão das outras telas) com uma dica curta à direita
+    (escondida no celular) e o campo.
+  - Campo de placa desenhado como placa: faixa azul-marinho à esquerda com "BR" (referência à Mercosul), letras grandes
+    em mono, botão de seta dentro do campo (acende quando a placa é válida). `size={7}` + `min-w-0` para não vazar no celular.
+  - Campo de busca com lupa e botão de seta dentro, mesma altura do de placa.
+  - Últimas consultas: rótulo em mono fora do card, "Limpar" como texto discreto, itens sem caixinha de ícone, tempo
+    relativo alinhado à direita; vazio com borda tracejada e texto curto.
+- **Verificação:** build ok; oxlint sem aviso no arquivo; capturas 1280×800 (normal e com placa digitada) e 390×844
+  (com histórico e vazio); largura do painel conferida no celular.
+- **Pendências:** nenhuma.
 
 ### 2026-09-16 · Tela inicial com consulta, busca geral e últimas consultas; código reorganizado
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
