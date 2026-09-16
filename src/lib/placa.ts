@@ -12,7 +12,7 @@ export type Veiculo = {
   segmento: string | null
   municipio: string | null
   uf: string | null
-  origem: 'apibrasil' | 'consultarplaca' | 'simulado'
+  origem: 'falcon' | 'simulado'
   cache?: boolean
 }
 

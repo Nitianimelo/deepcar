@@ -330,7 +330,7 @@ function AbaChaves() {
       {erro && <p role="alert" className="mt-4 rounded-lg border border-fault/30 bg-fault/10 px-4 py-3 text-sm text-fault">{erro}</p>}
 
       <form onSubmit={gravar} className="mt-5 grid gap-3 rounded-xl border seam bg-bench-2 p-5 sm:grid-cols-[1fr_1.4fr_1fr_auto]">
-        <input className="field code" placeholder="APIBRASIL_BEARER_TOKEN" value={d.chave}
+        <input className="field code" placeholder="FALCON_TOKEN" value={d.chave}
           onChange={(e) => setD({ ...d, chave: e.target.value.toUpperCase() })} required />
         <input className="field" type="password" placeholder="valor" value={d.valor}
           onChange={(e) => setD({ ...d, valor: e.target.value })} required />

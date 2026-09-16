@@ -22,7 +22,7 @@ export const erro = (mensagem, status) => Object.assign(new Error(mensagem), { s
 
 /**
  * @param {object} d campos já traduzidos pelo provedor
- * @param {'apibrasil' | 'consultarplaca' | 'simulado'} origem
+ * @param {'falcon' | 'simulado'} origem
  */
 export function montarVeiculo(d, origem) {
   return {

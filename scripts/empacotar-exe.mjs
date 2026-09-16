@@ -4,7 +4,7 @@
 //
 // Resultado:
 //   <destino>\Deepcar.exe     servidor + site embutidos (não precisa de Node instalado)
-//   <destino>\config.json     porta, usuários (padrão nini / 1234), credenciais da APIBrasil
+//   <destino>\config.json     porta, usuários (padrão nini / 1234), token do Falcon Data Hub
 //   <destino>\acervo\         catálogo, esquemas e imagens (HARDLINKS: no mesmo disco não ocupa espaço extra)
 //   <destino>\LEIA-ME.txt
 //
@@ -78,8 +78,7 @@ if (!fs.existsSync(cfg)) {
     abrirNavegador: true,
     acervo: 'acervo',
     usuarios: [{ usuario: 'nini', senha: '1234', nome: 'Nini', oficina: 'Minha oficina', plano: 'Profissional' }],
-    apibrasilBearerToken: '',
-    apibrasilDeviceToken: '',
+    falconToken: '',
   }, null, 2))
 }
 fs.writeFileSync(path.join(DESTINO, 'LEIA-ME.txt'), '﻿' + leiame().replace(/\n/g, '\r\n'), 'utf8')
@@ -185,8 +184,8 @@ CELULAR / TABLET
 CONSULTA POR PLACA
   Sem configuração, funciona em modo de demonstração com as placas:
   ABC1D23, FIA1T23, HON2C24, BRA2E19, AAA0000.
-  Para consultar placas reais, coloque o Bearer Token e o DeviceToken da APIBrasil
-  em "apibrasilBearerToken" e "apibrasilDeviceToken" no config.json.
+  Para consultar placas reais, coloque o token do Falcon Data Hub em
+  "falconToken" no config.json.
 
 PASTA "acervo"
   Contém o catálogo e as imagens dos esquemas. Não apague nem mova.

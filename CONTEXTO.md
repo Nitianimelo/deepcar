@@ -21,11 +21,11 @@ Regras de trabalho estão em `AGENTE.md`.
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link) e cofre de chaves.
   - Plataforma `/app`: seções de injeção leve/diesel, ABS, elétrica e câmbio, com catálogo do acervo no R2.
   - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
-  - Consulta por placa (`/app/veiculo/:placa`): APIBrasil → Consultar Placa → modo simulado, com cache de 24 h em memória.
-    **Em produção está no modo simulado** até as credenciais da APIBrasil serem gravadas no `/admin`.
+  - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → modo simulado, com cache de 24 h em memória.
+    **Em produção está no modo simulado** até o `FALCON_TOKEN` ser gravado no `/admin` → Chaves de API.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `cd90ce9`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `b09b48b`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -40,17 +40,40 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
 - [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado).
-- [ ] **Consulta de placa real sem fornecedor viável ainda.** Conta APIBrasil testada em 2026-09-16: sem plano ativo, sem device,
-      saldo R$ 0. Não há plano grátis de placa: o device-based exige o Plano Data Plus (R$ 384/mês); as APIs por crédito
-      baratas (agregados-simples R$ 0,02, agregados-propria R$ 0,08, agregados-basica R$ 0,14) exigem **conta PJ** e saldo.
-      Decidir: conta PJ + recarga (e adaptar o provedor para `/consulta/veiculos/credits` com `tipo`), outro fornecedor,
-      ou escolha manual de marca/modelo/ano pelo catálogo.
+- [ ] Gravar `FALCON_TOKEN` no `/admin` → Chaves de API e testar uma placa real. Confirmar com o Falcon se o endereço
+      `beta.falcon-server.com.br/data-hub` é o definitivo. Plano grátis = 10 consultas/hora para todos os usuários juntos.
 - [ ] Cache de placas no Neon (modelo e ano não mudam: cada placa seria consultada uma única vez). Precisa de migração.
 - [ ] Coerência de texto: o hero diz "só precisa digitar a placa do carro", mas na tabela a busca pela placa aparece só no Full.
 
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Volta ao Falcon Data Hub; APIBrasil e Consultar Placa removidos
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Contexto:** APIBrasil sem cota grátis de placa (exige PJ e saldo). O repositório `marcelopcosta2025/consulta-placa-apI`
+  (raspagem do anycar.com.br) foi avaliado e descartado: a página que ele lia não existe mais (404) e os dados hoje saem de
+  uma API interna do checkout pago do AnyCar, proibida a robôs no `robots.txt`. Decisão: voltar ao Falcon, que tem plano grátis.
+- **O que mudou:**
+  - `server/placa/provedores/falcon.mjs` (novo, a partir do código antigo do commit `9c22114`, revisado):
+    `GET {FALCON_BASE_URL}/private/v1/vehicles/{placa}/search` com `Authorization: Bearer`, tempo máximo de 10 s,
+    mensagens para token inválido (401/403), limite do plano (429, com minutos pela mensagem ou pelo cabeçalho de reset),
+    placa não encontrada, falha de rede e demora. Correção em relação ao código antigo: todo 404 virava "placa não encontrada";
+    agora 404 com outra mensagem (ex.: rota errada) aparece como erro de configuração.
+  - Removidos `provedores/apibrasil.mjs` e `provedores/consultarplaca.mjs`. `server/placa/` ficou com `index.mjs`,
+    `veiculo.mjs`, `provedores/falcon.mjs` e `provedores/simulado.mjs`.
+  - `server/placa/index.mjs`: `PROVEDORES = [falcon, simulado]`, `VARIAVEIS_PLACA = ['FALCON_TOKEN', 'FALCON_BASE_URL']`.
+  - `src/lib/placa.ts`: `origem` = `'falcon' | 'simulado'`. `src/pages/Admin.tsx`: exemplo de chave `FALCON_TOKEN`.
+  - Deepcar.exe (`server/app-local.mjs`, `scripts/empacotar-exe.mjs`): `config.json` volta a usar `falconToken`.
+  - `.env.example`, `README.md`, `AGENTE.md` e comentários do cofre atualizados.
+- **Banco:** sem mudança.
+- **Variáveis/infra:** `FALCON_TOKEN` (opcional `FALCON_BASE_URL`) no `/admin` → Chaves de API. As chaves `APIBRASIL_*`
+  nunca foram gravadas, nada a limpar.
+- **Verificação:** teste do provedor com 24 cenários (sucesso, só `ano`, base customizada, cache, 401, 403, 429 com minutos
+  na mensagem, 429 com cabeçalho de reset, 429 sem JSON, 404 de placa, 404 vazio, 404 de rota, `success: false`, dados vazios,
+  500, tempo esgotado, falha de rede, placa inválida sem chamar a rede, modo simulado sem rede); `node --check`;
+  `npm run build` ok; oxlint com os mesmos 13 avisos; `vite` dev respondendo `/api/placa` (simulado, não encontrada, inválida).
+- **Pendências:** gravar o `FALCON_TOKEN` e testar uma placa real; cache de placas no Neon.
 
 ### 2026-09-16 · Teste da conta APIBrasil e mensagem correta para conta sem plano
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

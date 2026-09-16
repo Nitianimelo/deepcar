@@ -25,8 +25,7 @@ const CONFIG_PADRAO = {
   abrirNavegador: true,
   acervo: 'acervo',
   usuarios: USUARIOS_PADRAO,
-  apibrasilBearerToken: '',
-  apibrasilDeviceToken: '',
+  falconToken: '',
 }
 
 function carregarConfig() {
@@ -82,11 +81,7 @@ const servidor = http.createServer(async (req, res) => {
 
     const placa = caminho.match(/^\/api\/placa\/([^/]+)$/)
     if (placa && req.method === 'GET') {
-      try { return json(res, 200, await consultarPlaca(placa[1], {
-        ...process.env,
-        APIBRASIL_BEARER_TOKEN: cfg.apibrasilBearerToken || process.env.APIBRASIL_BEARER_TOKEN,
-        APIBRASIL_DEVICE_TOKEN: cfg.apibrasilDeviceToken || process.env.APIBRASIL_DEVICE_TOKEN,
-      })) }
+      try { return json(res, 200, await consultarPlaca(placa[1], { ...process.env, FALCON_TOKEN: cfg.falconToken || process.env.FALCON_TOKEN })) }
       catch (e) { return json(res, e.status ?? 500, { erro: e.message }) }
     }
 
