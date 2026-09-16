@@ -23,18 +23,19 @@
   --font-ui: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-code: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* superfícies: base → elevação, saltos de poucos pontos */
-  --color-pit: #0a0d12;        /* fundo da tela */
-  --color-bench-1: #0e1218;    /* painéis, sidebar */
-  --color-bench-2: #131922;    /* cards */
-  --color-bench-3: #19212c;    /* hover / dropdown */
-  --color-well: #080b0f;       /* inputs (rebaixados) */
+  /* superfícies: base → elevação. Grafite azulado, não preto: com o brilho da tela baixo,
+     fundo quase preto apagava a diferença entre fundo, cartão e texto. */
+  --color-pit: #151b24;        /* fundo da tela */
+  --color-bench-1: #1a212b;    /* painéis, sidebar */
+  --color-bench-2: #212a36;    /* cards */
+  --color-bench-3: #2a3443;    /* hover / dropdown */
+  --color-well: #10151c;       /* inputs (rebaixados) */
 
-  /* texto */
-  --color-ink-1: #f1f4f9;
-  --color-ink-2: #b4bdcb;
-  --color-ink-3: #7b8697;
-  --color-ink-4: #4b5464;
+  /* texto: todos com contraste ≥ 4,5:1 sobre os cartões (bench-2), inclusive rótulos e placeholders */
+  --color-ink-1: #f3f6fa;
+  --color-ink-2: #cfd6e1;
+  --color-ink-3: #a3aebd;
+  --color-ink-4: #8793a4;
 
   /* marca e acento */
   --color-navy: #0e3a76;       /* azul do logo */
@@ -49,9 +50,9 @@
 }
 
 :root {
-  --seam-1: rgba(255, 255, 255, 0.07);
-  --seam-2: rgba(255, 255, 255, 0.045);
-  --seam-3: rgba(255, 255, 255, 0.14);
+  --seam-1: rgba(255, 255, 255, 0.10);
+  --seam-2: rgba(255, 255, 255, 0.07);
+  --seam-3: rgba(255, 255, 255, 0.18);
   --seam-focus: rgba(74, 141, 255, 0.55);
   --glow: 0 0 0 1px rgba(74, 141, 255, 0.35), 0 0 24px rgba(74, 141, 255, 0.18);
   color-scheme: dark;
@@ -61,10 +62,10 @@ html, body, #root { height: 100%; }
 
 /* acabamento global: seleção e barras de rolagem na paleta do produto */
 ::selection { background: rgba(74, 141, 255, 0.35); color: var(--color-ink-1); }
-* { scrollbar-width: thin; scrollbar-color: #2a3341 transparent; }
+* { scrollbar-width: thin; scrollbar-color: #3a4556 transparent; }
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: #2a3341; border: 3px solid transparent; border-radius: 8px; background-clip: padding-box; }
-*::-webkit-scrollbar-thumb:hover { background: #3a4556; border: 3px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb { background: #3a4556; border: 3px solid transparent; border-radius: 8px; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: #4b5769; border: 3px solid transparent; background-clip: padding-box; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 body {
@@ -81,8 +82,8 @@ body {
 /* grade de papel de esquema, quase invisível */
 .schematic-grid {
   background-image:
-    linear-gradient(to right, rgba(255,255,255,0.028) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255,255,255,0.028) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
@@ -195,14 +196,14 @@ body {
 
 /* dicas (components/Tooltips.tsx) */
 .tip {
-  background: #1a2230;
+  background: #2c3647;
   border-color: rgba(255, 255, 255, 0.12);
   color: var(--color-ink-1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.3);
   font-family: var(--font-ui);
   animation: tip-in 120ms cubic-bezier(.2, .7, .2, 1);
 }
-.tip-seta { background: #1a2230; border: 0 solid rgba(255, 255, 255, 0.12); }
+.tip-seta { background: #2c3647; border: 0 solid rgba(255, 255, 255, 0.12); }
 .tip-kbd {
   display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px;
   border-radius: 5px; border: 1px solid rgba(255, 255, 255, 0.14); border-bottom-width: 2px;

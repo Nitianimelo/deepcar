@@ -215,7 +215,7 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
   }
 
   const filtro = escuro ? 'invert(1) hue-rotate(180deg) saturate(.35)' : 'none'
-  const fundoFolha = escuro ? '#06090d' : '#f3f6fa'
+  const fundoFolha = escuro ? '#10151c' : '#f3f6fa'
 
   return (
     <div ref={raiz} className={leitura ? 'fixed inset-0 z-50 overflow-y-auto bg-pit px-2 pb-2 sm:px-4 sm:pb-4 xl:pr-[136px]' : 'xl:pr-[92px]'}>

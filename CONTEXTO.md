@@ -22,8 +22,9 @@ Regras de trabalho estão em `AGENTE.md`.
   - Plataforma `/app`: seções de injeção leve/diesel, ABS, elétrica e câmbio, com catálogo do acervo no R2.
   - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → Consultar Placa → modo simulado, com cache de 24 h.
+- **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `6372685`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `11be327`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -37,11 +38,43 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Assinatura/pagamento do plano pro não existe: a passagem para `pro` é manual no `/admin`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
+- [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado).
 - [ ] Coerência de texto: o hero diz "só precisa digitar a placa do carro", mas na tabela a busca pela placa aparece só no Full.
 
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Paleta mais clara para leitura com brilho baixo (landing e plataforma)
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** com brilho de tela baixo as informações ficavam pouco legíveis; o preto estava escuro demais. Clarear a paleta
+  da página de vendas e da plataforma.
+- **Diagnóstico (contraste WCAG medido):** fundo quase preto (`#0a0d12`) e degraus fundo→painel→cartão de só 4–9%;
+  `ink-4` (rótulos, placeholders, dicas) com 2,3:1 sobre os cartões e `ink-3` com 4,8:1 (mínimo recomendado 4,5:1).
+- **O que mudou:**
+  - `src/index.css` (tokens do `@theme`, valem para o site inteiro):
+    | token | antes | depois |
+    | --- | --- | --- |
+    | `pit` (fundo) | `#0a0d12` | `#151b24` |
+    | `bench-1` (painéis, sidebar) | `#0e1218` | `#1a212b` |
+    | `bench-2` (cartões) | `#131922` | `#212a36` |
+    | `bench-3` (hover) | `#19212c` | `#2a3443` |
+    | `well` (inputs) | `#080b0f` | `#10151c` |
+    | `ink-1` | `#f1f4f9` | `#f3f6fa` |
+    | `ink-2` | `#b4bdcb` | `#cfd6e1` |
+    | `ink-3` | `#7b8697` | `#a3aebd` |
+    | `ink-4` | `#4b5464` | `#8793a4` |
+    Bordas `--seam-1/2/3` de 0,07/0,045/0,14 para 0,10/0,07/0,18; grade de fundo 0,028→0,035; barra de rolagem e fundo
+    das dicas (`#1a2230`→`#2c3647`) acompanharam.
+  - Contraste resultante sobre os cartões: `ink-2` 9,9:1, `ink-3` 6,5:1, `ink-4` 4,7:1 (sobre o fundo: 11,8 / 7,7 / 5,6).
+  - `src/components/EsquemaViewer.tsx`: fundo da folha no modo desenho escuro `#06090d`→`#10151c`.
+  - `index.html`: `theme-color` `#0A0D12`→`#151B24` (cor da barra do navegador no celular).
+  - Não mudou: azul de acento (`trace`), botões, cores semânticas, selos das lojas, impressão A4 (fundo branco).
+- **Banco:** sem mudança.
+- **Variáveis/infra:** sem mudança.
+- **Verificação:** capturas em `vite` dev (landing hero e planos 1440×900; app desktop; lista de esquemas e login 390×844);
+  `npm run build` ok; oxlint com os mesmos 13 avisos.
+- **Pendências:** notado nas capturas (não é da paleta): no celular com plano Free, o contador aperta o campo de placa na barra superior.
 
 ### 2026-09-16 · Dados do esquema legíveis no celular (modelo, motorização, sistema e fabricação)
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
