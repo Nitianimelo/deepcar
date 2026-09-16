@@ -29,7 +29,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `f8bcbab`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `b45e2fe`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -56,6 +56,25 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Título da aba e metadados de SEO/compartilhamento
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** trocar o título da aba ("Deepcar · Esquemas elétricos") para "Deepcar · Inteligência automotiva" com esquemas
+  elétricos e diagramas, e melhorar o SEO pelos metadados.
+- **O que mudou:**
+  - `index.html`: título "Deepcar · Inteligência automotiva | Esquemas elétricos e diagramas"; `description` (≤ 155
+    caracteres) e `keywords`; `robots`; URL canônica `https://deepcar.vercel.app/`; `apple-touch-icon`; Open Graph
+    (WhatsApp/Facebook/LinkedIn) e Twitter Card com imagem grande; JSON-LD `SoftwareApplication` com a faixa de preço
+    dos planos (R$ 47,90 a R$ 59,90).
+  - `public/brand/compartilhar.jpg` (novo, 1200×630, 68 KB): imagem de prévia do link, feita com as fontes, cores e logo
+    do site (renderizada no navegador e salva em JPEG).
+  - `public/robots.txt` (novo): libera `/`, bloqueia `/app`, `/admin` e `/api/`, aponta o sitemap.
+  - `public/sitemap.xml` (novo): `/`, `/cadastro` e `/login`.
+  - Atenção: se o site ganhar domínio próprio, trocar `deepcar.vercel.app` em `index.html`, `robots.txt` e `sitemap.xml`.
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** JSON-LD e sitemap validados como JSON/XML; build ok; em produção `robots.txt`, `sitemap.xml` e a
+  imagem respondem com o tipo certo (não caem no rewrite do SPA) e o HTML traz o título novo.
+- **Pendências:** cadastrar o site e o sitemap no Google Search Console.
 
 ### 2026-09-16 · Campo de placa da barra superior escondido no Início
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

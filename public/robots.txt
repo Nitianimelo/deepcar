@@ -1,0 +1,8 @@
+# Página de vendas e telas de conta podem ser indexadas; a plataforma e a administração exigem login.
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://deepcar.vercel.app/sitemap.xml
