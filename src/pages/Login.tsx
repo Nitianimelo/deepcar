@@ -58,10 +58,8 @@ export default function Login() {
       </section>
 
       {/* Formulário */}
-      {/* min-w-0 + max-w com min(): sem isso a coluna do grid assume a largura máxima do
-          cartão e a tela vaza para a direita no celular */}
-      <section className="flex min-w-0 items-center justify-center p-6 sm:p-10">
-        <div className="w-full max-w-[min(420px,100%)]">
+      <section className="flex items-center justify-center p-6 sm:p-10">
+        <div className="w-full max-w-[420px]">
           <img src="/brand/logo-h-light.png" alt="Deepcar" className="lg:hidden w-44 mb-10 select-none" draggable={false} />
 
           <div className="relative rounded-2xl border seam bg-bench-2 p-7 sm:p-8">
