@@ -15,6 +15,7 @@ Regras de trabalho estão em `AGENTE.md`.
 - **Funcionando em produção:**
   - Landing (`/`) com mockups de celular/tablet, selos das lojas e planos sem valores. Textos comerciais fixos:
     subtítulo "15 mil modelos de veículos" e números "60 montadoras" / "98% da frota nacional".
+    Faixa de montadoras da landing com os logos nas cores das marcas, sobre cartões claros.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
   - Plano **free = 5 minutos de acesso**, contados a partir do primeiro acesso; depois bloqueia a tela e a API responde 402.
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link) e cofre de chaves.
@@ -22,7 +23,7 @@ Regras de trabalho estão em `AGENTE.md`.
   - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → Consultar Placa → modo simulado, com cache de 24 h.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `31b1313`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `994287a`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -38,6 +39,24 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Logos coloridos na faixa de montadoras da página de vendas
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** deixar coloridas as montadoras que passam na faixa da página de vendas (só na landing, não no app).
+- **O que mudou:**
+  - `src/components/MarcasStrip.tsx`: mapa `CORES` com a cor oficial (ou predominante) de cada uma das 55 marcas;
+    marca sem cor no mapa sai grafite (`#2B2F36`). Cartões passaram de escuros para claros (`#F4F6F9`), porque muitas
+    cores de marca (azul-marinho da Ford, VW, Hyundai, Scania…) sumiriam no fundo escuro. Hover sobe o cartão 2 px.
+  - `src/components/LogoMarca.tsx`: nova prop opcional `cor`, que substitui a cor do texto. Sem ela, nada muda:
+    os logos das páginas do app (`SectionPage`, `VeiculoPage`, `EsquemaPage`, `DeviceMockups`) seguem monocromáticos.
+  - Por que não os logos originais multicoloridos: as fontes em `scripts/logos/fontes/` são quase todas silhuetas
+    monocromáticas (Simple Icons) e `public/marcas/*.png` são máscaras. Cada logo sai em **uma** cor (ex.: BMW todo azul,
+    sem os quadrantes). Logos multicoloridos exigiriam novos arquivos de origem.
+  - Para ajustar a cor de uma marca: editar `CORES` em `MarcasStrip.tsx`.
+- **Banco:** sem mudança.
+- **Variáveis/infra:** sem mudança.
+- **Verificação:** `npm run build` ok; capturas do build em 1440×900 com a faixa em três posições (todas as marcas conferidas).
+- **Pendências:** nenhuma.
 
 ### 2026-09-16 · Novos textos da página de vendas (subtítulo e números de cobertura)
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
