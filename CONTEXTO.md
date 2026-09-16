@@ -13,7 +13,7 @@ Regras de trabalho estão em `AGENTE.md`.
 
 - **Produção:** Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub `Nitianimelo/deepcar`.
 - **Funcionando em produção:**
-  - Landing (`/`) com mockups de celular/tablet, selos das lojas e planos sem valores. Textos comerciais fixos:
+  - Landing (`/`) com mockups de celular/tablet, selos das lojas e dois planos com preço: Pro (R$ 47,90/mês) e Full (R$ 59,90/mês). Textos comerciais fixos:
     subtítulo "15 mil modelos de veículos" e números "60 montadoras" / "98% da frota nacional".
     Faixa de montadoras da landing com os logos nas cores das marcas, sobre cartões claros.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
@@ -23,7 +23,7 @@ Regras de trabalho estão em `AGENTE.md`.
   - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → Consultar Placa → modo simulado, com cache de 24 h.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `994287a`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `45092b9`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -35,10 +35,31 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] 5 avisos do oxlint (`set-state-in-effect`/`exhaustive-deps`) em `src/lib/acervo.ts`, `src/pages/Admin.tsx`, `src/pages/SectionPage.tsx`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
 - [ ] Assinatura/pagamento do plano pro não existe: a passagem para `pro` é manual no `/admin`.
+- [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
+      os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
+- [ ] Coerência de texto: o hero diz "só precisa digitar a placa do carro", mas na tabela a busca pela placa aparece só no Full.
 
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Planos Pro e Full com preços na página de vendas
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** substituir os planos da landing por dois:
+  - **Pro — R$ 47,90/mês:** injeção eletrônica leve, ABS, elétrica leve, 2 dispositivos conectados, app mobile, suporte.
+  - **Full — R$ 59,90/mês:** injeção eletrônica leve e diesel, ABS, elétrica leve e diesel, câmbio leve e diesel,
+    4 dispositivos conectados, busca pela placa, app mobile, suporte.
+- **O que mudou (`src/pages/Landing.tsx`, função `Planos`):**
+  - Saíram os planos antigos Oficina, Profissional e Rede (sem preço; o Rede tinha botão "Falar com a equipe" no WhatsApp).
+  - Cada cartão mostra nome, uma linha de público ("Para a oficina de veículos leves." / "Para a oficina que atende do leve ao diesel."),
+    preço grande em R$ por mês e a lista de itens. Full em destaque, com selo "Mais completo" (antes "Mais usado").
+  - Grade de 2 colunas centralizada (máx. 880 px); no celular, um cartão por linha.
+  - Texto ao lado do título: saiu "Valores em breve."; ficou "A conta gratuita abre na hora e dá 5 minutos de acesso…".
+  - Os dois botões são "Criar conta grátis" → `/cadastro`, porque ainda não há pagamento. Import `linkSuporte` removido da landing.
+- **Banco:** sem mudança (ver pendência sobre planos no sistema).
+- **Variáveis/infra:** sem mudança.
+- **Verificação:** `npm run build` ok; oxlint sem avisos em `Landing.tsx`; capturas em 1440×1000 e 390×844.
+- **Pendências:** implementar os planos Pro/Full de verdade (banco, liberação por sistema, limite de dispositivos, pagamento).
 
 ### 2026-09-16 · Logos coloridos na faixa de montadoras da página de vendas
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

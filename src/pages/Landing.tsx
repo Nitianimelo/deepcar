@@ -6,7 +6,7 @@ import { AppStoreBadge, PlayStoreBadge } from '../components/StoreBadges'
 import { CarBlueprint } from '../components/CarBlueprint'
 import { MarcasStrip } from '../components/MarcasStrip'
 import { formatarPlaca, placaValida } from '../lib/placa'
-import { linkSuporte, MINUTOS_FREE } from '../lib/plano'
+import { MINUTOS_FREE } from '../lib/plano'
 
 export default function Landing() {
   return (
@@ -168,28 +168,30 @@ function Numero({ valor, rotulo }: { valor: string; rotulo: string }) {
 function Planos() {
   const planos = [
     {
-      nome: 'Oficina',
-      para: 'Para quem está começando a consultar esquemas digitalmente.',
-      itens: ['1 usuário', 'Consulta por placa', 'Injeção leve e elétrica', 'Acesso pelo app'],
-      cta: 'Criar conta grátis',
-      destino: '/cadastro',
+      nome: 'Pro',
+      para: 'Para a oficina de veículos leves.',
+      preco: '47,90',
+      itens: ['Injeção eletrônica leve', 'ABS', 'Elétrica leve', '2 dispositivos conectados', 'App mobile', 'Suporte'],
       destaque: false,
     },
     {
-      nome: 'Profissional',
-      para: 'Para a oficina que atende de tudo, do popular ao diesel.',
-      itens: ['Até 5 usuários', 'Todos os sistemas', 'Injeção diesel e câmbio', 'Navegação por componente e minimapa', 'Modo leitura e impressão'],
-      cta: 'Criar conta grátis',
-      destino: '/cadastro',
+      nome: 'Full',
+      para: 'Para a oficina que atende do leve ao diesel.',
+      preco: '59,90',
+      itens: [
+        'Injeção eletrônica leve',
+        'Injeção eletrônica diesel',
+        'ABS',
+        'Elétrica leve',
+        'Elétrica diesel',
+        'Câmbio leve',
+        'Câmbio diesel',
+        '4 dispositivos conectados',
+        'Busca pela placa',
+        'App mobile',
+        'Suporte',
+      ],
       destaque: true,
-    },
-    {
-      nome: 'Rede',
-      para: 'Para redes, concessionárias e centros de formação.',
-      itens: ['Usuários ilimitados', 'Várias unidades', 'Gestão centralizada', 'Suporte dedicado'],
-      cta: 'Falar com a equipe',
-      destino: linkSuporte('Olá! Quero falar sobre o plano Rede do Deepcar.'),
-      destaque: false,
     },
   ]
   return (
@@ -198,12 +200,12 @@ function Planos() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <h2 className="text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">Planos</h2>
           <p className="max-w-[46ch] text-[15px] text-ink-3">
-            Valores em breve. A conta gratuita abre na hora e dá {MINUTOS_FREE} minutos de acesso para você
+            A conta gratuita abre na hora e dá {MINUTOS_FREE} minutos de acesso para você
             conhecer o acervo por dentro.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
+        <div className="mx-auto mt-12 grid max-w-[880px] gap-4 md:grid-cols-2">
           {planos.map((p) => (
             <div
               key={p.nome}
@@ -212,31 +214,25 @@ function Planos() {
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-[22px] font-semibold tracking-tight">{p.nome}</h3>
-                {p.destaque && <span className="code rounded-full bg-trace/15 px-2.5 py-1 text-[11px] uppercase tracking-[0.14em] text-trace-hi">Mais usado</span>}
+                {p.destaque && <span className="code rounded-full bg-trace/15 px-2.5 py-1 text-[11px] uppercase tracking-[0.14em] text-trace-hi">Mais completo</span>}
               </div>
-              <p className="mt-2 min-h-[48px] text-[14px] leading-relaxed text-ink-3">{p.para}</p>
-              <ul className="mt-6 space-y-2.5 text-[14.5px]">
+              <p className="mt-2 text-[14px] leading-relaxed text-ink-3">{p.para}</p>
+              <p className="mt-6 flex items-baseline gap-1.5">
+                <span className="text-[15px] text-ink-3">R$</span>
+                <span className="text-[40px] font-semibold leading-none tracking-[-0.02em]">{p.preco}</span>
+                <span className="text-[15px] text-ink-3">/mês</span>
+              </p>
+              <ul className="mb-8 mt-6 space-y-2.5 text-[14.5px]">
                 {p.itens.map((i) => (
                   <li key={i} className="flex items-start gap-2.5 text-ink-2"><Check size={16} className="mt-[3px] flex-none text-trace" /> {i}</li>
                 ))}
               </ul>
-              {p.destino.startsWith('/') ? (
-                <Link
-                  to={p.destino}
-                  className={`mt-8 inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-primary' : 'btn-ghost !h-12'}`}
-                >
-                  {p.cta}
-                </Link>
-              ) : (
-                <a
-                  href={p.destino}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`mt-8 inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-primary' : 'btn-ghost !h-12'}`}
-                >
-                  {p.cta}
-                </a>
-              )}
+              <Link
+                to="/cadastro"
+                className={`mt-auto inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-primary' : 'btn-ghost !h-12'}`}
+              >
+                Criar conta grátis
+              </Link>
             </div>
           ))}
         </div>
