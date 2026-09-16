@@ -1,4 +1,4 @@
-// Tela /admin — cofre de chaves de API (token do Falcon, dados do R2, ...).
+// Tela /admin — cofre de chaves de API (credenciais da APIBrasil, dados do R2, ...).
 // O valor vai cifrado para o banco e nunca volta para o navegador.
 //
 //   GET    /api/admin/segredos             nomes, descrição e quando mudou

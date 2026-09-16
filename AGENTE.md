@@ -40,7 +40,7 @@ Node na Vercel (`api/`) e Postgres no **Neon**.
 | Banco | Neon (Postgres), ligado à Vercel pela integração | schema em `db/*.sql`, **não** é aplicado pelo deploy |
 | Acervo (catálogo, esquemas, imagens) | Cloudflare R2 | **não** está no git nem na Vercel; front lê de `VITE_ACERVO_URL` |
 | Segredos de infraestrutura | Variáveis de ambiente da Vercel | `DATABASE_URL`, `SESSAO_SEGREDO`, `SEGREDOS_CHAVE` |
-| Chaves de API de terceiros | Cofre no banco (tabela `segredos`), editável em `/admin` | ex.: `FALCON_TOKEN` |
+| Chaves de API de terceiros | Cofre no banco (tabela `segredos`), editável em `/admin` | ex.: `APIBRASIL_BEARER_TOKEN`, `APIBRASIL_DEVICE_TOKEN` |
 
 Branch `main` não tem proteção: qualquer push publica. Por isso as regras da seção 0.
 
@@ -105,7 +105,9 @@ api/                      funções serverless da Vercel (JavaScript, Node)
   placa/[placa].js        consulta de placa (exige sessão + acesso)
 db/                       migrações SQL numeradas, idempotentes
 server/                   lógica Node reaproveitável
-  placa.mjs               provedores de placa (Falcon, Consultar Placa, simulado) + cache 24h
+  placa/index.mjs         consulta de placa: escolhe o provedor + cache 24h (VARIAVEIS_PLACA = chaves lidas)
+  placa/veiculo.mjs       formato único do veículo, normalizarPlaca()
+  placa/provedores/       apibrasil.mjs (principal), consultarplaca.mjs (pago), simulado.mjs (placas de teste)
   login.mjs               login ANTIGO por variáveis (usado só pelo Vite dev e pelo .exe)
   app-local.mjs           servidor do Deepcar.exe
   vitePlacaPlugin.mjs     /api/placa e /api/login no `npm run dev`

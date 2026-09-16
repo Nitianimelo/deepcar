@@ -21,10 +21,11 @@ Regras de trabalho estão em `AGENTE.md`.
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link) e cofre de chaves.
   - Plataforma `/app`: seções de injeção leve/diesel, ABS, elétrica e câmbio, com catálogo do acervo no R2.
   - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
-  - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → Consultar Placa → modo simulado, com cache de 24 h.
+  - Consulta por placa (`/app/veiculo/:placa`): APIBrasil → Consultar Placa → modo simulado, com cache de 24 h em memória.
+    **Em produção está no modo simulado** até as credenciais da APIBrasil serem gravadas no `/admin`.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `11be327`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `9c22114`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -39,11 +40,46 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
 - [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado).
+- [ ] Gravar `APIBRASIL_BEARER_TOKEN` e `APIBRASIL_DEVICE_TOKEN` no `/admin` → Chaves de API e testar uma placa real
+      (o formato exato da resposta da APIBrasil não está documentado publicamente; o leitor aceita variações de nome).
+- [ ] Cache de placas no Neon (modelo e ano não mudam: cada placa seria consultada uma única vez). Precisa de migração.
 - [ ] Coerência de texto: o hero diz "só precisa digitar a placa do carro", mas na tabela a busca pela placa aparece só no Full.
 
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Consulta de placa pela APIBrasil e provedores organizados em módulos
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** trocar o Falcon Data Hub (produção estava em modo simulado, fornecedor difícil) pela APIBrasil e organizar o código.
+  Só são necessários modelo e ano.
+- **Pesquisa:** não há fonte pública gratuita de placa → veículo (RENAVAM só via SERPRO pago; dados abertos da Senatran
+  são agregados; Sinesp Cidadão só por engenharia reversa, instável e contra os termos). APIBrasil tem plano grátis diário.
+- **O que mudou:**
+  - `server/placa.mjs` virou a pasta `server/placa/`:
+    - `index.mjs`: `consultarPlaca()`, cache de 24 h, lista `PROVEDORES` em ordem e `VARIAVEIS_PLACA` (chaves que a rota lê do cofre).
+    - `veiculo.mjs`: `normalizarPlaca()`, `montarVeiculo()` (formato único para o front) e `erro()`.
+    - `provedores/apibrasil.mjs` (novo, principal): `POST https://gateway.apibrasil.io/api/v2/vehicles/dados` com
+      `Authorization: Bearer` + `DeviceToken`, corpo `{ placa }`, tempo máximo 10 s. Lê o envelope `{ error, message, response }`
+      procurando cada campo por vários nomes (maiúsculas/minúsculas, snake/camel, dentro de `extra`). Mensagens claras para
+      credencial inválida (401), plano/device (402/403), cota (429 ou `error: true` com "limite"), placa inexistente e demora.
+    - `provedores/consultarplaca.mjs`: alternativa paga, mesma lógica de antes, agora isolada.
+    - `provedores/simulado.mjs`: placas de teste de antes.
+    - **Falcon Data Hub removido** (código, variáveis `FALCON_TOKEN`/`FALCON_BASE_URL`).
+  - `api/placa/[placa].js`: importa `server/placa/index.mjs` e busca no cofre as chaves de `VARIAVEIS_PLACA`.
+  - `server/vitePlacaPlugin.mjs`, `server/app-local.mjs`, `scripts/empacotar-exe.mjs`: novo caminho; o `config.json` do
+    Deepcar.exe troca `falconToken` por `apibrasilBearerToken` e `apibrasilDeviceToken`.
+  - `src/lib/placa.ts`: `origem` passa a ser `'apibrasil' | 'consultarplaca' | 'simulado'`.
+  - `src/pages/Admin.tsx`: exemplo do campo de chave virou `APIBRASIL_BEARER_TOKEN`. Comentários do cofre atualizados.
+  - `.env.example`, `README.md` e `AGENTE.md` atualizados.
+- **Banco:** sem mudança.
+- **Variáveis/infra:** novas chaves `APIBRASIL_BEARER_TOKEN` e `APIBRASIL_DEVICE_TOKEN` (opcional `APIBRASIL_BASE_URL`),
+  a gravar no `/admin` → Chaves de API. Enquanto não forem gravadas, produção segue no modo simulado.
+- **Verificação:** teste com respostas simuladas da APIBrasil (sucesso com campos em maiúsculas/`extra`, snake_case, cache,
+  401, 402, 404, 429, `error: true` de cota, resposta vazia, 500, tempo esgotado, placa inválida, escolha de provedor);
+  `node --check` nos arquivos do servidor; `npm run build` ok; oxlint com os mesmos 13 avisos; `vite` dev respondendo
+  `/api/placa` no modo simulado.
+- **Pendências:** gravar as credenciais e testar uma placa real; cache de placas no Neon.
 
 ### 2026-09-16 · Paleta mais clara para leitura com brilho baixo (landing e plataforma)
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

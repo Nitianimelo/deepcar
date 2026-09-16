@@ -58,7 +58,7 @@ O front é estático; só o login e a consulta de placa precisam de servidor, e 
 | `VITE_ACERVO_URL` | endereço público do bucket R2 (entra no bundle, é lido pelo navegador) |
 | `LOGIN_USUARIO` / `LOGIN_SENHA` | login de um usuário; `LOGIN_NOME` e `LOGIN_OFICINA` são opcionais |
 | `LOGIN_USUARIOS` | alternativa: JSON com a lista de usuários (mesmo formato do `config.json` do executável) |
-| `FALCON_TOKEN` | consulta de placa real; sem ele a rota responde em modo simulado |
+| `APIBRASIL_BEARER_TOKEN` / `APIBRASIL_DEVICE_TOKEN` | consulta de placa real (APIBrasil); sem os dois a rota responde em modo simulado. Prefira gravar no cofre do `/admin` |
 | `VITE_SUPORTE_WHATSAPP` | número (só dígitos, com DDI) do botão "Falar no WhatsApp" quando o teste grátis acaba |
 
 3. As rotas do React Router dependem do rewrite em `vercel.json` (tudo que não é `/api` cai no `index.html`).
@@ -92,7 +92,7 @@ Banco Postgres no Neon. Esquema em `db/*.sql`, aplicado em ordem por `node scrip
   `POST /api/admin/inicializar` uma vez. Só funciona enquanto não existe nenhum admin. Depois,
   apague as duas variáveis.
 - **Cofre de chaves** (`segredos`): valores cifrados em AES-256-GCM com `SEGREDOS_CHAVE`.
-  É de onde sai o `FALCON_TOKEN` em produção (`ambienteCom()` em `api/_lib/segredos.js`),
+  É de onde saem as credenciais da APIBrasil em produção (`ambienteCom()` em `api/_lib/segredos.js`),
   editável pelo `/admin` sem novo deploy. `DATABASE_URL`, `SESSAO_SEGREDO` e a própria
   `SEGREDOS_CHAVE` ficam só nas variáveis da Vercel — o cofre recusa gravá-las.
 
@@ -121,8 +121,10 @@ do catálogo compatíveis (regra em `sistemasDisponiveis()`, `src/pages/VeiculoP
 marca (com apelidos VW/GM…) + modelo + ano dentro da produção; por sistema, prefere os esquemas que citam a
 cilindrada da placa e os que informam ano.
 
-- Rota `GET /api/placa/:placa` servida pelo plugin `server/vitePlacaPlugin.mjs` (dev). A lógica está em
-  `server/placa.mjs`, sem dependência do Vite, para mover a um backend real.
-- Provedores (escolhidos por variáveis do `.env`, ver `.env.example`): Falcon Data Hub (plano grátis = 10 consultas/hora;
-  Premium R$ 49,90/mês = 1.000/hora), Consultar Placa (R$ 0,31/consulta) ou modo simulado (sem chave).
-- Resultados reais ficam em cache na memória do servidor por 24 h, então repetir a mesma placa não gasta cota.
+- Rota `GET /api/placa/:placa`: `api/placa/[placa].js` na Vercel e `server/vitePlacaPlugin.mjs` no dev.
+  A lógica está em `server/placa/`, sem dependência do Vite:
+  - `index.mjs` escolhe o provedor e guarda o cache; `veiculo.mjs` define o formato único do veículo;
+  - `provedores/apibrasil.mjs` (principal: `POST gateway.apibrasil.io/api/v2/vehicles/dados`, cota grátis diária),
+    `provedores/consultarplaca.mjs` (alternativa paga, R$ 0,31/consulta) e `provedores/simulado.mjs` (placas de teste).
+- Vale o primeiro provedor com credenciais (ver `.env.example`). Sem nenhuma: modo simulado.
+- Resultados reais ficam em cache na memória da instância por 24 h (na Vercel a instância reinicia com frequência).

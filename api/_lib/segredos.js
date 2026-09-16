@@ -1,4 +1,4 @@
-// Cofre de chaves de API (token do Falcon, dados do R2, ...).
+// Cofre de chaves de API (credenciais da APIBrasil, dados do R2, ...).
 //
 // O valor vai cifrado para o Neon em AES-256-GCM; a chave da cifra (SEGREDOS_CHAVE)
 // fica nas variaveis da Vercel. Assim o banco sozinho nao entrega nenhum token.

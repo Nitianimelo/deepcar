@@ -1,6 +1,6 @@
 // Plugin do Vite: expõe GET /api/placa/:placa e POST /api/login no servidor de desenvolvimento.
 // Mantém chaves e senhas fora do navegador. O Deepcar.exe usa os mesmos módulos (server/app-local.mjs).
-import { consultarPlaca } from './placa.mjs'
+import { consultarPlaca } from './placa/index.mjs'
 import { autenticar, lerJson, usuariosDe } from './login.mjs'
 
 export function placaApiPlugin(env = process.env) {

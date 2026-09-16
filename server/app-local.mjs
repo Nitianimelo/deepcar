@@ -12,7 +12,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { exec } from 'node:child_process'
 import sea from 'node:sea'
-import { consultarPlaca } from './placa.mjs'
+import { consultarPlaca } from './placa/index.mjs'
 import { autenticar, lerJson, USUARIOS_PADRAO } from './login.mjs'
 
 const noExecutavel = sea.isSea()
@@ -25,7 +25,8 @@ const CONFIG_PADRAO = {
   abrirNavegador: true,
   acervo: 'acervo',
   usuarios: USUARIOS_PADRAO,
-  falconToken: '',
+  apibrasilBearerToken: '',
+  apibrasilDeviceToken: '',
 }
 
 function carregarConfig() {
@@ -81,7 +82,11 @@ const servidor = http.createServer(async (req, res) => {
 
     const placa = caminho.match(/^\/api\/placa\/([^/]+)$/)
     if (placa && req.method === 'GET') {
-      try { return json(res, 200, await consultarPlaca(placa[1], { ...process.env, FALCON_TOKEN: cfg.falconToken || process.env.FALCON_TOKEN })) }
+      try { return json(res, 200, await consultarPlaca(placa[1], {
+        ...process.env,
+        APIBRASIL_BEARER_TOKEN: cfg.apibrasilBearerToken || process.env.APIBRASIL_BEARER_TOKEN,
+        APIBRASIL_DEVICE_TOKEN: cfg.apibrasilDeviceToken || process.env.APIBRASIL_DEVICE_TOKEN,
+      })) }
       catch (e) { return json(res, e.status ?? 500, { erro: e.message }) }
     }
 
