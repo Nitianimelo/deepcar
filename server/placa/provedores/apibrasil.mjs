@@ -38,11 +38,13 @@ export async function consultar(placa, env) {
   const msg = String(corpo?.message || corpo?.error || '').trim()
 
   if (res.status === 401) throw erro('Credenciais da APIBrasil inválidas ou expiradas (APIBRASIL_BEARER_TOKEN).', 502)
+  // a conta sem plano responde 404 "Plano ativo não encontrado." — não é placa inexistente
+  if (/plano/i.test(msg)) throw erro(`Conta da APIBrasil sem plano ativo para consulta de veículos${msg ? ` (${msg})` : ''}.`, 502)
   if (res.status === 402 || res.status === 403) {
     throw erro(`APIBrasil recusou a consulta${msg ? `: ${msg}` : ''}. Confira o plano e o DeviceToken.`, 502)
   }
   if (res.status === 429) throw erro('Limite de consultas da APIBrasil atingido. Tente novamente mais tarde.', 503)
-  if (res.status === 404 || /n[aã]o encontrad|not found/i.test(msg)) throw erro('Placa não encontrada na base.', 404)
+  if (/(placa|ve[ií]culo).*n[aã]o encontrad|not found/i.test(msg) || (res.status === 404 && !msg)) throw erro('Placa não encontrada na base.', 404)
   if (!res.ok || corpo?.error === true) {
     // o gateway às vezes responde 200 com { error: true, message } quando a cota do dia acabou
     if (/limit|cota|excedid/i.test(msg)) throw erro('Limite de consultas da APIBrasil atingido. Tente novamente mais tarde.', 503)

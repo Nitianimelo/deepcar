@@ -25,7 +25,7 @@ Regras de trabalho estão em `AGENTE.md`.
     **Em produção está no modo simulado** até as credenciais da APIBrasil serem gravadas no `/admin`.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `9c22114`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `cd90ce9`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -40,14 +40,35 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
 - [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado).
-- [ ] Gravar `APIBRASIL_BEARER_TOKEN` e `APIBRASIL_DEVICE_TOKEN` no `/admin` → Chaves de API e testar uma placa real
-      (o formato exato da resposta da APIBrasil não está documentado publicamente; o leitor aceita variações de nome).
+- [ ] **Consulta de placa real sem fornecedor viável ainda.** Conta APIBrasil testada em 2026-09-16: sem plano ativo, sem device,
+      saldo R$ 0. Não há plano grátis de placa: o device-based exige o Plano Data Plus (R$ 384/mês); as APIs por crédito
+      baratas (agregados-simples R$ 0,02, agregados-propria R$ 0,08, agregados-basica R$ 0,14) exigem **conta PJ** e saldo.
+      Decidir: conta PJ + recarga (e adaptar o provedor para `/consulta/veiculos/credits` com `tipo`), outro fornecedor,
+      ou escolha manual de marca/modelo/ano pelo catálogo.
 - [ ] Cache de placas no Neon (modelo e ano não mudam: cada placa seria consultada uma única vez). Precisa de migração.
 - [ ] Coerência de texto: o hero diz "só precisa digitar a placa do carro", mas na tabela a busca pela placa aparece só no Full.
 
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Teste da conta APIBrasil e mensagem correta para conta sem plano
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** ver se a consulta funciona só com o Bearer Token do plano gratuito.
+- **Teste (só chamadas sem custo; token guardado em arquivo temporário fora do repositório e apagado):**
+  - `GET /plan` sem plano; `GET /balance` saldo R$ 0,00; `GET /devices` "Você não possui um plano ativo".
+  - `POST /vehicles/dados` → HTTP 404 "Plano ativo não encontrado."
+  - `POST /consulta/veiculos/credits` em homologação: sem `tipo` → "Essa API não está disponível para esse endpoint";
+    com `tipo` agregados-simples / agregados-propria / agregados-basica → HTTP 403 "exclusiva para usuarios PJ".
+  - Catálogo (`GET /apis`, `GET /plans`): APIs de placa por crédito de R$ 0,02 a R$ 3,20; plano device-based com veículos
+    é o Data Plus, R$ 384/mês. **Não existe mais cota grátis de placa.**
+- **Conclusão:** com esse token não dá para consultar placas. Ver pendência "Consulta de placa real".
+- **O que mudou:** `server/placa/provedores/apibrasil.mjs` tratava todo HTTP 404 como "Placa não encontrada"; a APIBrasil usa
+  404 também para "Plano ativo não encontrado". Agora mensagem com "plano" vira erro de configuração ("Conta da APIBrasil sem
+  plano ativo…", HTTP 502) e só é "placa não encontrada" quando a mensagem fala de placa/veículo ou o 404 vem sem mensagem.
+- **Banco / Variáveis:** sem mudança. Nenhuma credencial foi gravada no código, no `/admin` ou no Git.
+- **Verificação:** teste do provedor com os cenários anteriores + conta sem plano + API indisponível; `node --check`.
+- **Pendências:** decisão sobre o fornecedor de placa.
 
 ### 2026-09-16 · Consulta de placa pela APIBrasil e provedores organizados em módulos
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
