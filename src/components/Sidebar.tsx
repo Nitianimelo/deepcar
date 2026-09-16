@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronsLeft, ChevronsRight, LogOut, ShieldCheck, UserRound, X } from 'lucide-react'
+import { ChevronDown, ChevronsLeft, ChevronsRight, House, LogOut, ShieldCheck, UserRound, X } from 'lucide-react'
 import { NAV, SECTION_META, type NavGroup, type NavLeaf } from '../data/nav'
 import { TracePad } from './TracePad'
 import { getSession, logout } from '../lib/auth'
@@ -46,11 +46,13 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
       >
         {/* topo: marca */}
         <div className={`flex h-[68px] items-center border-b seam ${collapsed ? 'justify-center px-0' : 'justify-between px-5'}`}>
-          {collapsed ? (
-            <img src="/brand/mark-light.png" alt="Deepcar" className="h-8 w-8 object-contain" draggable={false} />
-          ) : (
-            <img src="/brand/logo-h-light.png" alt="Deepcar" className="h-7 object-contain" draggable={false} />
-          )}
+          <Link to="/app" aria-label="Início" className="flex items-center">
+            {collapsed ? (
+              <img src="/brand/mark-light.png" alt="Deepcar" className="h-8 w-8 object-contain" draggable={false} />
+            ) : (
+              <img src="/brand/logo-h-light.png" alt="Deepcar" className="h-7 object-contain" draggable={false} />
+            )}
+          </Link>
           <button onClick={onCloseMobile} aria-label="Fechar menu" data-tip="Fechar menu" className="grid h-9 w-9 place-items-center rounded-md text-ink-3 hover:bg-bench-3 hover:text-ink-1 lg:hidden">
             <X size={18} />
           </button>
@@ -58,6 +60,22 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
 
         {/* navegação */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <NavLink
+            to="/app"
+            end
+            aria-label="Início"
+            data-tip={collapsed ? 'Início: consultar por placa ou buscar' : 'Consultar por placa, buscar e últimas consultas'}
+            data-tip-side="right"
+            className={({ isActive }) => `nav-item mb-4 ${isActive ? 'nav-active' : ''} ${collapsed ? 'justify-center px-0' : ''}`}
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && !collapsed && <TracePad />}
+                <House size={19} className="nav-icon" />
+                {!collapsed && <span>Início</span>}
+              </>
+            )}
+          </NavLink>
           {!collapsed && (
             <p className="code mb-2 px-4 text-[10.5px] uppercase tracking-[0.2em] text-ink-4">Sistemas</p>
           )}

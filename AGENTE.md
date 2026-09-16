@@ -114,14 +114,18 @@ server/                   lógica Node reaproveitável
   viteAcervoPlugin.mjs    serve ACERVO_DIR em /acervo no `npm run dev`
 src/
   App.tsx                 rotas (lazy por página)
-  pages/                  Landing, Login, Cadastro, Admin, SectionPage, EsquemaPage, VeiculoPage, Conta
+  pages/                  Landing, Login, Cadastro, Admin, Inicio (/app), Busca, SectionPage, EsquemaPage, VeiculoPage, Conta
   layouts/AppLayout.tsx   casca do /app (sidebar, barra, LimiteFree)
-  components/             EsquemaViewer, PrintEsquema, Sidebar, LimiteFree, LogoMarca, Tooltips…
+  components/             ListaEsquemas (lista da seção e da busca), DetalhesEsquema, EsquemaViewer, PrintEsquema, Sidebar, LimiteFree, LogoMarca, Tooltips…
   lib/auth.ts             cliente de sessão (cookie no servidor; localStorage só guarda retrato do perfil)
   lib/plano.ts            relógio do plano free no navegador (espelha MINUTOS_FREE)
   lib/validacao.ts        validação de cadastro no navegador (espelha api/_lib/validar.js)
   lib/acervo.ts           leitura do acervo (VITE_ACERVO_URL ou /acervo)
-  data/nav.ts             menu lateral e metadados das seções
+  lib/busca.ts            busca de texto no catálogo (normalizar, indexar, filtrar)
+  lib/compatibilidade.ts  quais esquemas servem para o veículo da placa (sistemasDisponiveis)
+  lib/recentes.ts         últimas consultas no localStorage, por conta; reaproveita veículo já consultado
+  lib/placa.ts            cliente de /api/placa, formatar/validar/normalizar placa
+  data/nav.ts             menu lateral, SECOES e metadados das seções
   data/marcas.json        montadoras
   index.css               tokens de design (@theme do Tailwind)
 public/                   brand/, marcas/ (logos), fonts/
@@ -130,7 +134,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 ```
 
 ### Rotas
-- Front: `/`, `/login`, `/cadastro`, `/admin`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
+- Front: `/`, `/login`, `/cadastro`, `/admin`, `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
   `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`.
 - API: `POST /api/registrar`, `POST /api/login`, `POST /api/sair`, `GET /api/sessao`,
   `GET|POST|PATCH|DELETE /api/admin/usuarios`, `GET|PUT|DELETE /api/admin/segredos`,
@@ -187,7 +191,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   no dev. Para testar contas: `npx vercel dev` (com as variáveis puxadas via `vercel env pull`) ou um Preview Deployment.
 - **Acervo local** depende de `ACERVO_DIR` (padrão `E:\deepcar-publicacao`, máquina Windows). Sem ele, catálogo vazio no dev.
 - `Iniciar-Local.ps1`, `exportar-acervo.mjs` e `empacotar-exe.mjs` usam caminhos `E:\` e ferramentas Windows.
-- `npm run lint` já tem 13 avisos (0 erros), principalmente `set-state-in-effect`, `exhaustive-deps` e `only-export-components`, espalhados por `src/`. Não são erros; não aumente a lista (compare a contagem antes e depois da mudança).
+- `npm run lint` já tem 12 avisos (0 erros), principalmente `set-state-in-effect`, `exhaustive-deps` e `only-export-components`, espalhados por `src/`. Não são erros; não aumente a lista (compare a contagem antes e depois da mudança).
 - Prints do `capturar-telas.mjs` (Edge headless) cortam a largura: não confunda com layout quebrado (ver commit `31b1313`).
 - Pasta local dentro do iCloud Drive pode corromper o `.git` (arquivos duplicados tipo `index 2`). Prefira clonar fora do iCloud.
 - Deploy da Vercel não roda migração nem copia o acervo.

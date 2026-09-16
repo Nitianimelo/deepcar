@@ -8,6 +8,8 @@ const Login = lazy(() => import('./pages/Login'))
 const Cadastro = lazy(() => import('./pages/Cadastro'))
 const Admin = lazy(() => import('./pages/Admin'))
 const AppLayout = lazy(() => import('./layouts/AppLayout'))
+const Inicio = lazy(() => import('./pages/Inicio'))
+const Busca = lazy(() => import('./pages/Busca'))
 const SectionPage = lazy(() => import('./pages/SectionPage'))
 const EsquemaPage = lazy(() => import('./pages/EsquemaPage'))
 const Conta = lazy(() => import('./pages/Conta'))
@@ -22,7 +24,8 @@ export default function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/app" element={<AppLayout />}>
-          <Route index element={<Navigate to="/app/injecao/leve" replace />} />
+          <Route index element={<Inicio />} />
+          <Route path="busca" element={<Busca />} />
           <Route path="injecao/leve" element={<SectionPage secao="injecao-leve" />} />
           <Route path="injecao/diesel" element={<SectionPage secao="injecao-diesel" />} />
           <Route path="abs" element={<SectionPage secao="abs" />} />

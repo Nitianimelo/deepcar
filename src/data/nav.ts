@@ -22,6 +22,9 @@ export const NAV: NavEntry[] = [
   { kind: 'leaf', key: 'cambio', label: 'Câmbio', to: '/app/cambio', icon: Cog },
 ]
 
+/** Todas as seções, na ordem do menu. */
+export const SECOES: SectionKey[] = NAV.flatMap((n) => (n.kind === 'group' ? n.children : [n])).map((n) => n.key)
+
 export const SECTION_META: Record<SectionKey, { titulo: string; trilha: string[]; descricao: string }> = {
   'injecao-leve': {
     titulo: 'Injeção Eletrônica · Leve',

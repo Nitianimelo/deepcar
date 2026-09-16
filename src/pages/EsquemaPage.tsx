@@ -7,6 +7,7 @@ import { carregarEsquema, rotaSecao, rotulo, subtituloCurto, useCarga } from '..
 import { EsquemaViewer } from '../components/EsquemaViewer'
 import { LogoMarca } from '../components/LogoMarca'
 import { PrintEsquema } from '../components/PrintEsquema'
+import { registrarRecente } from '../lib/recentes'
 
 /**
  * Impressão: monta o documento A4, espera as imagens e só então abre a janela do navegador.
@@ -53,6 +54,18 @@ export default function EsquemaPage() {
   const meta = SECTION_META[secao]
   const carga = useCarga(() => carregarEsquema(id), [id])
   const impressao = useImpressao()
+
+  // entra nas últimas consultas da tela inicial
+  const aberto = carga.estado === 'ok' ? carga.dados : null
+  useEffect(() => {
+    if (!aberto || !SECTION_META[aberto.secao]) return
+    registrarRecente({
+      tipo: 'esquema',
+      id: aberto.id,
+      titulo: `${aberto.marca} ${aberto.modelo}`,
+      detalhe: SECTION_META[aberto.secao].titulo,
+    })
+  }, [aberto])
 
   if (!meta) return <NaoEncontrado />
 

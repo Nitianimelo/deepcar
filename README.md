@@ -16,7 +16,8 @@ npm run build    # gera dist/
 
 - `/` landing page (`src/pages/Landing.tsx`): hero com celular e tablet em CSS (`DeviceMockups.tsx`),
   selos App Store / Google Play (`StoreBadges.tsx`, trocar os `href` quando publicar), cobertura, planos sem valores.
-- `/login` e `/app/*` plataforma.
+- `/login` e `/app/*` plataforma. `/app` abre a tela inicial (consultar por placa, buscar esquema e últimas consultas);
+  `/app/busca?q=` busca em todos os sistemas.
 
 ## Estado atual
 

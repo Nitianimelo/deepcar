@@ -20,6 +20,9 @@ export type Veiculo = {
   cache?: boolean
 }
 
+/** "abc-1d23" → "ABC1D23" (sem validar). */
+export const normalizarPlaca = (p: string) => p.toUpperCase().replace(/[^A-Z0-9]/g, '')
+
 export function formatarPlaca(p: string) {
   const s = p.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7)
   return s.length > 3 ? `${s.slice(0, 3)}-${s.slice(3)}` : s
@@ -30,7 +33,7 @@ export function placaValida(p: string) {
 }
 
 export async function consultarPlaca(placa: string): Promise<Veiculo> {
-  const limpa = placa.toUpperCase().replace(/[^A-Z0-9]/g, '')
+  const limpa = normalizarPlaca(placa)
   const res = await fetch(`/api/placa/${encodeURIComponent(limpa)}`)
   const body = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(body?.erro ?? `Falha na consulta (HTTP ${res.status}).`)

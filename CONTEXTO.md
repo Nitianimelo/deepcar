@@ -19,6 +19,9 @@ Regras de trabalho estão em `AGENTE.md`.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
   - Plano **free = 5 minutos de acesso**, contados a partir do primeiro acesso; depois bloqueia a tela e a API responde 402.
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link) e cofre de chaves.
+  - Tela inicial `/app`: cards "Consultar por placa" e "Buscar esquema" e card "Últimas consultas" (localStorage, por conta).
+    Botão "Início" no menu lateral (e o logo leva para lá).
+  - Busca geral `/app/busca?q=` em todos os sistemas (modelo, motor, código, gerenciamento, fabricação e nome do sistema).
   - Plataforma `/app`: seções de injeção leve/diesel, ABS, elétrica e câmbio, com catálogo do acervo no R2.
   - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → modo simulado, com cache de 24 h em memória.
@@ -26,7 +29,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `d3954f1`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `4649ab7`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -35,7 +38,7 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] `npm run dev` não suporta o fluxo de contas do Neon (`/api/login` antigo, sem `/api/registrar`, `/api/sessao`, `/api/admin/*`).
       Testar contas via `vercel dev` ou Preview Deployment.
 - [ ] Scripts de acervo e do executável dependem de caminhos Windows (`E:\`).
-- [ ] 13 avisos do oxlint (0 erros) em `src/`: `set-state-in-effect`, `exhaustive-deps`, `only-export-components`.
+- [ ] 12 avisos do oxlint (0 erros) em `src/`: `set-state-in-effect`, `exhaustive-deps`, `only-export-components`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
 - [ ] Assinatura/pagamento do plano pro não existe: a passagem para `pro` é manual no `/admin`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
@@ -53,6 +56,43 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-16 · Tela inicial com consulta, busca geral e últimas consultas; código reorganizado
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** ao abrir o sistema ele ia direto para Injeção Leve. Criar uma tela inicial com botão de consultar por placa e
+  de consultar por nome/sistema/palavra-chave, um card com as últimas consultas (guardadas no navegador) e um botão de
+  início. Deixar o código organizado.
+- **O que mudou:**
+  - `src/pages/Inicio.tsx` (novo, rota índice de `/app`, antes redirecionava para `/app/injecao/leve`): saudação com o
+    primeiro nome; card "Consultar por placa" (valida e abre `/app/veiculo/:placa`); card "Buscar esquema" (abre
+    `/app/busca?q=`); card "Últimas consultas" com ícone por tipo, detalhe, tempo relativo ("há 12 min", "ontem") e "Limpar".
+  - `src/pages/Busca.tsx` (novo, `/app/busca?q=`): busca em todas as seções de uma vez; o termo fica na URL; lista acompanha
+    a digitação (`useDeferredValue`); mostra contagem e o nome do sistema em cada linha. Inclui o nome do sistema na busca
+    ("abs gol", "hilux diesel").
+  - `src/lib/recentes.ts` (novo): até 12 itens em `localStorage` na chave `deepcar.recentes:<email>` (cada conta vê só as
+    suas); tipos `placa` (guarda o veículo retornado) e `esquema`; atualiza a tela na hora (evento) e entre abas (`storage`);
+    ignora itens inválidos e JSON quebrado. `veiculoGuardado()` faz a `VeiculoPage` reabrir uma placa já consultada **sem
+    nova chamada ao Falcon** (economiza a cota de 10/hora).
+  - `src/lib/busca.ts` (novo): `normalizar`, `termosDe`, `indexar` (texto de cada esquema montado uma vez) e `filtrar`.
+  - `src/lib/compatibilidade.ts` (novo): `sistemasDisponiveis()` e `marcaCanonica()` saíram de `VeiculoPage.tsx` sem mudança
+    de regra (some o aviso de lint `only-export-components`).
+  - `src/components/ListaEsquemas.tsx` (novo): lista com carregamento em lotes que era interna da `SectionPage`, agora
+    compartilhada com a busca (prop `mostrarSecao`).
+  - `src/pages/SectionPage.tsx`: usa `ListaEsquemas` e `lib/busca` (mesmo comportamento).
+  - `src/pages/VeiculoPage.tsx`: usa `lib/compatibilidade`, reaproveita veículo guardado e registra a consulta.
+  - `src/pages/EsquemaPage.tsx`: registra o esquema aberto nas últimas consultas.
+  - `src/components/Sidebar.tsx`: item "Início" no topo do menu (ícone casa, também no menu recolhido); logo leva a `/app`.
+  - `src/data/nav.ts`: `SECOES` (todas as seções na ordem do menu). `src/lib/placa.ts`: `normalizarPlaca()`.
+  - `src/App.tsx`: rotas `index → Inicio` e `busca`.
+  - `AGENTE.md` (mapa do código e rotas) e `README.md` atualizados.
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** `vite` dev com acervo de teste e sessão simulada, no navegador: `/app` abre o início; placa → ficha;
+  botão Início volta; último item aparece ("HONDA CIVIC EXL 2.0 CVT · HON-2C24 · 2018 · agora") na chave por conta;
+  reabrir pelo histórico fez 0 chamadas a `/api/placa`; busca "abs gol" → 1 esquema com o rótulo ABS; sem erros no console;
+  campos com 48 px no celular (bug de altura corrigido antes de publicar); JSON inválido no histórico mostra lista vazia.
+  `npm run build` ok; oxlint 12 avisos (antes 13), 0 erros. Obs.: no `npm run dev` a 1ª consulta de placa chama a API
+  2 vezes por causa do `StrictMode` do React; em produção é 1 chamada.
+- **Pendências:** nenhuma.
 
 ### 2026-09-16 · Procedência (importado/nacional) e chassi na consulta por placa
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
