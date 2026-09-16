@@ -14,8 +14,8 @@ export default function Conta() {
   const s = getSession()
   if (!s) return null
 
-  function sair() {
-    logout()
+  async function sair() {
+    await logout()
     nav('/login', { replace: true })
   }
 

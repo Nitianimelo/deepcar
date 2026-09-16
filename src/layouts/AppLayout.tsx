@@ -3,13 +3,13 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import { PlateSearch } from '../components/PlateSearch'
 import { Sidebar } from '../components/Sidebar'
-import { getSession } from '../lib/auth'
+import { useSessao } from '../lib/auth'
 
 const COLLAPSE_KEY = 'deepcar.sidebar.collapsed'
 
 export default function AppLayout() {
   const loc = useLocation()
-  const session = getSession()
+  const { session, conferindo } = useSessao()
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem(COLLAPSE_KEY) === '1' } catch { return false }
   })
@@ -19,7 +19,12 @@ export default function AppLayout() {
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0') } catch { /* ignore */ }
   }, [collapsed])
 
-  if (!session) return <Navigate to="/login" replace state={{ from: loc.pathname }} />
+  // primeira visita (sem perfil guardado): espera o servidor dizer quem é, para não
+  // piscar a tela de login para quem já está conectado
+  if (!session) {
+    if (conferindo) return <div aria-busy="true" className="min-h-full" />
+    return <Navigate to="/login" replace state={{ from: loc.pathname }} />
+  }
 
   return (
     <div className="flex h-full min-h-0">

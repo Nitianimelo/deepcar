@@ -66,6 +66,34 @@ O acervo **não** vai para a Vercel: fica no R2 (`https://<bucket>.r2.dev` ou do
 por `E:\ferramentas\rclone\Enviar-Acervo-R2.ps1`. Os JSON sobem compactados com `Content-Encoding: gzip`
 (o catálogo de injeção leve cai de 1,16 MB para 107 KB); as imagens vão com cache de um ano.
 
+### Contas, sessão e administração (Neon)
+
+Banco Postgres no Neon, criado pela integração da Vercel. Esquema em `db/001_inicial.sql`
+(rodar no editor SQL do Neon; pode rodar de novo sem estragar nada).
+
+- **Senha** guardada com scrypt do próprio Node (`scrypt$<sal>$<hash>`), nunca em texto.
+- **Sessão** num cookie httpOnly de 30 dias; no banco fica só o sha-256 do token. O navegador
+  guarda apenas um retrato do perfil (`deepcar.perfil`), que serve para desenhar a tela e não
+  libera nada: `api/admin/*` e a consulta de placa conferem o cookie no servidor.
+- **Cadastro aberto** em `/cadastro` (plano free). Login em `/login`.
+- **`/admin`** (só para `papel = admin`): lista de usuários com busca, plano free/pro no dropdown,
+  papel, bloquear, trocar senha, apagar; e o cofre de chaves de API.
+- **Primeiro administrador**: configure `ADMIN_EMAIL` e `ADMIN_SENHA` na Vercel e chame
+  `POST /api/admin/inicializar` uma vez. Só funciona enquanto não existe nenhum admin. Depois,
+  apague as duas variáveis.
+- **Cofre de chaves** (`segredos`): valores cifrados em AES-256-GCM com `SEGREDOS_CHAVE`.
+  É de onde sai o `FALCON_TOKEN` em produção (`ambienteCom()` em `api/_lib/segredos.js`),
+  editável pelo `/admin` sem novo deploy. `DATABASE_URL`, `SESSAO_SEGREDO` e a própria
+  `SEGREDOS_CHAVE` ficam só nas variáveis da Vercel — o cofre recusa gravá-las.
+
+| Rota | Para quê |
+| --- | --- |
+| `POST /api/registrar` · `POST /api/login` · `POST /api/sair` | conta e sessão |
+| `GET /api/sessao` | quem está logado (o front confere ao abrir) |
+| `GET/POST/PATCH/DELETE /api/admin/usuarios` | controle de usuários |
+| `GET/PUT/DELETE /api/admin/segredos` | cofre de chaves |
+| `GET /api/placa/:placa` | consulta de placa (exige sessão) |
+
 ### Peso da primeira visita
 
 - Pacote inicial: ~97 KB comprimidos (só a landing). Login, plataforma, visualizador e impressão são

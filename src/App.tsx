@@ -5,6 +5,8 @@ import Landing from './pages/Landing'
 // Só a landing entra no pacote inicial. O resto chega quando a rota é aberta —
 // quem só visita a página inicial não baixa o visualizador nem a impressão.
 const Login = lazy(() => import('./pages/Login'))
+const Cadastro = lazy(() => import('./pages/Cadastro'))
+const Admin = lazy(() => import('./pages/Admin'))
 const AppLayout = lazy(() => import('./layouts/AppLayout'))
 const SectionPage = lazy(() => import('./pages/SectionPage'))
 const EsquemaPage = lazy(() => import('./pages/EsquemaPage'))
@@ -17,6 +19,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="/app" element={<AppLayout />}>
           <Route index element={<Navigate to="/app/injecao/leve" replace />} />
           <Route path="injecao/leve" element={<SectionPage secao="injecao-leve" />} />

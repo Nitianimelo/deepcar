@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronsLeft, ChevronsRight, LogOut, UserRound, X } from 'lucide-react'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { ChevronDown, ChevronsLeft, ChevronsRight, LogOut, ShieldCheck, UserRound, X } from 'lucide-react'
 import { NAV, SECTION_META, type NavGroup, type NavLeaf } from '../data/nav'
 import { TracePad } from './TracePad'
 import { getSession, logout } from '../lib/auth'
@@ -26,8 +26,8 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
   // fecha o drawer ao navegar no mobile
   useEffect(() => { onCloseMobile() }, [loc.pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function sair() {
-    logout()
+  async function sair() {
+    await logout()
     nav('/login', { replace: true })
   }
 
@@ -82,6 +82,15 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
 
         {/* rodapé: conta */}
         <div className="border-t seam p-3">
+          {session?.papel === 'admin' && !collapsed && (
+            <Link
+              to="/admin"
+              data-tip="Usuários e chaves de API"
+              className="mb-1 flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-ink-3 hover:bg-bench-3 hover:text-ink-1"
+            >
+              <ShieldCheck size={16} /> Administração
+            </Link>
+          )}
           <NavLink
             to="/app/conta"
             data-tip="Sua conta e preferências"
