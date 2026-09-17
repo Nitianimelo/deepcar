@@ -12,10 +12,9 @@ const emailSuporte = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) 
 export const temWhatsappSuporte = numeroSuporte.length >= 12
 
 /** Link de contato: WhatsApp quando há número configurado, e-mail como reserva. */
-export function linkSuporte(mensagem: string) {
+export function linkSuporte(mensagem: string, assunto = 'Deepcar · assinatura') {
   if (temWhatsappSuporte) return `https://wa.me/${numeroSuporte}?text=${encodeURIComponent(mensagem)}`
-  const assunto = encodeURIComponent('Deepcar · assinatura')
-  return `mailto:${emailSuporte}?subject=${assunto}&body=${encodeURIComponent(mensagem)}`
+  return `mailto:${emailSuporte}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(mensagem)}`
 }
 
 /**

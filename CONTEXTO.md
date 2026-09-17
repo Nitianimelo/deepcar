@@ -29,7 +29,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `aa74bde`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `a82df1a`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -56,6 +56,26 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-17 · Redefinição de senha pelo administrador
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** no `/admin`, o administrador poder recuperar/editar a senha dos usuários.
+- **O que mudou:**
+  - `src/pages/Admin.tsx`: botão de chave em cada linha de usuário abre o diálogo "Redefinir senha": campo com mostrar/esconder,
+    botão que **gera** uma senha fácil de ditar (ex.: `k7mq-4hzt`, sem 0/O, 1/l/I, com `crypto.getRandomValues`), mínimo de 8
+    caracteres. Depois de salvar mostra a senha para **copiar** e o botão **Enviar pelo WhatsApp** (número da pessoa, mensagem
+    com e-mail, senha e link de login). Avisa que as sessões abertas da conta são encerradas; na própria conta oferece
+    "Entrar de novo". Fecha com Esc, clique fora ou X. A senha não é guardada em lugar nenhum além do hash no banco.
+  - `api/admin/usuarios.js`: PATCH passa a recusar senha com menos de `SENHA_MINIMA` (8) caracteres; antes aceitava qualquer
+    tamanho. POST usa a mesma constante. (O PATCH já cifrava com scrypt e derrubava as sessões ao trocar a senha.)
+  - `src/pages/Login.tsx`: "Esqueci a senha" deixava de fazer qualquer coisa; agora abre o contato do suporte (WhatsApp de
+    `VITE_SUPORTE_WHATSAPP` ou e-mail de `VITE_SUPORTE_EMAIL`) com a mensagem pronta e o e-mail digitado.
+  - `src/lib/plano.ts`: `linkSuporte()` aceita o assunto do e-mail (padrão continua "Deepcar · assinatura").
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** `node --check` na API; build ok; oxlint 12 avisos (sem novos); no navegador com admin e API simulados:
+  salvar desativado vazio e com 3 caracteres, senha gerada enviada no PATCH do usuário certo, senha exibida, link do WhatsApp
+  com o número e a senha, aviso na própria conta, Esc fecha, "Esqueci a senha" com o e-mail digitado; sem erros de página.
+- **Pendências:** nenhuma.
 
 ### 2026-09-17 · Nova copy do painel lateral do cadastro
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

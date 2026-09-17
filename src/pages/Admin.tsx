@@ -2,10 +2,10 @@
 // Toda a autorização é do servidor (api/admin/*): aqui a checagem só evita mostrar a tela.
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { KeyRound, Loader2, Plus, RefreshCw, Search, Timer, Trash2, Users } from 'lucide-react'
+import { Check, Copy, Eye, EyeOff, KeyRound, Loader2, MessageCircle, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
 import { useSessao } from '../lib/auth'
 import { mmss } from '../lib/plano'
-import { mascararWhatsapp } from '../lib/validacao'
+import { mascararWhatsapp, SENHA_MINIMA } from '../lib/validacao'
 
 type Usuario = {
   id: string
@@ -85,6 +85,7 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [novo, setNovo] = useState(false)
+  const [senhaDe, setSenhaDe] = useState<Usuario | null>(null)
 
   const buscar = useCallback(async (termo: string) => {
     setCarregando(true)
@@ -227,7 +228,17 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
                 </td>
                 <td className="code px-3 py-3 text-[12px] text-ink-3">{data(u.criado_em)}</td>
                 <td className="code px-3 py-3 text-[12px] text-ink-3">{data(u.visto_em)}</td>
-                <td className="px-3 py-3 text-right">
+                <td className="px-3 py-3">
+                  <div className="flex items-center justify-end gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSenhaDe(u)}
+                    aria-label={`Redefinir a senha de ${u.nome}`}
+                    data-tip="Redefinir senha"
+                    className="grid h-8 w-8 place-items-center rounded-md text-ink-4 hover:bg-bench-3 hover:text-trace-hi"
+                  >
+                    <KeyRound size={15} />
+                  </button>
                   <button
                     type="button"
                     onClick={() => void remover(u)}
@@ -237,13 +248,140 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
                   >
                     <Trash2 size={15} />
                   </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {senhaDe && <RedefinirSenha u={senhaDe} ehVoce={senhaDe.email === meuEmail} onFechar={() => setSenhaDe(null)} />}
     </>
+  )
+}
+
+/** Senha fácil de ditar por telefone: sem 0/O, 1/l/I. Ex.: "k7mq-4hzt". */
+function gerarSenha() {
+  const letras = 'abcdefghjkmnpqrstuvwxyz23456789'
+  const bytes = crypto.getRandomValues(new Uint8Array(8))
+  const s = Array.from(bytes, (b) => letras[b % letras.length]).join('')
+  return `${s.slice(0, 4)}-${s.slice(4)}`
+}
+
+function RedefinirSenha({ u, ehVoce, onFechar }: { u: Usuario; ehVoce: boolean; onFechar: () => void }) {
+  const [senha, setSenha] = useState('')
+  const [mostrar, setMostrar] = useState(true)
+  const [salvando, setSalvando] = useState(false)
+  const [erro, setErro] = useState('')
+  const [pronta, setPronta] = useState<string | null>(null)
+  const [copiada, setCopiada] = useState(false)
+  const valida = senha.length >= SENHA_MINIMA
+
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape' && !salvando) onFechar() }
+    window.addEventListener('keydown', esc)
+    return () => window.removeEventListener('keydown', esc)
+  }, [onFechar, salvando])
+
+  async function salvar(e: FormEvent) {
+    e.preventDefault()
+    if (!valida) return
+    setSalvando(true)
+    setErro('')
+    try {
+      await api(`/api/admin/usuarios?id=${u.id}`, { method: 'PATCH', body: JSON.stringify({ senha }) })
+      setPronta(senha)
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Não foi possível trocar a senha.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function copiar() {
+    if (!pronta) return
+    try {
+      await navigator.clipboard.writeText(pronta)
+      setCopiada(true)
+      setTimeout(() => setCopiada(false), 2000)
+    } catch { /* navegador sem permissão: a senha está visível na tela */ }
+  }
+
+  const whatsapp = u.whatsapp?.replace(/\D/g, '')
+  const mensagem = pronta
+    ? `Olá, ${u.nome.split(' ')[0]}! Sua senha do Deepcar foi redefinida.\nE-mail: ${u.email}\nSenha nova: ${pronta}\nEntre em ${window.location.origin}/login`
+    : ''
+
+  return (
+    <div role="dialog" aria-modal="true" aria-labelledby="redefinir-titulo" className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-pit/80 p-4 backdrop-blur-sm" onMouseDown={(e) => { if (e.target === e.currentTarget && !salvando) onFechar() }}>
+      <div className="relative w-full max-w-[440px] rounded-2xl border seam bg-bench-2 p-6">
+        <button type="button" onClick={onFechar} aria-label="Fechar" className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-md text-ink-4 hover:bg-bench-3 hover:text-ink-1">
+          <X size={16} />
+        </button>
+        <h2 id="redefinir-titulo" className="text-[19px] font-semibold tracking-tight">Redefinir senha</h2>
+        <p className="mt-1 text-[14px] text-ink-3">{u.nome} · <span className="code text-[13px]">{u.email}</span></p>
+
+        {!pronta ? (
+          <form onSubmit={salvar} className="mt-5">
+            <label className="block text-[13px] font-medium text-ink-2" htmlFor="senha-nova">Senha nova</label>
+            <div className="relative mt-1.5">
+              <input
+                id="senha-nova"
+                className="field code pr-24"
+                type={mostrar ? 'text' : 'password'}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder={`pelo menos ${SENHA_MINIMA} caracteres`}
+                autoComplete="new-password"
+                autoFocus
+              />
+              <div className="absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center gap-0.5">
+                <button type="button" onClick={() => { setSenha(gerarSenha()); setMostrar(true) }} aria-label="Gerar senha" data-tip="Gerar uma senha fácil de ditar" className="grid h-9 w-9 place-items-center rounded-md text-ink-3 hover:bg-bench-3 hover:text-trace-hi">
+                  <Wand2 size={16} />
+                </button>
+                <button type="button" onClick={() => setMostrar((v) => !v)} aria-label={mostrar ? 'Esconder senha' : 'Mostrar senha'} className="grid h-9 w-9 place-items-center rounded-md text-ink-3 hover:bg-bench-3 hover:text-ink-1">
+                  {mostrar ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+            <p className="mt-2 text-[12.5px] text-ink-4">
+              {ehVoce
+                ? 'É a sua própria conta: depois de salvar você sai e entra de novo com a senha nova.'
+                : 'As sessões abertas dessa conta são encerradas: a pessoa entra de novo com a senha nova.'}
+            </p>
+            {erro && <p role="alert" className="mt-3 rounded-lg border border-fault/30 bg-fault/10 px-3 py-2 text-[13px] text-fault">{erro}</p>}
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={onFechar} className="btn-ghost">Cancelar</button>
+              <button type="submit" className="btn-primary !h-10 px-4 text-[14px]" disabled={!valida || salvando}>
+                {salvando ? 'Salvando…' : 'Salvar senha'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-5">
+            <p className="flex items-center gap-2 text-[14px] text-ok"><Check size={16} /> Senha trocada.</p>
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border seam bg-well px-4 py-3">
+              <span className="code break-all text-[17px] tracking-[0.06em] text-ink-1">{pronta}</span>
+              <button type="button" onClick={() => void copiar()} className="inline-flex flex-none items-center gap-1.5 text-[13px] text-ink-3 hover:text-ink-1">
+                {copiada ? <><Check size={14} /> Copiada</> : <><Copy size={14} /> Copiar</>}
+              </button>
+            </div>
+            <p className="mt-2 text-[12.5px] text-ink-4">Ela não fica guardada em lugar nenhum: passe para a pessoa agora.</p>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              {whatsapp && !ehVoce && (
+                <a href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(mensagem)}`} target="_blank" rel="noreferrer" className="btn-ghost inline-flex items-center gap-2">
+                  <MessageCircle size={15} /> Enviar pelo WhatsApp
+                </a>
+              )}
+              {ehVoce
+                ? <a href="/login" className="btn-primary inline-flex !h-10 items-center px-4 text-[14px]">Entrar de novo</a>
+                : <button type="button" onClick={onFechar} className="btn-primary !h-10 px-4 text-[14px]">Concluir</button>}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 

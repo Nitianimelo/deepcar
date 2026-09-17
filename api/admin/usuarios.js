@@ -6,7 +6,7 @@
 //   DELETE /api/admin/usuarios?id=...     remove (as sessões vão junto)
 import { sql, um } from '../_lib/db.js'
 import { cifrarSenha, corpo, exigir } from '../_lib/sessao.js'
-import { normalizarWhatsapp } from '../_lib/validar.js'
+import { normalizarWhatsapp, SENHA_MINIMA } from '../_lib/validar.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
       const d = corpo(req)
       const email = String(d.email ?? '').trim().toLowerCase()
       if (!email || !d.nome) return res.status(400).json({ erro: 'Informe nome e e-mail.' })
-      if (String(d.senha ?? '').length < 8) return res.status(400).json({ erro: 'A senha precisa de pelo menos 8 caracteres.' })
+      if (String(d.senha ?? '').length < SENHA_MINIMA) return res.status(400).json({ erro: `A senha precisa de pelo menos ${SENHA_MINIMA} caracteres.` })
       if (await um(sql`select 1 from usuarios where lower(email) = ${email}`)) {
         return res.status(409).json({ erro: 'Já existe uma conta com este e-mail.' })
       }
@@ -66,6 +66,10 @@ export default async function handler(req, res) {
       // ninguém pode tirar o próprio acesso de administrador e ficar sem volta
       if (id === admin.id && (d.papel === 'usuario' || d.ativo === false)) {
         return res.status(400).json({ erro: 'Você não pode remover o próprio acesso de administrador.' })
+      }
+      // redefinição de senha pelo administrador: mesma regra do cadastro
+      if (d.senha !== undefined && (typeof d.senha !== 'string' || d.senha.length < SENHA_MINIMA)) {
+        return res.status(400).json({ erro: `A senha precisa de pelo menos ${SENHA_MINIMA} caracteres.` })
       }
       if (d.whatsapp !== undefined && d.whatsapp !== null && d.whatsapp !== '' && !normalizarWhatsapp(d.whatsapp)) {
         return res.status(400).json({ erro: 'WhatsApp inválido. Use DDD + número, com o 9 na frente.' })
