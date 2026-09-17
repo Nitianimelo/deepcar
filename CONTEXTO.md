@@ -29,7 +29,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `76b5f98`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `7f087d0`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -56,6 +56,17 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-17 · Botão "Entrar" some no celular (corrigido)
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Bug:** na página de vendas, o cabeçalho só mostrava "Criar conta grátis" no celular. Quem já tinha conta não achava o
+  login. Causa: o link "Entrar" estava com `hidden ... sm:inline-flex`, escondido abaixo de 640 px.
+- **O que mudou (`src/pages/Landing.tsx`, `Header`):** "Entrar" aparece em qualquer largura; no celular o logo fica um
+  pouco menor (h-6), o espaçamento do cabeçalho diminui (gap/padding) e os dois botões ganham padding e fonte menores,
+  com `whitespace-nowrap`, para caberem lado a lado.
+- **Verificação:** build ok; no navegador, os dois botões visíveis e sem rolagem horizontal em 320, 360, 390, 430, 768 e
+  1280 px; capturas do cabeçalho em 320 e 390.
+- **Pendências:** nenhuma.
 
 ### 2026-09-17 · Visual dos cards de planos (só design)
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

@@ -24,16 +24,16 @@ export default function Landing() {
 function Header() {
   return (
     <header className="sticky top-0 z-30 border-b seam bg-pit/85 backdrop-blur-md">
-      <div className="mx-auto flex h-[68px] max-w-[1200px] items-center gap-8 px-5 sm:px-8">
-        <a href="#topo" className="flex items-center"><img src="/brand/logo-h-light.png" alt="Deepcar" className="h-7" draggable={false} /></a>
+      <div className="mx-auto flex h-[68px] max-w-[1200px] items-center gap-4 px-4 sm:gap-8 sm:px-8">
+        <a href="#topo" className="flex items-center"><img src="/brand/logo-h-light.png" alt="Deepcar" className="h-6 sm:h-7" draggable={false} /></a>
         <nav className="ml-6 hidden items-center gap-7 text-[14px] text-ink-2 md:flex">
           <a href="#plataforma" className="hover:text-ink-1">Plataforma</a>
           <a href="#cobertura" className="hover:text-ink-1">Cobertura</a>
           <a href="#planos" className="hover:text-ink-1">Planos</a>
         </nav>
-        <div className="ml-auto flex items-center gap-2.5">
-          <Link to="/login" className="btn-ghost hidden items-center sm:inline-flex">Entrar</Link>
-          <Link to="/cadastro" className="btn-primary inline-flex h-10 items-center px-4 text-[14px]">Criar conta grátis</Link>
+        <div className="ml-auto flex flex-none items-center gap-1.5 sm:gap-2.5">
+          <Link to="/login" className="btn-ghost inline-flex flex-none items-center !px-3 text-[14px] sm:!px-4">Entrar</Link>
+          <Link to="/cadastro" className="btn-primary inline-flex h-10 flex-none items-center whitespace-nowrap px-3 text-[13.5px] sm:px-4 sm:text-[14px]">Criar conta grátis</Link>
         </div>
       </div>
     </header>
