@@ -137,10 +137,25 @@ function BuscaPlaca() {
           </div>
         </div>
 
-        {/* o celular do produto: a mesma tela que o mecânico vê na oficina */}
-        <div className="relative mx-auto h-[520px] w-full max-w-[380px] sm:h-[600px] sm:max-w-[420px]">
-          <Phone scale={0.58} className="absolute left-1/2 top-0 -translate-x-1/2 drop-shadow-2xl sm:scale-100" />
-        </div>
+        {/* foto da oficina: o app aberto no celular, na mão de quem usa */}
+        <figure className="relative overflow-hidden rounded-2xl border seam bg-bench-1">
+          <picture>
+            <source type="image/webp" srcSet="/landing/oficina-placa-900.webp 900w, /landing/oficina-placa-1400.webp 1400w" sizes="(min-width: 1024px) 46vw, 92vw" />
+            <img
+              src="/landing/oficina-placa-1400.jpg"
+              srcSet="/landing/oficina-placa-900.jpg 900w, /landing/oficina-placa-1400.jpg 1400w"
+              sizes="(min-width: 1024px) 46vw, 92vw"
+              width={1400}
+              height={933}
+              loading="lazy"
+              decoding="async"
+              alt="Mecânico na oficina consultando o Deepcar no celular, com a lista de montadoras aberta"
+              className="block h-full w-full object-cover"
+            />
+          </picture>
+          {/* escurece a base para a foto se assentar no fundo escuro da página */}
+          <span aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(21,27,36,.45), transparent 45%)' }} />
+        </figure>
       </div>
     </section>
   )

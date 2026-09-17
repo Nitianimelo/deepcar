@@ -30,7 +30,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `69c32c1`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `69264e6`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -41,8 +41,8 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Scripts de acervo e do executável dependem de caminhos Windows (`E:\`).
 - [ ] 12 avisos do oxlint (0 erros) em `src/`: `set-state-in-effect`, `exhaustive-deps`, `only-export-components`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
-- [ ] Dobra `#placa` da landing usa o mockup de celular em CSS; se houver foto real (mecânico com o app na mão),
-      trocar o `<Phone>` pela imagem em `src/pages/Landing.tsx` (função `BuscaPlaca`).
+- [ ] A foto da dobra `#placa` é gerada por IA: a tela do celular tem nomes de montadora com erro de grafia
+      ("Chewolet", "Citrofo", "Alfa Roemo"). No tamanho exibido não se lê, mas vale trocar por foto real quando houver.
 - [ ] Assinatura/pagamento do plano pro não existe: a passagem para `pro` é manual no `/admin`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
@@ -59,6 +59,19 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-17 · Foto real na dobra "Busca por placa"
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** usar a imagem que estava em `~/Downloads` (mecânico de uniforme Deepcar com o app aberto no celular, na oficina).
+- **O que mudou:**
+  - `public/landing/oficina-placa-{900,1400}.{webp,jpg}` (novos): o PNG original tinha 2,0 MB; virou 1400 px e 900 px de
+    largura, em WebP (37–69 KB) com JPEG de reserva (67–133 KB).
+  - `src/pages/Landing.tsx` (`BuscaPlaca`): o mockup `<Phone>` deu lugar à foto, num `<picture>` com `srcSet`/`sizes`
+    (o celular baixa a versão de 900 px), `loading="lazy"`, `width`/`height` para não pular o layout, texto alternativo
+    descritivo, moldura arredondada e um degradê na base para assentar no fundo escuro. O `<Phone>` continua no hero.
+- **Verificação:** build ok; capturas 1440×1000 e 390×844; no celular o navegador escolheu `oficina-placa-900.webp` (37 KB).
+- **Pendências:** a foto é gerada por IA e a tela do celular tem nomes de montadora com erro de grafia; ilegíveis no tamanho
+  exibido, mas vale trocar por foto real quando houver.
 
 ### 2026-09-17 · Dobra "Busca por placa" na página de vendas
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
