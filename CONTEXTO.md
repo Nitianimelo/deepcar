@@ -30,7 +30,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `69264e6`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `e373997`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -59,6 +59,23 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-17 · Foto da dobra "Busca por placa" sem moldura e em tamanho cheio
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** a foto estava com borda e pequena demais para o espaço; deixar mais bonita.
+- **O que mudou (`src/pages/Landing.tsx`, `BuscaPlaca`):**
+  - Saíram a moldura (`border seam`, fundo e cantos arredondados de todos os lados) e a altura livre da imagem.
+  - A foto passa a **encher a coluna** (360 px no celular, 460 px em tablet, 600 px no desktop) com `object-cover` e
+    enquadramento em 62%/45%, que centraliza o celular e as mãos em vez do fundo da oficina.
+  - **Sangra** até a borda da tela: largura total no celular e, no desktop, até o limite da janela à direita, com canto
+    arredondado só à esquerda.
+  - Dissolve no fundo em vez de terminar numa linha: degradê na base sempre e um degradê lateral **só no desktop** (onde o
+    texto fica ao lado). No celular esse lateral escurecia o mecânico sem motivo, e foi limitado a `lg`.
+  - Colunas reequilibradas (`0.92fr / 1fr`), dando mais espaço à imagem.
+  - Assets refeitos na resolução cheia do original: `oficina-placa-1536.{webp,jpg}` (86 KB / 168 KB) e
+    `oficina-placa-900.{webp,jpg}` (41 KB / 72 KB); a variante de 1400 px foi removida.
+- **Verificação:** build ok; capturas 1440×1000, 1280, 1024×900 e 390×844; sem rolagem horizontal em nenhuma largura.
+- **Pendências:** nenhuma.
 
 ### 2026-09-17 · Foto real na dobra "Busca por placa"
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
