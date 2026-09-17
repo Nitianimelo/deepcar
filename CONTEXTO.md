@@ -29,7 +29,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `a82df1a`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `76b5f98`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -56,6 +56,21 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-17 · Visual dos cards de planos (só design)
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** deixar os cards de plano mais premium e profissionais, sem "cara de IA". Só o design; textos e itens iguais.
+- **O que mudou (`src/pages/Landing.tsx`, função `Planos`):**
+  - Os dois cards passam a usar a mesma superfície (`bench-1`) — antes o destaque mudava o fundo, o que parecia erro.
+    O Full se distingue por borda azul discreta, sombra projetada e um filete de luz no topo.
+  - Selo "Mais completo": era pílula azul preenchida, virou texto pequeno em mono (mesma linguagem dos rótulos do app).
+  - Preço maior (44 px), com números tabulares e "R$" / "/mês" em tom secundário; linhas finas separam descrição, preço e itens.
+  - Itens com check menor e mais discreto (`trace/70`); a lista do Full (11 itens) vai em **duas colunas de texto** a partir de
+    `sm` (`columns-2` + `break-inside-avoid`), o que encurta o card e alinha as alturas. Primeira tentativa com `grid` de 2
+    colunas abria buracos quando um item quebrava em duas linhas.
+  - Botões com a mesma altura nos dois cards; no Pro, a borda acende no hover.
+- **Verificação:** build ok; capturas 1440×1000, 820×900 e 390×844 (Full sem cortes e cards da mesma altura).
+- **Pendências:** nenhuma.
 
 ### 2026-09-17 · Redefinição de senha pelo administrador
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

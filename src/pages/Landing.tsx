@@ -205,35 +205,56 @@ function Planos() {
           </p>
         </div>
 
-        <div className="mx-auto mt-12 grid max-w-[880px] gap-4 md:grid-cols-2">
+        <div className="mx-auto mt-12 grid max-w-[920px] items-stretch gap-5 md:grid-cols-2">
           {planos.map((p) => (
-            <div
+            <article
               key={p.nome}
-              className={`flex flex-col rounded-2xl border p-7 ${p.destaque ? 'border-trace/50 bg-bench-2' : 'seam bg-bench-1'}`}
-              style={p.destaque ? { boxShadow: '0 0 0 1px rgba(74,141,255,.25), 0 24px 60px rgba(29,85,199,.18)' } : undefined}
+              className={`relative flex flex-col overflow-hidden rounded-[18px] border bg-bench-1 p-7 sm:p-8 ${
+                p.destaque ? 'border-trace/35' : 'seam'
+              }`}
+              style={p.destaque ? { boxShadow: '0 30px 80px -40px rgba(29,85,199,.55)' } : undefined}
             >
-              <div className="flex items-center justify-between">
-                <h3 className="text-[22px] font-semibold tracking-tight">{p.nome}</h3>
-                {p.destaque && <span className="code rounded-full bg-trace/15 px-2.5 py-1 text-[11px] uppercase tracking-[0.14em] text-trace-hi">Mais completo</span>}
-              </div>
-              <p className="mt-2 text-[14px] leading-relaxed text-ink-3">{p.para}</p>
-              <p className="mt-6 flex items-baseline gap-1.5">
-                <span className="text-[15px] text-ink-3">R$</span>
-                <span className="text-[40px] font-semibold leading-none tracking-[-0.02em]">{p.preco}</span>
-                <span className="text-[15px] text-ink-3">/mês</span>
+              {/* filete de luz no topo do plano em destaque, no lugar do selo colorido */}
+              {p.destaque && (
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 top-0 h-px"
+                  style={{ background: 'linear-gradient(90deg, transparent, rgba(138,184,255,.7), transparent)' }}
+                />
+              )}
+
+              <header className="flex items-baseline justify-between gap-3">
+                <h3 className="text-[20px] font-semibold tracking-tight">{p.nome}</h3>
+                {p.destaque && (
+                  <span className="code text-[10.5px] uppercase tracking-[0.18em] text-trace-hi">Mais completo</span>
+                )}
+              </header>
+              <p className="mt-1.5 min-h-[42px] max-w-[34ch] text-[14px] leading-relaxed text-ink-3">{p.para}</p>
+
+              <p className="mt-6 flex items-baseline gap-2 border-t seam-soft pt-6">
+                <span className="text-[14px] text-ink-4">R$</span>
+                <span className="text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink-1" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {p.preco}
+                </span>
+                <span className="text-[14px] text-ink-4">/mês</span>
               </p>
-              <ul className="mb-8 mt-6 space-y-2.5 text-[14.5px]">
+
+              {/* lista longa (Full) em duas colunas de texto: flui sem abrir buracos entre as linhas */}
+              <ul className={`mb-9 mt-7 border-t seam-soft pt-6 text-[14px] ${p.itens.length > 7 ? 'sm:columns-2 sm:gap-x-7' : ''}`}>
                 {p.itens.map((i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-ink-2"><Check size={16} className="mt-[3px] flex-none text-trace" /> {i}</li>
+                  <li key={i} className="flex items-start gap-2.5 break-inside-avoid pb-2.5 text-ink-2 last:pb-0">
+                    <Check size={14} className="mt-[4px] flex-none text-trace/70" strokeWidth={2.5} /> {i}
+                  </li>
                 ))}
               </ul>
+
               <Link
                 to="/cadastro"
-                className={`mt-auto inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-primary' : 'btn-ghost !h-12'}`}
+                className={`mt-auto inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-primary' : 'btn-ghost !h-12 hover:!border-trace/40'}`}
               >
                 Criar conta grátis
               </Link>
-            </div>
+            </article>
           ))}
         </div>
       </div>
