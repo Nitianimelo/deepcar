@@ -2,7 +2,6 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, AtSign, Check, CircleAlert, CircleCheck, Eye, EyeOff, LockKeyhole, Smartphone, Timer, UserRound } from 'lucide-react'
 import { registrar, type ErroApi } from '../lib/auth'
-import { carregarIndice, fmt, resumoAcervo, useCarga } from '../lib/acervo'
 import { MINUTOS_FREE } from '../lib/plano'
 import {
   emailValido,
@@ -51,8 +50,6 @@ export default function Cadastro() {
   const [enviando, setEnviando] = useState(false)
 
   // os números do painel vêm do catálogo real, como na landing
-  const indice = useCarga(() => carregarIndice(), [])
-  const acervo = resumoAcervo(indice.estado === 'ok' ? indice.dados : null)
 
   const erros = useMemo(() => validar(d), [d])
   const tudoCerto = !erros.nome && !erros.email && !erros.whatsapp && !erros.senha
@@ -111,13 +108,13 @@ export default function Cadastro() {
         <div className="relative max-w-md">
           <p className="code text-[11px] tracking-[0.22em] uppercase text-ink-3 mb-4">Criar conta</p>
           <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight text-ink-1">
-            Abra o esquema certo antes de encostar o multímetro.
+            Comece grátis e consulte o primeiro carro agora.
           </h1>
           <ul className="mt-6 space-y-2.5">
             {[
-              `${fmt(acervo.esquemas)} esquemas: injeção leve e diesel, ABS, elétrica e câmbio`,
-              `${acervo.montadoras} montadoras, da linha leve ao caminhão`,
-              'Consulta por placa, navegação por componente e impressão em A4',
+              'Mais de 15 mil modelos: injeção eletrônica, elétrica, ABS e câmbio',
+              '60 montadoras e 98% da frota nacional, do leve ao diesel',
+              'Consulta pela placa no celular, no tablet ou no computador',
             ].map((i) => (
               <li key={i} className="flex items-start gap-2.5 text-[15px] leading-relaxed text-ink-2">
                 <Check size={16} className="mt-[5px] flex-none text-trace" /> {i}

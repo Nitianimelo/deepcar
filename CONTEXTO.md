@@ -29,7 +29,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `24a8509`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `aa74bde`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -57,6 +57,18 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-09-17 · Nova copy do painel lateral do cadastro
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** tirar do cadastro o mesmo tipo de copy removida do login ("Abra o esquema certo antes de encostar o multímetro.").
+- **O que mudou:**
+  - `src/pages/Cadastro.tsx`: título "Comece grátis e consulte o primeiro carro agora."; itens alinhados com a página de
+    vendas: "Mais de 15 mil modelos: injeção eletrônica, elétrica, ABS e câmbio", "60 montadoras e 98% da frota nacional,
+    do leve ao diesel", "Consulta pela placa no celular, no tablet ou no computador". Antes os itens usavam números calculados
+    do acervo (10.522 esquemas, 55 montadoras), que contradiziam a landing; a página deixou de baixar o índice do R2.
+  - `src/lib/acervo.ts`: removida `resumoAcervo()`, sem uso em nenhuma tela.
+- **Verificação:** build ok; oxlint 12 avisos (sem novos); captura do cadastro 1440×900.
+- **Pendências:** nenhuma.
+
 ### 2026-09-16 · Nova copy da tela de login e "Grupo Arcco" fora dos rodapés
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
 - **Pedido:** trocar a copy do painel lateral do login ("Esquemas elétricos automotivos, na bancada." / "…para quem está
@@ -66,7 +78,6 @@ Regras de trabalho estão em `AGENTE.md`.
     câmbio de mais de 15 mil modelos, do leve ao diesel. Digite a placa e encontre o que precisa no celular, no tablet ou
     no computador." (mesmo tom da página de vendas).
   - Rodapé "© ano Deepcar · Grupo Arcco" virou "© ano Deepcar" em `Landing.tsx`, `Login.tsx` e `Cadastro.tsx`.
-  - Não mudou: o painel lateral do cadastro ainda diz "Abra o esquema certo antes de encostar o multímetro."
 - **Verificação:** build ok; captura do login 1440×900; rodapé da landing conferido no navegador.
 - **Pendências:** nenhuma.
 

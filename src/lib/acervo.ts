@@ -94,14 +94,6 @@ export async function carregarTudo(secoes: SectionKey[]) {
 
 export const urlImagem = (d: EsquemaDetalhe, t: Trecho) => `${ACERVO_URL}/${d.imagens}/${t.arquivo}`
 
-/** Totais do acervo; "Ford Caminhões" conta como Ford. Fallback com os números da última exportação. */
-export function resumoAcervo(i?: IndiceAcervo | null) {
-  if (!i) return { esquemas: 10522, montadoras: 55, sistemas: 5 }
-  const secoes = Object.values(i.secoes)
-  const nomes = new Set(secoes.flatMap((s) => s?.marcas.map((m) => m.nome.replace(/ Caminhões$/i, '')) ?? []))
-  return { esquemas: secoes.reduce((n, s) => n + (s?.total ?? 0), 0), montadoras: nomes.size, sistemas: secoes.length }
-}
-
 export const fmt = (n: number) => n.toLocaleString('pt-BR')
 
 /** Vocabulário da interface: o pipeline gera "Produção" e "Gerenciamento"; o mecânico lê "Fabricação" e "Sistema". */
