@@ -13,7 +13,8 @@ Regras de trabalho estão em `AGENTE.md`.
 
 - **Produção:** Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub `Nitianimelo/deepcar`.
 - **Funcionando em produção:**
-  - Landing (`/`) com mockups de celular/tablet, selos das lojas e dois planos com preço: Pro (R$ 47,90/mês) e Full (R$ 59,90/mês). Textos comerciais fixos:
+  - Landing (`/`) com mockups de celular/tablet, selos das lojas e dois planos com preço: Pro (R$ 47,90/mês) e Full (R$ 59,90/mês).
+    Dobras: hero → cobertura (60 montadoras / 98% da frota + faixa de logos) → busca por placa (`#placa`) → planos → rodapé. Textos comerciais fixos:
     subtítulo "15 mil modelos de veículos" e números "60 montadoras" / "98% da frota nacional".
     Faixa de montadoras da landing com os logos nas cores das marcas, sobre cartões claros.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
@@ -29,7 +30,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `7f087d0`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `69c32c1`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -40,6 +41,8 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Scripts de acervo e do executável dependem de caminhos Windows (`E:\`).
 - [ ] 12 avisos do oxlint (0 erros) em `src/`: `set-state-in-effect`, `exhaustive-deps`, `only-export-components`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
+- [ ] Dobra `#placa` da landing usa o mockup de celular em CSS; se houver foto real (mecânico com o app na mão),
+      trocar o `<Phone>` pela imagem em `src/pages/Landing.tsx` (função `BuscaPlaca`).
 - [ ] Assinatura/pagamento do plano pro não existe: a passagem para `pro` é manual no `/admin`.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
@@ -56,6 +59,22 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-17 · Dobra "Busca por placa" na página de vendas
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** dobra nova mostrando a busca por placa, com foto de um rapaz usando a plataforma no celular. O texto de
+  referência era a copy da Simplo ("Manuais Simplo… A BUSCA PLACA"), para adaptar à nossa plataforma.
+- **O que mudou (`src/pages/Landing.tsx`):** nova seção `BuscaPlaca` (`#placa`), entre cobertura e planos:
+  - Copy **reescrita** com nossas palavras (não copiada da concorrente, sem menção a Manuais Simplo): rótulo "Busca por
+    placa", título "O esquema certo em um toque.", parágrafo sobre identificar montadora, modelo, ano e motorização e já
+    mostrar os sistemas compatíveis.
+  - Três passos numerados (digite a placa → veja o veículo → abra o esquema) e botão "Testar com uma placa" para `/cadastro`,
+    com a observação "Grátis por 5 minutos, sem cartão".
+  - Ilustração: o **mockup de celular do próprio produto** (`Phone` de `DeviceMockups`), que já mostra a placa BRA-2E19,
+    a ficha do Hilux e os sistemas disponíveis. Não usei foto de banco de imagens (licença paga) nem foto inventada;
+    se o usuário mandar uma foto real, basta trocar o `<Phone>` pela imagem (anotado nas pendências).
+- **Verificação:** build ok; capturas 1440×1000 e 390×844 (texto e celular), sem rolagem horizontal.
+- **Pendências:** trocar o mockup por foto real, se houver.
 
 ### 2026-09-17 · Botão "Entrar" some no celular (corrigido)
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

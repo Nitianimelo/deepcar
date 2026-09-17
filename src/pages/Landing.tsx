@@ -14,6 +14,7 @@ export default function Landing() {
       <Header />
       <Hero />
       <Cobertura />
+      <BuscaPlaca />
       <Planos />
       <Footer />
     </div>
@@ -83,6 +84,62 @@ function Hero() {
         <div className="relative mx-auto h-[540px] w-full max-w-[420px] sm:h-[600px] sm:max-w-none lg:-mr-24 lg:h-[640px] lg:w-[820px] lg:max-w-none">
           <Tablet scale={0.52} className="absolute right-0 top-2 hidden sm:block lg:right-0 lg:top-4" />
           <Phone scale={0.55} className="absolute bottom-0 left-1/2 -translate-x-1/2 drop-shadow-2xl sm:left-4 sm:translate-x-0 lg:left-0" />
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ── Busca por placa ───────────────────────────────────────────────── */
+function BuscaPlaca() {
+  const passos = [
+    ['Digite a placa', 'Padrão antigo ou Mercosul, no celular ou no computador.'],
+    ['Veja o veículo', 'Montadora, modelo, ano, combustível e motorização na hora.'],
+    ['Abra o esquema', 'Só os sistemas compatíveis com aquele carro, sem procurar em lista.'],
+  ]
+  return (
+    <section id="placa" className="relative overflow-hidden border-t seam">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(800px 500px at 85% 20%, rgba(14,58,118,0.45) 0%, transparent 60%)' }}
+      />
+      <div className="relative mx-auto grid max-w-[1200px] items-center gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:gap-16 lg:py-28">
+        <div>
+          <p className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Busca por placa</p>
+          <h2 className="mt-4 text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
+            O esquema certo em um toque.
+          </h2>
+          <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-ink-2">
+            Em vez de garimpar o modelo no catálogo, digite a placa. O Deepcar identifica montadora, modelo, ano e
+            motorização e já mostra os esquemas que servem para aquele veículo — injeção, ABS, elétrica e câmbio.
+            Menos tempo procurando, mais tempo com o carro no elevador.
+          </p>
+
+          <ol className="mt-9 space-y-5 border-t seam pt-8">
+            {passos.map(([titulo, texto], i) => (
+              <li key={titulo} className="flex gap-4">
+                <span className="code mt-0.5 grid h-7 w-7 flex-none place-items-center rounded-full border border-trace/30 bg-trace/10 text-[12px] text-trace-hi">
+                  {i + 1}
+                </span>
+                <span>
+                  <span className="block text-[15.5px] font-medium text-ink-1">{titulo}</span>
+                  <span className="block text-[14.5px] leading-relaxed text-ink-3">{texto}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Link to="/cadastro" className="btn-primary inline-flex items-center gap-2 px-6">
+              Testar com uma placa <ArrowRight size={17} />
+            </Link>
+            <span className="text-[13.5px] text-ink-4">Grátis por {MINUTOS_FREE} minutos, sem cartão.</span>
+          </div>
+        </div>
+
+        {/* o celular do produto: a mesma tela que o mecânico vê na oficina */}
+        <div className="relative mx-auto h-[520px] w-full max-w-[380px] sm:h-[600px] sm:max-w-[420px]">
+          <Phone scale={0.58} className="absolute left-1/2 top-0 -translate-x-1/2 drop-shadow-2xl sm:scale-100" />
         </div>
       </div>
     </section>
