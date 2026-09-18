@@ -124,6 +124,23 @@ body {
 .btn-primary:focus-visible { outline: none; box-shadow: var(--glow); }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
+/* CTA da página de vendas: verde, para separar a ação comercial do azul do produto.
+   Tom escolhido pelo contraste do texto branco (5,1:1). */
+.btn-cta {
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #0f7d54 0%, #0b6243 100%);
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 8px 24px rgba(15,125,84,0.3);
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+.btn-cta:hover { filter: brightness(1.12); }
+.btn-cta:active { transform: translateY(1px); }
+.btn-cta:focus-visible { outline: none; box-shadow: 0 0 0 1px rgba(63,209,143,.5), 0 0 24px rgba(63,209,143,.25); }
+.btn-cta:disabled { opacity: 0.6; cursor: not-allowed; }
+
 .btn-ghost {
   height: 40px;
   padding: 0 14px;

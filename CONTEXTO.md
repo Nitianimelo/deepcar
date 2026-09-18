@@ -30,7 +30,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `e373997`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `23c89ae`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -59,6 +59,23 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-18 · Página de vendas: sem os "5 minutos", "manual técnico" na dobra da placa e CTA verde
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **O que mudou (só a landing):**
+  - **Fora a menção aos minutos grátis:** saiu "Grátis por 5 minutos, sem cartão." da dobra da placa e o texto dos planos
+    virou "A conta gratuita abre na hora, sem cartão, para você conhecer o acervo por dentro.". `MINUTOS_FREE` não é mais
+    importado na landing (segue no app e no cadastro, onde descreve o limite real do plano).
+  - **"esquema" → "manual técnico"** na dobra `#placa`: título "O manual técnico certo em um toque.", parágrafo
+    ("…já mostra os manuais técnicos daquele veículo…") e o terceiro passo ("Abra o manual técnico"). As outras dobras e o
+    app continuam com "esquema".
+  - **CTA verde:** nova classe `.btn-cta` em `src/index.css` (degradê `#0f7d54` → `#0b6243`, texto branco com contraste
+    5,1:1) usada nos botões da landing (cabeçalho, hero, dobra da placa, "Testar gratuitamente" e plano Full). O `.btn-primary`
+    azul continua valendo no app, no login e no cadastro. Os detalhes do card Full (borda, sombra, filete e selo) passaram
+    de azul para verde para não brigar com o botão.
+- **Verificação:** build ok; oxlint 12 avisos; no navegador: nenhuma ocorrência de "minutos" na página, "esquema" zerado na
+  dobra da placa (2 de "manual técnico"), botão com o degradê verde aplicado; capturas do hero, cobertura, placa e planos.
+- **Pendências:** nenhuma.
 
 ### 2026-09-17 · Foto da dobra "Busca por placa" sem moldura e em tamanho cheio
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

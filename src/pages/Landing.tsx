@@ -6,7 +6,6 @@ import { AppStoreBadge, PlayStoreBadge } from '../components/StoreBadges'
 import { CarBlueprint } from '../components/CarBlueprint'
 import { MarcasStrip } from '../components/MarcasStrip'
 import { formatarPlaca, placaValida } from '../lib/placa'
-import { MINUTOS_FREE } from '../lib/plano'
 
 export default function Landing() {
   return (
@@ -34,7 +33,7 @@ function Header() {
         </nav>
         <div className="ml-auto flex flex-none items-center gap-1.5 sm:gap-2.5">
           <Link to="/login" className="btn-ghost inline-flex flex-none items-center !px-3 text-[14px] sm:!px-4">Entrar</Link>
-          <Link to="/cadastro" className="btn-primary inline-flex h-10 flex-none items-center whitespace-nowrap px-3 text-[13.5px] sm:px-4 sm:text-[14px]">Criar conta grátis</Link>
+          <Link to="/cadastro" className="btn-cta inline-flex h-10 flex-none items-center whitespace-nowrap px-3 text-[13.5px] sm:px-4 sm:text-[14px]">Criar conta grátis</Link>
         </div>
       </div>
     </header>
@@ -65,7 +64,7 @@ function Hero() {
             Injeção eletrônica, elétrica, ABS e câmbio. No celular, no tablet ou no computador da sua oficina.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link to="/cadastro" className="btn-primary inline-flex items-center gap-2 px-6">
+            <Link to="/cadastro" className="btn-cta inline-flex items-center gap-2 px-6">
               Criar conta grátis <ArrowRight size={17} />
             </Link>
             <a href="#cobertura" className="btn-ghost inline-flex h-12 items-center px-5">Ver cobertura</a>
@@ -95,7 +94,7 @@ function BuscaPlaca() {
   const passos = [
     ['Digite a placa', 'Padrão antigo ou Mercosul, no celular ou no computador.'],
     ['Veja o veículo', 'Montadora, modelo, ano, combustível e motorização na hora.'],
-    ['Abra o esquema', 'Só os sistemas compatíveis com aquele carro, sem procurar em lista.'],
+    ['Abra o manual técnico', 'Só os sistemas compatíveis com aquele carro, sem procurar em lista.'],
   ]
   return (
     <section id="placa" className="relative overflow-hidden border-t seam">
@@ -107,11 +106,11 @@ function BuscaPlaca() {
         <div>
           <p className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Busca por placa</p>
           <h2 className="mt-4 text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
-            O esquema certo em um toque.
+            O manual técnico certo em um toque.
           </h2>
           <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-ink-2">
             Em vez de garimpar o modelo no catálogo, digite a placa. O Deepcar identifica montadora, modelo, ano e
-            motorização e já mostra os esquemas que servem para aquele veículo — injeção, ABS, elétrica e câmbio.
+            motorização e já mostra os manuais técnicos daquele veículo — injeção, ABS, elétrica e câmbio.
             Menos tempo procurando, mais tempo com o carro no elevador.
           </p>
 
@@ -130,10 +129,9 @@ function BuscaPlaca() {
           </ol>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Link to="/cadastro" className="btn-primary inline-flex items-center gap-2 px-6">
+            <Link to="/cadastro" className="btn-cta inline-flex items-center gap-2 px-6">
               Testar com uma placa <ArrowRight size={17} />
             </Link>
-            <span className="text-[13.5px] text-ink-4">Grátis por {MINUTOS_FREE} minutos, sem cartão.</span>
           </div>
         </div>
 
@@ -220,7 +218,7 @@ function Cobertura() {
                     aria-label="Placa do veículo"
                   />
                 </label>
-                <button type="submit" className="btn-primary px-6" disabled={!ok}>Testar gratuitamente</button>
+                <button type="submit" className="btn-cta px-6" disabled={!ok}>Testar gratuitamente</button>
               </form>
               <p className="code mt-3 text-[11.5px] text-ink-4">Placas Mercosul e padrão antigo. Sem cartão de crédito.</p>
             </div>
@@ -282,8 +280,7 @@ function Planos() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <h2 className="text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">Planos</h2>
           <p className="max-w-[46ch] text-[15px] text-ink-3">
-            A conta gratuita abre na hora e dá {MINUTOS_FREE} minutos de acesso para você
-            conhecer o acervo por dentro.
+            A conta gratuita abre na hora, sem cartão, para você conhecer o acervo por dentro.
           </p>
         </div>
 
@@ -292,23 +289,23 @@ function Planos() {
             <article
               key={p.nome}
               className={`relative flex flex-col overflow-hidden rounded-[18px] border bg-bench-1 p-7 sm:p-8 ${
-                p.destaque ? 'border-trace/35' : 'seam'
+                p.destaque ? 'border-ok/35' : 'seam'
               }`}
-              style={p.destaque ? { boxShadow: '0 30px 80px -40px rgba(29,85,199,.55)' } : undefined}
+              style={p.destaque ? { boxShadow: '0 30px 80px -40px rgba(15,125,84,.6)' } : undefined}
             >
               {/* filete de luz no topo do plano em destaque, no lugar do selo colorido */}
               {p.destaque && (
                 <span
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-x-0 top-0 h-px"
-                  style={{ background: 'linear-gradient(90deg, transparent, rgba(138,184,255,.7), transparent)' }}
+                  style={{ background: 'linear-gradient(90deg, transparent, rgba(63,209,143,.7), transparent)' }}
                 />
               )}
 
               <header className="flex items-baseline justify-between gap-3">
                 <h3 className="text-[20px] font-semibold tracking-tight">{p.nome}</h3>
                 {p.destaque && (
-                  <span className="code text-[10.5px] uppercase tracking-[0.18em] text-trace-hi">Mais completo</span>
+                  <span className="code text-[10.5px] uppercase tracking-[0.18em] text-ok">Mais completo</span>
                 )}
               </header>
               <p className="mt-1.5 min-h-[42px] max-w-[34ch] text-[14px] leading-relaxed text-ink-3">{p.para}</p>
@@ -332,7 +329,7 @@ function Planos() {
 
               <Link
                 to="/cadastro"
-                className={`mt-auto inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-primary' : 'btn-ghost !h-12 hover:!border-trace/40'}`}
+                className={`mt-auto inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-cta' : 'btn-ghost !h-12 hover:!border-ok/40'}`}
               >
                 Criar conta grátis
               </Link>
