@@ -103,8 +103,19 @@ export const rotulo = (k: string) =>
 /** "Esquema elétrico de injeção eletrônica — gerenciamento Siemens 2.1" → só a primeira parte (o resto já está nos cartões). */
 export const subtituloCurto = (s: string) => s.split(' — ')[0]
 
+/** Chave da seção → rota. As seções com submenu (Leve/Diesel) viram duas rotas sob o mesmo caminho. */
+const ROTAS: Record<SectionKey, string> = {
+  'injecao-leve': 'injecao/leve',
+  'injecao-diesel': 'injecao/diesel',
+  abs: 'abs',
+  eletrica: 'eletrica/leve',
+  'eletrica-diesel': 'eletrica/diesel',
+  cambio: 'cambio/leve',
+  'cambio-diesel': 'cambio/diesel',
+}
+
 export function rotaSecao(secao: SectionKey) {
-  return `/app/${secao === 'injecao-leve' ? 'injecao/leve' : secao === 'injecao-diesel' ? 'injecao/diesel' : secao}`
+  return `/app/${ROTAS[secao] ?? secao}`
 }
 
 export type Carga<T> = { estado: 'carregando' } | { estado: 'ok'; dados: T } | { estado: 'erro'; msg: string }

@@ -23,7 +23,7 @@ Regras de trabalho estão em `AGENTE.md`.
   - Tela inicial `/app`: cards "Consultar por placa" e "Buscar esquema" e card "Últimas consultas" (localStorage, por conta).
     Botão "Início" no menu lateral (e o logo leva para lá).
   - Busca geral `/app/busca?q=` em todos os sistemas (modelo, motor, código, gerenciamento, fabricação e nome do sistema).
-  - Plataforma `/app`: seções de injeção leve/diesel, ABS, elétrica e câmbio, com catálogo do acervo no R2.
+  - Plataforma `/app`: seções de injeção (Leve/Diesel), ABS, elétrica (Leve/Diesel) e câmbio (Leve/Diesel), com catálogo do acervo no R2.
   - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → modo simulado, com cache de 24 h em memória.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
@@ -59,6 +59,29 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-18 · Submenus Leve/Diesel em Elétrica e Câmbio
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** o acervo de caminhões, ônibus e picapes diesel (elétrica e câmbio) acabou de subir para o R2 e precisa
+  aparecer como submenu, do mesmo jeito que a injeção já tem Leve e Diesel.
+- **O que mudou:**
+  - `src/data/nav.ts`: `SectionKey` ganhou `eletrica-diesel` e `cambio-diesel`; Elétrica e Câmbio deixaram de ser itens
+    soltos e viraram grupos com os filhos **Leve** e **Diesel** (mesmos ícones da injeção: `Car` e `Truck`).
+    `SECTION_META` ganhou as duas seções novas e os títulos das antigas viraram "Elétrica · Leve" e "Câmbio · Leve".
+  - `src/lib/acervo.ts`: `rotaSecao` virou uma tabela `ROTAS` (antes era um encadeado de ternários só para a injeção).
+  - `src/App.tsx`: rotas `eletrica/leve`, `eletrica/diesel`, `cambio/leve`, `cambio/diesel`; `/app/eletrica` e
+    `/app/cambio` continuam existindo como redirecionamento para `/leve`, para não quebrar link salvo.
+  - Nada mais precisou mudar: menu, busca, compatibilidade por placa e impressão já derivam de `NAV`/`SECTION_META`.
+- **Acervo (R2):** seções novas `eletrica-diesel` (884 esquemas, 25 marcas) e `cambio-diesel` (314, 17 marcas), geradas
+  pelo pipeline em `E:\Esquemas_Azul_Preto_20260908` (`Publicar-R2.ps1`, `Reorganizar-Diesel-R2.ps1`). As marcas ficam
+  com o nome limpo ("Scania"), porque a seção já diz que é diesel. `catalogo/eletrica.json` e `catalogo/cambio.json`
+  voltaram ao conteúdo de antes (1.527 e 1.335), e o `index.json` agora tem 7 seções.
+- **Banco:** sem mudança.
+- **Variáveis/infra:** sem mudança (mesmo bucket e mesma `VITE_ACERVO_URL`).
+- **Verificação:** `npm run build` e `npm run lint` (0 erros; os 12 avisos conhecidos continuam). Conferido no ar que o
+  JSON das seções novas e as imagens respondem no domínio público do R2.
+- **Pendências:** 14 PDFs de câmbio diesel ficaram sem esquema (esquema em blocos, sem coluna do módulo; detalhes no
+  README do pipeline) e o plano Free continua sem separar o que cada seção libera.
 
 ### 2026-09-18 · Página de vendas: sem os "5 minutos", "manual técnico" na dobra da placa e CTA verde
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

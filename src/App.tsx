@@ -29,8 +29,13 @@ export default function App() {
           <Route path="injecao/leve" element={<SectionPage secao="injecao-leve" />} />
           <Route path="injecao/diesel" element={<SectionPage secao="injecao-diesel" />} />
           <Route path="abs" element={<SectionPage secao="abs" />} />
-          <Route path="eletrica" element={<SectionPage secao="eletrica" />} />
-          <Route path="cambio" element={<SectionPage secao="cambio" />} />
+          <Route path="eletrica/leve" element={<SectionPage secao="eletrica" />} />
+          <Route path="eletrica/diesel" element={<SectionPage secao="eletrica-diesel" />} />
+          <Route path="cambio/leve" element={<SectionPage secao="cambio" />} />
+          <Route path="cambio/diesel" element={<SectionPage secao="cambio-diesel" />} />
+          {/* rotas antigas, de antes do submenu: quem tem link salvo continua chegando */}
+          <Route path="eletrica" element={<Navigate to="/app/eletrica/leve" replace />} />
+          <Route path="cambio" element={<Navigate to="/app/cambio/leve" replace />} />
           <Route path="esquema/*" element={<EsquemaPage />} />
           <Route path="veiculo/:placa" element={<VeiculoPage />} />
           <Route path="conta" element={<Conta />} />
