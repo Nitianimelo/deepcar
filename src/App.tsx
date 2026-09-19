@@ -1,6 +1,12 @@
 import { Suspense, lazy } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Landing from './pages/Landing'
+
+/** Redireciona mantendo a query (`?marca=Volvo` de link salvo não pode se perder). */
+function Redireciona({ para }: { para: string }) {
+  const { search } = useLocation()
+  return <Navigate to={`${para}${search}`} replace />
+}
 
 // Só a landing entra no pacote inicial. O resto chega quando a rota é aberta —
 // quem só visita a página inicial não baixa o visualizador nem a impressão.
@@ -34,8 +40,8 @@ export default function App() {
           <Route path="cambio/leve" element={<SectionPage secao="cambio" />} />
           <Route path="cambio/diesel" element={<SectionPage secao="cambio-diesel" />} />
           {/* rotas antigas, de antes do submenu: quem tem link salvo continua chegando */}
-          <Route path="eletrica" element={<Navigate to="/app/eletrica/leve" replace />} />
-          <Route path="cambio" element={<Navigate to="/app/cambio/leve" replace />} />
+          <Route path="eletrica" element={<Redireciona para="/app/eletrica/leve" />} />
+          <Route path="cambio" element={<Redireciona para="/app/cambio/leve" />} />
           <Route path="esquema/*" element={<EsquemaPage />} />
           <Route path="veiculo/:placa" element={<VeiculoPage />} />
           <Route path="conta" element={<Conta />} />

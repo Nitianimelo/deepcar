@@ -60,6 +60,26 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-09-18 · Revisão dos submenus: dica do grupo e redirecionamento com filtro
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani ("revisa algum possível bug")
+- **O que mudou:**
+  - `src/components/Sidebar.tsx`: a dica (`data-tip`) do cabeçalho de grupo estava escrita à mão para injeção
+    ("Injeção leve (Otto e flex) e diesel") e passou a aparecer igual em Elétrica e Câmbio depois do commit anterior.
+    Agora é montada do próprio grupo: "Elétrica: Leve e Diesel" / "Recolher Elétrica".
+  - `src/App.tsx`: novo componente `Redireciona`, que mantém a query ao mandar `/app/eletrica` e `/app/cambio` para
+    `/leve`. O `<Navigate>` anterior descartava a busca, então link salvo com `?marca=Volvo` caía na grade de montadoras.
+- **Revisado e sem mudança necessária:** `compatibilidade.ts`, `busca.ts`, `ListaEsquemas`, `PrintEsquema` e
+  `EsquemaPage` derivam tudo de `NAV`/`SECTION_META`; o plano free não filtra por seção; os logos das marcas novas
+  (Scania, MAN, Marcopolo, Troller, Mahindra…) já existem em `public/marcas`.
+- **Efeito colateral bom:** com a marca de nome limpo nas seções diesel, a consulta por placa passa a achá-las —
+  antes, "Scania Caminhões" nunca casava com a marca da placa.
+- **Atenção (não é defeito):** `/app/busca` e a consulta por placa baixam o catálogo de **todas** as seções, que agora
+  são 7 (mais ~1,2 MB não comprimido). Se incomodar, o caminho é buscar por seção sob demanda.
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** `npm run build` e `npm run lint` (0 erros). No acervo: 1.198 fichas e 38.085 imagens nas seções
+  `-diesel`, nenhuma sobra `-truck`, e amostra de 20 modelos conferida por HTTP (ficha + última imagem + minimapa).
+- **Pendências:** as mesmas do commit anterior.
+
 ### 2026-09-18 · Submenus Leve/Diesel em Elétrica e Câmbio
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
 - **Pedido:** o acervo de caminhões, ônibus e picapes diesel (elétrica e câmbio) acabou de subir para o R2 e precisa

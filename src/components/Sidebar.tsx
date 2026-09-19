@@ -202,7 +202,7 @@ function GroupItem({
         type="button"
         onClick={onToggle}
         aria-expanded={isOpen}
-        data-tip={isOpen ? 'Recolher opções de injeção' : 'Injeção leve (Otto e flex) e diesel'}
+        data-tip={isOpen ? `Recolher ${group.label}` : `${group.label}: ${group.children.map((c) => c.label).join(' e ')}`}
         data-tip-side="right"
         className={`nav-item w-full ${childActive && !isOpen ? 'nav-active' : ''}`}
       >
