@@ -30,7 +30,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `23c89ae`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `1a245e9`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -43,7 +43,9 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
 - [ ] A foto da dobra `#placa` é gerada por IA: a tela do celular tem nomes de montadora com erro de grafia
       ("Chewolet", "Citrofo", "Alfa Roemo"). No tamanho exibido não se lê, mas vale trocar por foto real quando houver.
-- [ ] Assinatura/pagamento do plano pro não existe: a passagem para `pro` é manual no `/admin`.
+- [ ] Assinatura/pagamento não existe no produto: a passagem de plano é manual no `/admin`. Gateway escolhido: **Cakto**
+      (MCP conectado, ver histórico de 2026-09-21). Próximos passos: criar produto/ofertas Pro e Full, checkout a partir do
+      app, webhook `purchase_approved` / `subscription_*` para virar o plano sozinho, e a modelagem dos planos no banco.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
 - [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado). No Início não acontece mais (o campo não aparece lá); nas outras telas continua.
@@ -59,6 +61,27 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-21 · Cakto (gateway de pagamento) conectado via MCP
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** conectar ao MCP da Cakto para integrar pagamentos; credenciais guardadas localmente.
+- **O que foi feito (nada de código ainda):**
+  - Credenciais em `~/.config/deepcar/cakto.env` (permissão 600, **fora do repositório**): `CAKTO_MCP_URL`,
+    `CAKTO_CLIENT_ID`, `CAKTO_CLIENT_SECRET`.
+  - Servidor MCP registrado no **escopo de usuário** (`~/.claude.json`, vale em qualquer projeto, não vai para o Git):
+    `claude mcp add --scope user --transport http cakto https://mcp.cakto.com.br` com os cabeçalhos
+    `X-Cakto-Client-Id` / `X-Cakto-Client-Secret`. Status `✔ Connected`. Para remover: `claude mcp remove cakto -s user`.
+  - Credencial conferida (`cakto_whoami`): ambiente **produção**, base `https://api.cakto.com.br`, escopos `read`, `write`,
+    `products`, `orders`, `payments`, `subscriptions`, `webhooks`. O token expira e é renovado pelo próprio MCP.
+  - Catálogo: 59 endpoints em 11 grupos — products (11), subscriptions (11), webhook (8), orders (6), order-bumps (6),
+    offers (5), withdrawals (3), installment-interest (3), balance (2), customers (2), payments (1).
+  - Eventos de webhook úteis para o produto: `purchase_approved`, `purchase_refused`, `refund`, `chargeback`,
+    `subscription_created`, `subscription_canceled`, `subscription_late`, `subscription_late_recovered`,
+    `subscription_paused`, `subscription_renewal_*`, `pix_gerado`, `boleto_gerado`, `checkout_abandonment`.
+  - Ferramentas do MCP: `cakto_search_api`, `cakto_list_endpoints`, `cakto_get_endpoint`, `cakto_call` (escrita só com
+    `confirm=true`, com preview antes), `cakto_search_docs`, `cakto_get_guide`, `cakto_list_webhook_events`, `cakto_whoami`.
+- **Atenção:** a credencial é de **produção e tem escopo de escrita**; nunca commitar, e trocar a chave se ela vazar.
+- **Pendências:** modelar Pro/Full na Cakto e no banco, checkout no app e webhook que muda o plano automaticamente.
 
 ### 2026-09-18 · Revisão dos submenus: dica do grupo e redirecionamento com filtro
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani ("revisa algum possível bug")
