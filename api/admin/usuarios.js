@@ -10,7 +10,7 @@ import { normalizarWhatsapp, SENHA_MINIMA } from '../_lib/validar.js'
 
 export const config = { runtime: 'nodejs' }
 
-const PLANOS = ['free', 'pro']
+const PLANOS = ['free', 'pro', 'full']
 const PAPEIS = ['usuario', 'admin']
 
 export default async function handler(req, res) {
@@ -28,7 +28,8 @@ export default async function handler(req, res) {
       const qDigitos = digitos ? `%${digitos}%` : null
       const linhas = await sql`
         select u.id, u.email, u.nome, u.oficina, u.plano, u.papel, u.ativo, u.criado_em, u.visto_em,
-               u.whatsapp, u.free_expira_em,
+               u.whatsapp, u.free_expira_em, u.assinatura_status, u.assinatura_plano,
+               u.assinatura_renova_em, u.assinatura_em_atraso, u.assinatura_origem,
                (select count(*)::int from sessoes s where s.usuario_id = u.id and s.expira_em > now()) as sessoes
           from usuarios u
          where ${q} = '%%' or u.email ilike ${q} or u.nome ilike ${q} or u.oficina ilike ${q}
@@ -53,7 +54,8 @@ export default async function handler(req, res) {
                 ${PLANOS.includes(d.plano) ? d.plano : 'free'},
                 ${PAPEIS.includes(d.papel) ? d.papel : 'usuario'},
                 ${normalizarWhatsapp(d.whatsapp)})
-        returning id, email, nome, oficina, plano, papel, ativo, criado_em, visto_em, whatsapp, free_expira_em`)
+        returning id, email, nome, oficina, plano, papel, ativo, criado_em, visto_em, whatsapp, free_expira_em,
+                  assinatura_status, assinatura_plano, assinatura_renova_em, assinatura_em_atraso, assinatura_origem`)
       return res.status(201).json(novo)
     }
 
@@ -77,6 +79,8 @@ export default async function handler(req, res) {
       // zerar o relógio do teste: pedido explícito, ou troca de plano (quem volta para o
       // free ganha uma janela nova, quem vira pro deixa de ter relógio)
       const zerarFree = d.liberarFree === true || d.plano !== undefined
+      // plano mexido a mao: um chargeback posterior nao desfaz a decisao do administrador
+      const manual = d.plano !== undefined
 
       const atualizado = await um(sql`
         update usuarios set
@@ -87,9 +91,13 @@ export default async function handler(req, res) {
           oficina  = coalesce(${d.oficina ?? null}, oficina),
           whatsapp = coalesce(${d.whatsapp ? normalizarWhatsapp(d.whatsapp) : null}, whatsapp),
           senha    = coalesce(${d.senha ? await cifrarSenha(String(d.senha)) : null}, senha),
-          free_expira_em = case when ${zerarFree}::boolean then null else free_expira_em end
+          free_expira_em = case when ${zerarFree}::boolean then null else free_expira_em end,
+          assinatura_origem = case when ${manual}::boolean then 'manual' else assinatura_origem end,
+          assinatura_status = case when ${manual}::boolean then 'manual' else assinatura_status end,
+          assinatura_atualizada_em = case when ${manual}::boolean then now() else assinatura_atualizada_em end
         where id = ${id}
-        returning id, email, nome, oficina, plano, papel, ativo, criado_em, visto_em, whatsapp, free_expira_em`)
+        returning id, email, nome, oficina, plano, papel, ativo, criado_em, visto_em, whatsapp, free_expira_em,
+                  assinatura_status, assinatura_plano, assinatura_renova_em, assinatura_em_atraso, assinatura_origem`)
       if (!atualizado) return res.status(404).json({ erro: 'Usuário não encontrado.' })
       // desativado ou com senha nova: as sessões abertas caem
       if (d.ativo === false || d.senha) await sql`delete from sessoes where usuario_id = ${id}`

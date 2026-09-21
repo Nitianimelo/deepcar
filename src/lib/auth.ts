@@ -5,15 +5,29 @@ import { useEffect, useState } from 'react'
 
 const PERFIL = 'deepcar.perfil'
 
+export type Plano = 'free' | 'pro' | 'full'
+
+/** Estado da assinatura na Cakto, como o navegador precisa ver. */
+export type Assinatura = {
+  status: string
+  plano: Plano | null
+  /** Próxima cobrança (ISO), quando a Cakto informa. */
+  renovaEm: string | null
+  /** Última cobrança falhou: o acesso continua, mas vale avisar. */
+  emAtraso: boolean
+}
+
 export type Session = {
   nome: string
   email: string
   oficina: string
-  plano: 'free' | 'pro'
+  plano: Plano
   papel: 'usuario' | 'admin'
   whatsapp: string | null
   /** Fim dos minutos gratuitos (ISO). Nulo = teste ainda não começou, ou plano pago. */
   freeExpiraEm: string | null
+  /** Nulo = nunca assinou (ou plano dado à mão antes da integração de pagamento). */
+  assinatura?: Assinatura | null
 }
 
 function guardarPerfil(s: Session | null) {

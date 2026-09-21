@@ -14,6 +14,9 @@ const DIAS = 30
 /** Quanto tempo de acesso o plano free da. Trocar aqui muda o produto inteiro. */
 export const MINUTOS_FREE = 5
 
+/** Planos pagos: nao tem relogio de teste. */
+export const PAGOS = new Set(['pro', 'full'])
+
 /**
  * Comeca a contar o teste gratuito na primeira entrada (nao na criacao da conta):
  * quem cadastra hoje e so volta amanha nao perde o teste. Idempotente.
@@ -27,7 +30,7 @@ export async function abrirJanelaFree(u) {
 
 /** Teste gratuito ja vencido? Plano pago nunca vence. */
 export const freeAcabou = (u) =>
-  u.plano === 'free' && !!u.free_expira_em && new Date(u.free_expira_em) <= new Date()
+  !PAGOS.has(u.plano) && !!u.free_expira_em && new Date(u.free_expira_em) <= new Date()
 
 export async function cifrarSenha(senha) {
   const sal = randomBytes(16)
@@ -84,7 +87,8 @@ export async function usuarioDaSessao(req) {
   const token = tokenDe(req)
   if (!token) return null
   const linha = await um(sql`
-    select u.id, u.email, u.nome, u.oficina, u.plano, u.papel, u.ativo, u.whatsapp, u.free_expira_em
+    select u.id, u.email, u.nome, u.oficina, u.plano, u.papel, u.ativo, u.whatsapp, u.free_expira_em,
+           u.assinatura_status, u.assinatura_plano, u.assinatura_renova_em, u.assinatura_em_atraso
       from sessoes s join usuarios u on u.id = s.usuario_id
      where s.token = ${digerir(token)} and s.expira_em > now()`)
   if (!linha || !linha.ativo) return null
@@ -130,7 +134,16 @@ export const publico = (u) => ({
   papel: u.papel,
   whatsapp: u.whatsapp ?? null,
   // nulo = teste ainda nao comecou, ou plano pago (ai nao ha relogio nenhum)
-  freeExpiraEm: u.plano === 'free' && u.free_expira_em ? new Date(u.free_expira_em).toISOString() : null,
+  freeExpiraEm: !PAGOS.has(u.plano) && u.free_expira_em ? new Date(u.free_expira_em).toISOString() : null,
+  // o navegador so precisa saber o estado; ids de cobranca ficam no servidor
+  assinatura: u.assinatura_status
+    ? {
+        status: u.assinatura_status,
+        plano: u.assinatura_plano ?? null,
+        renovaEm: u.assinatura_renova_em ? new Date(u.assinatura_renova_em).toISOString() : null,
+        emAtraso: !!u.assinatura_em_atraso,
+      }
+    : null,
 })
 
 export const corpo = (req) => (typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body ?? {}))

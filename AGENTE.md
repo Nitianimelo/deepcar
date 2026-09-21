@@ -40,7 +40,8 @@ Node na Vercel (`api/`) e Postgres no **Neon**.
 | Banco | Neon (Postgres), ligado à Vercel pela integração | schema em `db/*.sql`, **não** é aplicado pelo deploy |
 | Acervo (catálogo, esquemas, imagens) | Cloudflare R2 | **não** está no git nem na Vercel; front lê de `VITE_ACERVO_URL` |
 | Segredos de infraestrutura | Variáveis de ambiente da Vercel | `DATABASE_URL`, `SESSAO_SEGREDO`, `SEGREDOS_CHAVE` |
-| Chaves de API de terceiros | Cofre no banco (tabela `segredos`), editável em `/admin` | ex.: `FALCON_TOKEN` |
+| Chaves de API de terceiros | Cofre no banco (tabela `segredos`), editável em `/admin` | `FALCON_TOKEN`, `CAKTO_WEBHOOK_SECRET`, `CAKTO_PRODUTO_PRO/FULL` |
+| Pagamento | Cakto (produtos Pro e Full), webhook em `/api/webhooks/cakto` | troca o plano sozinha; MCP `cakto` no escopo de usuário |
 
 Branch `main` não tem proteção: qualquer push publica. Por isso as regras da seção 0.
 
@@ -85,6 +86,7 @@ git push origin main            # 8. publica em produção
 | `npm run preview` | serve o `dist/` |
 | `node scripts/migrar.mjs` | aplica `db/*.sql` em ordem no banco da `DATABASE_URL` (ambiente ou `.env`) |
 | `node scripts/criar-admin.mjs <email> <senha> [nome]` | cria/promove administrador direto no banco |
+| `node scripts/testar-webhook.mjs [url] [email]` | dispara eventos da Cakto assinados contra a rota do webhook |
 | `node scripts/exportar-acervo.mjs` | gera a pasta de publicação do acervo (máquina Windows, caminhos `E:\`) |
 | `node scripts/baixar-fontes.mjs` | baixa as fontes para `public/fonts` |
 | `node scripts/capturar-telas.mjs` | prints das rotas com Edge headless (conferência visual) |
@@ -100,6 +102,10 @@ api/                      funções serverless da Vercel (JavaScript, Node)
   _lib/sessao.js          scrypt, sessão em cookie, exigir(), MINUTOS_FREE, publico()
   _lib/segredos.js        cofre AES-256-GCM (segredo(), ambienteCom(), guardar())
   _lib/validar.js         validação de cadastro (regra que vale de verdade)
+  _lib/cakto.js           webhook da Cakto: prova a origem, evento→ação, produto→plano
+  _lib/assinatura.js      o que um pagamento faz com a conta (ativar, derrubar, atraso, pendente)
+  webhooks/cakto.js       rota pública que recebe os eventos da Cakto
+  admin/assinaturas.js    pendências sem conta e histórico de eventos
   login.js registrar.js sair.js sessao.js
   admin/usuarios.js admin/segredos.js admin/inicializar.js
   placa/[placa].js        consulta de placa (exige sessão + acesso)
@@ -191,7 +197,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   no dev. Para testar contas: `npx vercel dev` (com as variáveis puxadas via `vercel env pull`) ou um Preview Deployment.
 - **Acervo local** depende de `ACERVO_DIR` (padrão `E:\deepcar-publicacao`, máquina Windows). Sem ele, catálogo vazio no dev.
 - `Iniciar-Local.ps1`, `exportar-acervo.mjs` e `empacotar-exe.mjs` usam caminhos `E:\` e ferramentas Windows.
-- `npm run lint` já tem 12 avisos (0 erros), principalmente `set-state-in-effect`, `exhaustive-deps` e `only-export-components`, espalhados por `src/`. Não são erros; não aumente a lista (compare a contagem antes e depois da mudança).
+- `npm run lint` já tem 13 avisos (0 erros), principalmente `set-state-in-effect`, `exhaustive-deps` e `only-export-components`, espalhados por `src/`. Não são erros; não aumente a lista (compare a contagem antes e depois da mudança).
 - Prints do `capturar-telas.mjs` (Edge headless) cortam a largura: não confunda com layout quebrado (ver commit `31b1313`).
 - Pasta local dentro do iCloud Drive pode corromper o `.git` (arquivos duplicados tipo `index 2`). Prefira clonar fora do iCloud.
 - Deploy da Vercel não roda migração nem copia o acervo.

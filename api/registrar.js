@@ -2,6 +2,7 @@
 import { sql, um } from './_lib/db.js'
 import { abrirJanelaFree, cifrarSenha, corpo, criarSessao, porCookie, publico } from './_lib/sessao.js'
 import { emailValido, nomeValido, normalizarWhatsapp, senhaValida, SENHA_MINIMA } from './_lib/validar.js'
+import { consumirPendente } from './_lib/assinatura.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -35,8 +36,10 @@ export default async function handler(req, res) {
       values (${email}, ${await cifrarSenha(senha)}, ${nome}, ${oficina}, ${whatsapp})
       returning *`)
 
+    // pagou antes de ter conta: o plano entra agora, sem passar pelo bloqueio do free
+    const comPlano = await consumirPendente(u)
     // a conta nasce free: o relógio dos minutos começa aqui, porque o cadastro já entra no app
-    const comJanela = await abrirJanelaFree(u)
+    const comJanela = await abrirJanelaFree(comPlano)
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])
     porCookie(res, token, expira)
     return res.status(201).json(publico(comJanela))

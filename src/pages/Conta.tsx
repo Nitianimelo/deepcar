@@ -2,7 +2,18 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOut, ShieldCheck, UserRound } from 'lucide-react'
 import { getSession, logout } from '../lib/auth'
-import { mmss, restanteFree } from '../lib/plano'
+import { linkCheckout, mmss, restanteFree, rotuloPlano } from '../lib/plano'
+
+/** Como o estado da assinatura é lido na tela. */
+const ESTADOS: Record<string, string> = {
+  ativa: 'ativa',
+  em_atraso: 'com cobrança atrasada',
+  pausada: 'pausada',
+  cancelada: 'cancelada',
+  reembolsada: 'reembolsada',
+  chargeback: 'contestada',
+  manual: 'liberada pelo suporte',
+}
 
 // Preferências reais, guardadas neste navegador (as mesmas chaves que o visualizador e o layout leem).
 const PREFS = [
@@ -39,14 +50,25 @@ export default function Conta() {
           <h2 className="font-medium">Oficina</h2>
           <dl className="mt-3 space-y-2 text-[14px]">
             <Row k="Nome" v={s.oficina} />
-            <Row k="Plano" v={s.plano === 'pro' ? 'Profissional' : 'Free'} />
+            <Row k="Plano" v={rotuloPlano(s.plano)} />
             {s.whatsapp && <Row k="WhatsApp" v={s.whatsapp.replace(/^55(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')} />}
           </dl>
           {restante !== null && (
             <p className="mt-3 border-t seam-soft pt-3 text-[13px] text-ink-3">
               {restante > 0 ? <>Restam <b className="font-medium text-ink-1">{mmss(restante)}</b> de acesso gratuito.</> : 'Seu acesso gratuito terminou.'}{' '}
-              <a href="/#planos" className="text-trace hover:text-trace-hi">Ver planos</a>
+              <a href={linkCheckout('full', s)} target="_blank" rel="noreferrer" className="text-trace hover:text-trace-hi">Assinar</a>
             </p>
+          )}
+          {s.assinatura && (
+            <div className="mt-3 border-t seam-soft pt-3 text-[13px] text-ink-3">
+              <p>
+                Assinatura <b className="font-medium text-ink-1">{ESTADOS[s.assinatura.status] ?? s.assinatura.status}</b>
+                {s.assinatura.renovaEm && <> · próxima cobrança em {new Date(s.assinatura.renovaEm).toLocaleDateString('pt-BR')}</>}
+              </p>
+              {s.assinatura.emAtraso && (
+                <p className="mt-1 text-warn">A última cobrança falhou. O acesso continua enquanto a Cakto tenta de novo.</p>
+              )}
+            </div>
           )}
         </section>
 

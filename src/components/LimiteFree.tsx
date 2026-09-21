@@ -5,8 +5,8 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CircleAlert, LogOut, MessageCircle, Timer } from 'lucide-react'
-import { logout } from '../lib/auth'
-import { linkSuporte, mmss, MINUTOS_FREE, temWhatsappSuporte } from '../lib/plano'
+import { getSession, logout } from '../lib/auth'
+import { linkCheckout, linkSuporte, mmss, MINUTOS_FREE, PRECOS, temWhatsappSuporte } from '../lib/plano'
 
 /** Pastilha discreta com o que resta. Some quando não há relógio (plano pago ou admin). */
 export function ContadorFree({ restante }: { restante: number | null }) {
@@ -29,6 +29,7 @@ export function ContadorFree({ restante }: { restante: number | null }) {
 /** Tela de fim de teste: cobre tudo e não fecha — a saída é assinar, falar com o suporte ou sair. */
 export function BloqueioFree() {
   const nav = useNavigate()
+  const sessao = getSession()
 
   // com a tela travada, rolar o que está atrás só confunde
   useEffect(() => {
@@ -60,23 +61,37 @@ export function BloqueioFree() {
           Seus {MINUTOS_FREE} minutos gratuitos terminaram.
         </h2>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-2">
-          O plano Free serve para você conhecer o acervo. Para continuar consultando os esquemas de injeção
+          O plano Free serve para você conhecer o acervo. Para continuar consultando os manuais de injeção
           leve e diesel, ABS, elétrica e câmbio, assine um plano ou fale com a gente.
         </p>
 
-        <div className="mt-7 flex flex-col gap-2.5 sm:flex-row">
-          <a href="/#planos" autoFocus className="btn-primary inline-flex flex-1 items-center justify-center px-5">
-            Ver planos e assinar
-          </a>
+        <div className="mt-7 grid gap-2.5 sm:grid-cols-2">
           <a
-            href={linkSuporte(mensagem)}
+            href={linkCheckout('full', sessao)}
+            autoFocus
             target="_blank"
             rel="noreferrer"
-            className="btn-ghost inline-flex flex-1 items-center justify-center gap-2 !h-12"
+            className="btn-primary inline-flex items-center justify-center px-5"
           >
-            <MessageCircle size={16} /> {temWhatsappSuporte ? 'Falar no WhatsApp' : 'Falar com o suporte'}
+            Assinar Full · R$ {PRECOS.full}
+          </a>
+          <a
+            href={linkCheckout('pro', sessao)}
+            target="_blank"
+            rel="noreferrer"
+            className="btn-ghost inline-flex items-center justify-center !h-12"
+          >
+            Assinar Pro · R$ {PRECOS.pro}
           </a>
         </div>
+        <a
+          href={linkSuporte(mensagem)}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2.5 inline-flex w-full items-center justify-center gap-2 text-[13.5px] text-ink-3 hover:text-ink-1"
+        >
+          <MessageCircle size={15} /> {temWhatsappSuporte ? 'Falar no WhatsApp' : 'Falar com o suporte'}
+        </a>
 
         <div className="mt-6 flex items-center justify-between gap-4 border-t seam-soft pt-5">
           <p className="text-[12.5px] text-ink-4">

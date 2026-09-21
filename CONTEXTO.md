@@ -19,6 +19,8 @@ Regras de trabalho estão em `AGENTE.md`.
     Faixa de montadoras da landing com os logos nas cores das marcas, sobre cartões claros.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
   - Plano **free = 5 minutos de acesso**, contados a partir do primeiro acesso; depois bloqueia a tela e a API responde 402.
+  - **Pagamento pela Cakto**: produtos Pro (R$ 47,90) e Full (R$ 59,90), webhook em `/api/webhooks/cakto` que troca o
+    plano sozinho, pendências para quem paga sem conta e aba "Assinaturas" no `/admin`.
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link) e cofre de chaves.
   - Tela inicial `/app`: cards "Consultar por placa" e "Buscar esquema" e card "Últimas consultas" (localStorage, por conta).
     Botão "Início" no menu lateral (e o logo leva para lá).
@@ -30,7 +32,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `1a245e9`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `b50f76b`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -39,13 +41,15 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] `npm run dev` não suporta o fluxo de contas do Neon (`/api/login` antigo, sem `/api/registrar`, `/api/sessao`, `/api/admin/*`).
       Testar contas via `vercel dev` ou Preview Deployment.
 - [ ] Scripts de acervo e do executável dependem de caminhos Windows (`E:\`).
-- [ ] 12 avisos do oxlint (0 erros) em `src/`: `set-state-in-effect`, `exhaustive-deps`, `only-export-components`.
+- [ ] 13 avisos do oxlint (0 erros) em `src/`: `set-state-in-effect`, `exhaustive-deps`, `only-export-components`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
 - [ ] A foto da dobra `#placa` é gerada por IA: a tela do celular tem nomes de montadora com erro de grafia
       ("Chewolet", "Citrofo", "Alfa Roemo"). No tamanho exibido não se lê, mas vale trocar por foto real quando houver.
-- [ ] Assinatura/pagamento não existe no produto: a passagem de plano é manual no `/admin`. Gateway escolhido: **Cakto**
-      (MCP conectado, ver histórico de 2026-09-21). Próximos passos: criar produto/ofertas Pro e Full, checkout a partir do
-      app, webhook `purchase_approved` / `subscription_*` para virar o plano sozinho, e a modelagem dos planos no banco.
+- [ ] Preencher `VITE_CAKTO_CHECKOUT_PRO` e `VITE_CAKTO_CHECKOUT_FULL` na Vercel com os links `pay.cakto.com.br/...`
+      (o usuário copia do painel da Cakto). Sem eles, os botões de assinar caem no `/#planos`, como antes.
+- [ ] Bloqueio de sistemas por plano (Pro sem diesel nem câmbio) e limite de dispositivos (2/4): fora do escopo desta
+      entrega, pendente de decidir como separar leve/diesel nas seções Elétrica e Câmbio.
+- [ ] Portal do assinante (trocar cartão, cancelar) — hoje isso é feito pelo painel da Cakto.
 - [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
       os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
 - [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado). No Início não acontece mais (o campo não aparece lá); nas outras telas continua.
@@ -61,6 +65,39 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-21 · Pagamento pela Cakto: a assinatura troca o plano sozinha
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **Pedido:** criar a oferta de R$ 47,90 (a de R$ 59,90 já existia) e integrar os webhooks para o pagamento liberar o
+  acesso e trocar o plano, tudo integrado ao painel do admin.
+- **Na Cakto (produção):** produto **"Plataforma Deepcar - Plano Pro"** criado (`b5e5701c-82d4-43a9-a040-1ff960a60368`,
+  R$ 47,90, assinatura); webhook **id 69384** apontando para `https://deepcar.vercel.app/api/webhooks/cakto`, nos dois
+  produtos, com 12 eventos. O `secret` do webhook veio em `fields.secret` (não no corpo da criação).
+- **Cofre do `/admin`:** `CAKTO_WEBHOOK_SECRET`, `CAKTO_PRODUTO_PRO`, `CAKTO_PRODUTO_FULL` (gravadas e conferidas).
+- **Banco:** `db/003_assinaturas_cakto.sql` aplicado — plano aceita `full`, 9 colunas de assinatura em `usuarios`,
+  tabela `cakto_eventos` (idempotência + auditoria) e `assinaturas_pendentes` (pagou sem ter conta).
+- **API:** `_lib/cakto.js` (prova da origem, evento→ação, produto→plano), `_lib/assinatura.js` (ativar, derrubar,
+  atraso, consumir pendência, vincular), `webhooks/cakto.js` (rota pública) e `admin/assinaturas.js`.
+  `registrar.js` e `login.js` consomem a pendência; `admin/usuarios.js` aceita `full` e marca `assinatura_origem='manual'`
+  quando o admin mexe no plano (assim um chargeback não desfaz a decisão dele); `_lib/sessao.js` expõe o estado da
+  assinatura sem ids de cobrança.
+- **Front:** tipo `Plano` com `full`; `linkCheckout()` leva ao checkout com e-mail/nome/telefone preenchidos; a tela de
+  fim do teste passa a ter "Assinar Full" e "Assinar Pro"; a Conta mostra o estado da assinatura e a próxima cobrança;
+  o `/admin` ganhou a opção Full, a pastilha de estado por usuário e a aba **Assinaturas** (pendentes com vincular/
+  descartar e os últimos eventos com filtro de problemas).
+- **Descoberta importante:** na Vercel **não dá para conferir o HMAC** do webhook — o runtime consome o corpo antes do
+  handler e não expõe `rawBody` (medido: `readableEnded: true`, sem `req.rawBody`). A validação usa o campo `secret` do
+  corpo (a outra forma documentada pela Cakto), e a janela de 5 minutos continua sendo exigida quando o cabeçalho de
+  tempo vem junto. O código ainda tenta o HMAC primeiro, para o dia em que rodar num runtime que entregue os bytes.
+- **Verificação:** `vercel dev` contra o banco de produção com conta descartável — 12 cenários (compra aprovada, entrega
+  repetida → `repetido`, assinatura criada, atraso, atraso recuperado, produto desconhecido → erro, evento informativo →
+  ignorado, reembolso, secret certo sem assinatura → aceito, secret errado → 401, timestamp velho → 401) e uma sequência
+  encadeada conferindo o banco a cada passo: aprovado → `full/ativa`; atraso → `em_atraso` **sem perder o acesso**;
+  recuperado → `ativa`; cancelado → `free/cancelada`; nova compra → `full`; chargeback → `free/chargeback`.
+  O cadastro com o e-mail de uma compra pendente criou a conta **já no plano pago**. Dados de teste apagados depois
+  (44 eventos, 2 pendências e a conta); as 3 contas reais ficaram intactas. `npm run build` ok; oxlint 13 avisos
+  (1 novo, mesmo padrão da aba de chaves).
+- **Pendências:** links de checkout nas variáveis da Vercel; bloqueio por plano e limite de dispositivos; portal do assinante.
 
 ### 2026-09-21 · Cakto (gateway de pagamento) conectado via MCP
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

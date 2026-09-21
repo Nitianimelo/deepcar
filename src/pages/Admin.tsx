@@ -2,17 +2,19 @@
 // Toda a autorização é do servidor (api/admin/*): aqui a checagem só evita mostrar a tela.
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { Check, Copy, Eye, EyeOff, KeyRound, Loader2, MessageCircle, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
+import { BadgeDollarSign, Check, Copy, Eye, EyeOff, KeyRound, Link2, Loader2, MessageCircle, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
 import { useSessao } from '../lib/auth'
-import { mmss } from '../lib/plano'
+import { mmss, rotuloPlano } from '../lib/plano'
 import { mascararWhatsapp, SENHA_MINIMA } from '../lib/validacao'
+
+type Plano = 'free' | 'pro' | 'full'
 
 type Usuario = {
   id: string
   email: string
   nome: string
   oficina: string
-  plano: 'free' | 'pro'
+  plano: Plano
   papel: 'usuario' | 'admin'
   ativo: boolean
   criado_em: string
@@ -20,6 +22,36 @@ type Usuario = {
   whatsapp: string | null
   free_expira_em: string | null
   sessoes?: number
+  assinatura_status?: string | null
+  assinatura_plano?: Plano | null
+  assinatura_renova_em?: string | null
+  assinatura_em_atraso?: boolean
+  assinatura_origem?: string | null
+}
+
+type Pendente = {
+  id: string
+  email: string
+  nome: string | null
+  whatsapp: string | null
+  plano: Exclude<Plano, 'free'>
+  valor: string | number | null
+  criado_em: string
+  assinatura_id: string | null
+  pedido_id: string | null
+}
+
+type Evento = {
+  id: string
+  evento: string
+  status: string
+  email: string | null
+  plano: Plano | null
+  valor: string | number | null
+  detalhe: string | null
+  recebido_em: string
+  usuario_nome: string | null
+  usuario_email: string | null
 }
 
 type Segredo = { chave: string; descricao: string | null; atualizado_em: string; por: string | null }
@@ -46,7 +78,7 @@ function teste(ate: string | null) {
 
 export default function Admin() {
   const { session, conferindo } = useSessao()
-  const [aba, setAba] = useState<'usuarios' | 'chaves'>('usuarios')
+  const [aba, setAba] = useState<'usuarios' | 'assinaturas' | 'chaves'>('usuarios')
 
   if (!session) return conferindo ? <div aria-busy="true" className="min-h-screen" /> : <Navigate to="/login" replace />
   if (session.papel !== 'admin') return <Navigate to="/app" replace />
@@ -59,7 +91,7 @@ export default function Admin() {
           <span className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Administração</span>
         </div>
         <div className="flex items-center gap-1 rounded-lg border seam bg-bench-2 p-1">
-          {([['usuarios', 'Usuários', Users], ['chaves', 'Chaves de API', KeyRound]] as const).map(([k, rotulo, Icone]) => (
+          {([['usuarios', 'Usuários', Users], ['assinaturas', 'Assinaturas', BadgeDollarSign], ['chaves', 'Chaves de API', KeyRound]] as const).map(([k, rotulo, Icone]) => (
             <button
               key={k}
               type="button"
@@ -73,7 +105,9 @@ export default function Admin() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
-        {aba === 'usuarios' ? <AbaUsuarios meuEmail={session.email} /> : <AbaChaves />}
+        {aba === 'usuarios' && <AbaUsuarios meuEmail={session.email} />}
+        {aba === 'assinaturas' && <AbaAssinaturas />}
+        {aba === 'chaves' && <AbaChaves />}
       </main>
     </div>
   )
@@ -188,10 +222,12 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
                   )}
                 </td>
                 <td className="px-3 py-3">
-                  <select className="field h-9 py-0 text-[13px]" value={u.plano} onChange={(e) => void mudar(u, { plano: e.target.value as Usuario['plano'], free_expira_em: null })}>
+                  <select className="field h-9 py-0 text-[13px]" value={u.plano} onChange={(e) => void mudar(u, { plano: e.target.value as Plano, free_expira_em: null })}>
                     <option value="free">Free</option>
                     <option value="pro">Pro</option>
+                    <option value="full">Full</option>
                   </select>
+                  {u.assinatura_status && <EstadoAssinatura u={u} />}
                   {u.plano === 'free' && u.papel !== 'admin' && (
                     <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-ink-4">
                       <Timer size={12} className="flex-none" />
@@ -380,6 +416,225 @@ function RedefinirSenha({ u, ehVoce, onFechar }: { u: Usuario; ehVoce: boolean; 
             </div>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+/** Pastilha com o estado da assinatura, do jeito que o administrador precisa ler de relance. */
+const ESTADOS: Record<string, { rotulo: string; cor: string }> = {
+  ativa: { rotulo: 'assinatura ativa', cor: 'text-ok' },
+  em_atraso: { rotulo: 'cobrança atrasada', cor: 'text-warn' },
+  pausada: { rotulo: 'pausada', cor: 'text-ink-4' },
+  cancelada: { rotulo: 'cancelada', cor: 'text-fault' },
+  reembolsada: { rotulo: 'reembolsada', cor: 'text-fault' },
+  chargeback: { rotulo: 'contestada', cor: 'text-fault' },
+  manual: { rotulo: 'plano manual', cor: 'text-ink-4' },
+}
+
+function EstadoAssinatura({ u }: { u: Usuario }) {
+  const e = ESTADOS[u.assinatura_status ?? ''] ?? { rotulo: u.assinatura_status ?? '', cor: 'text-ink-4' }
+  return (
+    <span className={`mt-1.5 block text-[11.5px] ${e.cor}`}>
+      {e.rotulo}
+      {u.assinatura_renova_em && ` · renova ${data(u.assinatura_renova_em)}`}
+    </span>
+  )
+}
+
+/** Pagamentos que chegaram sem conta e o histórico do que a Cakto mandou. */
+function AbaAssinaturas() {
+  const [pendentes, setPendentes] = useState<Pendente[]>([])
+  const [eventos, setEventos] = useState<Evento[]>([])
+  const [erro, setErro] = useState('')
+  const [carregando, setCarregando] = useState(true)
+  const [soProblemas, setSoProblemas] = useState(false)
+  const [vinculando, setVinculando] = useState<Pendente | null>(null)
+
+  const carregar = useCallback(async () => {
+    setCarregando(true)
+    try {
+      const r = (await api('/api/admin/assinaturas')) as { pendentes: Pendente[]; eventos: Evento[] }
+      setPendentes(r.pendentes ?? [])
+      setEventos(r.eventos ?? [])
+      setErro('')
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Falha ao carregar.')
+    } finally {
+      setCarregando(false)
+    }
+  }, [])
+
+  useEffect(() => { void carregar() }, [carregar])
+
+  async function descartar(p: Pendente) {
+    if (!confirm(`Descartar o pagamento pendente de ${p.email}? A pessoa não recebe o plano.`)) return
+    try {
+      await api(`/api/admin/assinaturas?id=${p.id}&acao=descartar`, { method: 'POST' })
+      await carregar()
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível descartar.')
+    }
+  }
+
+  const lista = soProblemas ? eventos.filter((e) => ['erro', 'pendente'].includes(e.status)) : eventos
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-[26px] font-semibold tracking-tight">Assinaturas</h1>
+          <p className="mt-1 text-ink-3">Pagamentos da Cakto: o que ficou sem dono e o que chegou por webhook.</p>
+        </div>
+        <button type="button" onClick={() => void carregar()} className="btn-ghost inline-flex items-center gap-2">
+          <RefreshCw size={15} /> Atualizar
+        </button>
+      </div>
+
+      {erro && <p role="alert" className="mt-4 rounded-lg border border-fault/30 bg-fault/10 px-4 py-3 text-sm text-fault">{erro}</p>}
+
+      <h2 className="mt-8 text-[15px] font-medium">
+        Pagamentos sem conta {pendentes.length > 0 && <span className="ml-1 rounded-full bg-warn/15 px-2 py-0.5 text-[12px] text-warn">{pendentes.length}</span>}
+      </h2>
+      <p className="mt-1 text-[13px] text-ink-4">
+        Quem pagou com um e-mail que ainda não tem conta. O plano entra sozinho quando a pessoa se cadastrar com esse
+        e-mail; se ela digitou errado, vincule à conta certa aqui.
+      </p>
+
+      <div className="mt-3 overflow-x-auto rounded-xl border seam bg-bench-2">
+        <table className="w-full min-w-[720px] text-[14px]">
+          <thead>
+            <tr className="code border-b seam-soft text-left text-[11px] uppercase tracking-[0.14em] text-ink-4">
+              <th className="px-5 py-3 font-normal">Comprador</th>
+              <th className="px-3 py-3 font-normal">Plano</th>
+              <th className="px-3 py-3 font-normal">Valor</th>
+              <th className="px-3 py-3 font-normal">Quando</th>
+              <th className="px-3 py-3" />
+            </tr>
+          </thead>
+          <tbody>
+            {carregando && pendentes.length === 0 && (
+              <tr><td colSpan={5} className="px-5 py-8 text-center text-ink-4"><Loader2 size={18} className="mx-auto animate-spin" /></td></tr>
+            )}
+            {!carregando && pendentes.length === 0 && (
+              <tr><td colSpan={5} className="px-5 py-8 text-center text-ink-3">Nenhum pagamento sem conta.</td></tr>
+            )}
+            {pendentes.map((p) => (
+              <tr key={p.id} className="border-t seam-soft">
+                <td className="px-5 py-3">
+                  <span className="block font-medium text-ink-1">{p.nome ?? '—'}</span>
+                  <span className="code block text-[12px] text-ink-4">{p.email}</span>
+                </td>
+                <td className="px-3 py-3">{rotuloPlano(p.plano)}</td>
+                <td className="code px-3 py-3 text-[13px] text-ink-3">{p.valor ? `R$ ${Number(p.valor).toFixed(2).replace('.', ',')}` : '—'}</td>
+                <td className="code px-3 py-3 text-[12px] text-ink-3">{data(p.criado_em)}</td>
+                <td className="px-3 py-3 text-right">
+                  <button type="button" onClick={() => setVinculando(p)} className="btn-ghost !h-8 inline-flex items-center gap-1.5 text-[13px]">
+                    <Link2 size={14} /> Vincular
+                  </button>
+                  <button type="button" onClick={() => void descartar(p)} aria-label="Descartar" className="ml-1 grid h-8 w-8 place-items-center rounded-md text-ink-4 hover:bg-fault/10 hover:text-fault">
+                    <Trash2 size={15} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-8 flex items-center justify-between gap-3">
+        <h2 className="text-[15px] font-medium">Eventos recebidos</h2>
+        <label className="flex items-center gap-2 text-[13px] text-ink-3">
+          <input type="checkbox" checked={soProblemas} onChange={(e) => setSoProblemas(e.target.checked)} /> só problemas
+        </label>
+      </div>
+
+      <ul className="mt-3 overflow-hidden rounded-xl border seam bg-bench-2">
+        {lista.length === 0 && <li className="px-5 py-8 text-center text-ink-3">Nada por aqui.</li>}
+        {lista.map((e) => (
+          <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 border-t seam-soft px-5 py-3 first:border-t-0">
+            <div className="min-w-0">
+              <p className="text-[14px] text-ink-1">
+                <span className="code text-[13px]">{e.evento}</span>
+                {e.email && <span className="text-ink-3"> · {e.email}</span>}
+              </p>
+              <p className="text-[12px] text-ink-4">
+                {data(e.recebido_em)}
+                {e.plano && ` · ${rotuloPlano(e.plano)}`}
+                {e.usuario_nome && ` · ${e.usuario_nome}`}
+                {e.detalhe && ` · ${e.detalhe}`}
+              </p>
+            </div>
+            <span className={`code flex-none text-[11.5px] ${e.status === 'aplicado' ? 'text-ok' : e.status === 'erro' ? 'text-fault' : e.status === 'pendente' ? 'text-warn' : 'text-ink-4'}`}>
+              {e.status}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {vinculando && <VincularPendente p={vinculando} onFechar={() => setVinculando(null)} onPronto={() => { setVinculando(null); void carregar() }} />}
+    </>
+  )
+}
+
+/** Escolhe a conta que vai receber um pagamento pendente. */
+function VincularPendente({ p, onFechar, onPronto }: { p: Pendente; onFechar: () => void; onPronto: () => void }) {
+  const [q, setQ] = useState(p.email)
+  const [contas, setContas] = useState<Usuario[]>([])
+  const [erro, setErro] = useState('')
+  const [salvando, setSalvando] = useState(false)
+
+  useEffect(() => {
+    let vivo = true
+    const t = setTimeout(() => {
+      void api(`/api/admin/usuarios?q=${encodeURIComponent(q)}`)
+        .then((r) => { if (vivo) setContas((r as Usuario[]).slice(0, 8)) })
+        .catch(() => { /* a busca falhar não impede fechar o diálogo */ })
+    }, 300)
+    return () => { vivo = false; clearTimeout(t) }
+  }, [q])
+
+  async function vincular(u: Usuario) {
+    if (!confirm(`Dar o plano ${rotuloPlano(p.plano)} para ${u.nome} (${u.email})?`)) return
+    setSalvando(true)
+    try {
+      await api(`/api/admin/assinaturas?id=${p.id}`, { method: 'POST', body: JSON.stringify({ usuarioId: u.id }) })
+      onPronto()
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível vincular.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  return (
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-pit/80 p-4 backdrop-blur-sm" onMouseDown={(e) => { if (e.target === e.currentTarget) onFechar() }}>
+      <div className="relative w-full max-w-[520px] rounded-2xl border seam bg-bench-2 p-6">
+        <button type="button" onClick={onFechar} aria-label="Fechar" className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-md text-ink-4 hover:bg-bench-3 hover:text-ink-1">
+          <X size={16} />
+        </button>
+        <h2 className="text-[19px] font-semibold tracking-tight">Vincular pagamento</h2>
+        <p className="mt-1 text-[14px] text-ink-3">
+          {rotuloPlano(p.plano)} comprado por <span className="code text-[13px]">{p.email}</span>. Escolha a conta que recebe o plano.
+        </p>
+
+        <input className="field mt-4" placeholder="Buscar conta por nome ou e-mail" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+        {erro && <p role="alert" className="mt-3 rounded-lg border border-fault/30 bg-fault/10 px-3 py-2 text-[13px] text-fault">{erro}</p>}
+
+        <ul className="mt-3 max-h-[280px] overflow-y-auto rounded-xl border seam bg-bench-1">
+          {contas.length === 0 && <li className="px-4 py-6 text-center text-[13.5px] text-ink-4">Nenhuma conta encontrada.</li>}
+          {contas.map((u) => (
+            <li key={u.id} className="border-t seam-soft first:border-t-0">
+              <button type="button" disabled={salvando} onClick={() => void vincular(u)} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-bench-3 disabled:opacity-50">
+                <span className="min-w-0">
+                  <span className="block truncate text-[14px] text-ink-1">{u.nome}</span>
+                  <span className="code block truncate text-[12px] text-ink-4">{u.email} · {rotuloPlano(u.plano)}</span>
+                </span>
+                <Link2 size={15} className="flex-none text-ink-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   )
