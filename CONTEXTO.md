@@ -32,7 +32,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `b50f76b`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `111fbbc`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -97,6 +97,12 @@ Regras de trabalho estão em `AGENTE.md`.
   O cadastro com o e-mail de uma compra pendente criou a conta **já no plano pago**. Dados de teste apagados depois
   (44 eventos, 2 pendências e a conta); as 3 contas reais ficaram intactas. `npm run build` ok; oxlint 13 avisos
   (1 novo, mesmo padrão da aba de chaves).
+- **Conferido em produção (depois do deploy):** `POST /api/webhooks/cakto` com segredo errado → 401; evento de teste
+  disparado pela própria Cakto (`webhook_event_test_create`, evento `purchase_approved`) chegou, foi autenticado e
+  gravado em `cakto_eventos` como `erro: produto desconhecido` — o payload de teste da Cakto usa um produto fictício,
+  então esse é o resultado certo. Registro de teste apagado depois.
+- **Links de checkout:** o `short_id` do produto **não** serve (`pay.cakto.com.br/A6aHnEn` responde "Produto não
+  encontrado"); o link vem do **id da oferta**, que a API só entrega com o escopo `offers`. Copiar do painel da Cakto.
 - **Pendências:** links de checkout nas variáveis da Vercel; bloqueio por plano e limite de dispositivos; portal do assinante.
 
 ### 2026-09-21 · Cakto (gateway de pagamento) conectado via MCP
