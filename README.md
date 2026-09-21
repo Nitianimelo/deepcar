@@ -78,7 +78,7 @@ Banco Postgres no Neon. Esquema em `db/*.sql`, aplicado em ordem por `node scrip
   guarda apenas um retrato do perfil (`deepcar.perfil`), que serve para desenhar a tela e não
   libera nada: `api/admin/*` e a consulta de placa conferem o cookie no servidor.
 - **Cadastro aberto** em `/cadastro` (plano free). Login em `/login`.
-- **Plano free = 5 minutos de acesso** (`MINUTOS_FREE` em `api/_lib/sessao.js`, espelhado em `src/lib/plano.ts`).
+- **Plano free = 10 minutos de acesso** (`MINUTOS_FREE` em `api/_lib/sessao.js`, espelhado em `src/lib/plano.ts`).
   O relógio começa no **primeiro acesso**, não na criação da conta (`usuarios.free_expira_em`; nulo = ainda não
   começou). Acabou o tempo: a barra superior mostra o contador zerado, a tela do app é coberta por
   `BloqueioFree` (assinar, falar com o suporte ou sair) e o servidor responde **402** nas rotas de conteúdo

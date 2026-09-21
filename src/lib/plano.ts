@@ -1,9 +1,10 @@
 // Regras do plano free vistas pelo navegador. O corte que vale é do servidor
 // (api/_lib/sessao.js): aqui é só o relógio na tela e o texto que a pessoa lê.
 import { useEffect, useState } from 'react'
+import { PLANOS_VENDA, type PlanoPago } from '../data/planos'
 import { conferirSessao, type Plano, type Session } from './auth'
 
-export const MINUTOS_FREE = 5
+export const MINUTOS_FREE = 10
 
 const ROTULOS: Record<Plano, string> = { free: 'Free', pro: 'Pro', full: 'Full' }
 
@@ -11,10 +12,12 @@ export const rotuloPlano = (p: Plano | null | undefined) => ROTULOS[p ?? 'free']
 
 export const ehPago = (s: Session | null) => s?.plano === 'pro' || s?.plano === 'full'
 
-/** R$ 47,90 e R$ 59,90 — o mesmo que a página de vendas anuncia. */
-export const PRECOS: Record<'pro' | 'full', string> = { pro: '47,90', full: '59,90' }
+/** Preços do arquivo único dos planos (src/data/planos.ts). */
+export const PRECOS: Record<PlanoPago, string> = Object.fromEntries(
+  PLANOS_VENDA.map((p) => [p.id, p.preco]),
+) as Record<PlanoPago, string>
 
-const CHECKOUT: Record<'pro' | 'full', string | undefined> = {
+const CHECKOUT: Record<PlanoPago, string | undefined> = {
   pro: import.meta.env.VITE_CAKTO_CHECKOUT_PRO as string | undefined,
   full: import.meta.env.VITE_CAKTO_CHECKOUT_FULL as string | undefined,
 }
@@ -23,7 +26,7 @@ const CHECKOUT: Record<'pro' | 'full', string | undefined> = {
  * Checkout da Cakto com os dados da conta preenchidos — é o que faz o e-mail do pagamento
  * bater com o da conta e o plano entrar sozinho. Sem link configurado, cai nos planos da landing.
  */
-export function linkCheckout(plano: 'pro' | 'full', s: Session | null) {
+export function linkCheckout(plano: PlanoPago, s: Session | null) {
   const base = CHECKOUT[plano]
   if (!base) return '/#planos'
   const q = new URLSearchParams()

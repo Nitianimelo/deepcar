@@ -6,6 +6,7 @@ import { AppStoreBadge, PlayStoreBadge } from '../components/StoreBadges'
 import { CarBlueprint } from '../components/CarBlueprint'
 import { MarcasStrip } from '../components/MarcasStrip'
 import { formatarPlaca, placaValida } from '../lib/placa'
+import { PLANOS_VENDA } from '../data/planos'
 
 export default function Landing() {
   return (
@@ -246,34 +247,7 @@ function Numero({ valor, rotulo }: { valor: string; rotulo: string }) {
 
 /* ── Planos (sem valores por enquanto) ─────────────────────────────── */
 function Planos() {
-  const planos = [
-    {
-      nome: 'Pro',
-      para: 'Para a oficina de veículos leves.',
-      preco: '47,90',
-      itens: ['Injeção eletrônica leve', 'ABS', 'Elétrica leve', '2 dispositivos conectados', 'App mobile', 'Suporte'],
-      destaque: false,
-    },
-    {
-      nome: 'Full',
-      para: 'Para a oficina que atende do leve ao diesel.',
-      preco: '59,90',
-      itens: [
-        'Injeção eletrônica leve',
-        'Injeção eletrônica diesel',
-        'ABS',
-        'Elétrica leve',
-        'Elétrica diesel',
-        'Câmbio leve',
-        'Câmbio diesel',
-        '4 dispositivos conectados',
-        'Busca pela placa',
-        'App mobile',
-        'Suporte',
-      ],
-      destaque: true,
-    },
-  ]
+  const planos = PLANOS_VENDA
   return (
     <section id="planos" className="border-t seam">
       <div className="mx-auto max-w-[1200px] px-5 py-20 sm:px-8 lg:py-28">

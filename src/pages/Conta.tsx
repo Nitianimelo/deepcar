@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, ShieldCheck, UserRound } from 'lucide-react'
-import { getSession, logout } from '../lib/auth'
-import { linkCheckout, mmss, restanteFree, rotuloPlano } from '../lib/plano'
+import { ArrowRight, BadgeDollarSign, Check, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
+import { getSession, logout, type Session } from '../lib/auth'
+import { linkCheckout, linkSuporte, MINUTOS_FREE, mmss, restanteFree, rotuloPlano, temWhatsappSuporte } from '../lib/plano'
+import { PLANOS_VENDA } from '../data/planos'
 
 /** Como o estado da assinatura é lido na tela. */
 const ESTADOS: Record<string, string> = {
@@ -24,6 +25,7 @@ const PREFS = [
 export default function Conta() {
   const nav = useNavigate()
   const s = getSession()
+  const [aba, setAba] = useState<'conta' | 'plano'>('conta')
   const restante = restanteFree(s)
   if (!s) return null
 
@@ -45,7 +47,24 @@ export default function Conta() {
         </div>
       </div>
 
-      <div className="mt-8 grid gap-5 sm:grid-cols-2">
+      <div className="mt-7 flex items-center gap-1 rounded-lg border seam bg-bench-2 p-1 w-fit">
+        {([['conta', 'Conta', UserRound], ['plano', 'Plano', BadgeDollarSign]] as const).map(([k, rotulo, Icone]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setAba(k)}
+            className={`inline-flex items-center gap-2 rounded-md px-3.5 py-1.5 text-[13.5px] ${aba === k ? 'bg-bench-3 text-ink-1' : 'text-ink-3 hover:text-ink-1'}`}
+          >
+            <Icone size={15} /> {rotulo}
+          </button>
+        ))}
+      </div>
+
+      {aba === 'plano' ? (
+        <AbaPlano s={s} restante={restante} />
+      ) : (
+      <>
+      <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <section className="rounded-xl border seam bg-bench-2 p-5">
           <h2 className="font-medium">Oficina</h2>
           <dl className="mt-3 space-y-2 text-[14px]">
@@ -53,23 +72,10 @@ export default function Conta() {
             <Row k="Plano" v={rotuloPlano(s.plano)} />
             {s.whatsapp && <Row k="WhatsApp" v={s.whatsapp.replace(/^55(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')} />}
           </dl>
-          {restante !== null && (
-            <p className="mt-3 border-t seam-soft pt-3 text-[13px] text-ink-3">
-              {restante > 0 ? <>Restam <b className="font-medium text-ink-1">{mmss(restante)}</b> de acesso gratuito.</> : 'Seu acesso gratuito terminou.'}{' '}
-              <a href={linkCheckout('full', s)} target="_blank" rel="noreferrer" className="text-trace hover:text-trace-hi">Assinar</a>
-            </p>
-          )}
-          {s.assinatura && (
-            <div className="mt-3 border-t seam-soft pt-3 text-[13px] text-ink-3">
-              <p>
-                Assinatura <b className="font-medium text-ink-1">{ESTADOS[s.assinatura.status] ?? s.assinatura.status}</b>
-                {s.assinatura.renovaEm && <> · próxima cobrança em {new Date(s.assinatura.renovaEm).toLocaleDateString('pt-BR')}</>}
-              </p>
-              {s.assinatura.emAtraso && (
-                <p className="mt-1 text-warn">A última cobrança falhou. O acesso continua enquanto a Cakto tenta de novo.</p>
-              )}
-            </div>
-          )}
+          <button type="button" onClick={() => setAba('plano')} className="mt-3 inline-flex items-center gap-1.5 border-t seam-soft pt-3 text-[13px] text-trace hover:text-trace-hi">
+            {restante !== null && restante > 0 ? `Restam ${mmss(restante)} de acesso gratuito · ver planos` : 'Ver planos e assinar'}
+            <ArrowRight size={14} />
+          </button>
         </section>
 
         <section className="rounded-xl border seam bg-bench-2 p-5">
@@ -89,11 +95,105 @@ export default function Conta() {
         </div>
       </section>
 
+      </>
+      )}
+
       <div className="mt-8 flex justify-end">
         <button onClick={sair} className="btn-ghost inline-flex items-center gap-2 hover:!border-fault/40 hover:!text-fault">
           <LogOut size={16} /> Sair da conta
         </button>
       </div>
+    </div>
+  )
+}
+
+/** Aba Plano: em que pé está a assinatura e como assinar (ou trocar de plano). */
+function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
+  const pago = s.plano === 'pro' || s.plano === 'full'
+  const mensagem = `Olá! Sou ${s.nome} (${s.email}) e quero falar sobre a assinatura do Deepcar.`
+
+  return (
+    <div className="mt-6">
+      {/* situação atual */}
+      <section className="rounded-xl border seam bg-bench-2 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Plano atual</p>
+            <p className="mt-1 text-[22px] font-semibold tracking-tight">{rotuloPlano(s.plano)}</p>
+          </div>
+          {s.assinatura && (
+            <span className={`code text-[12px] ${s.assinatura.emAtraso ? 'text-warn' : 'text-ok'}`}>
+              {ESTADOS[s.assinatura.status] ?? s.assinatura.status}
+              {s.assinatura.renovaEm && ` · renova ${new Date(s.assinatura.renovaEm).toLocaleDateString('pt-BR')}`}
+            </span>
+          )}
+        </div>
+
+        {!pago && (
+          <p className="mt-3 flex items-center gap-2 border-t seam-soft pt-3 text-[13.5px] text-ink-3">
+            <Timer size={15} className="flex-none text-trace" />
+            {restante !== null && restante > 0
+              ? <>Você está no teste gratuito: restam <b className="font-medium text-ink-1">{mmss(restante)}</b> dos {MINUTOS_FREE} minutos.</>
+              : <>Seu teste de {MINUTOS_FREE} minutos terminou. Assine para voltar a consultar.</>}
+          </p>
+        )}
+        {s.assinatura?.emAtraso && (
+          <p className="mt-3 border-t seam-soft pt-3 text-[13.5px] text-warn">
+            A última cobrança falhou. O acesso continua enquanto a Cakto tenta de novo — vale conferir o cartão.
+          </p>
+        )}
+      </section>
+
+      {/* planos */}
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        {PLANOS_VENDA.map((p) => {
+          const atual = s.plano === p.id
+          return (
+            <section key={p.id} className={`flex flex-col rounded-xl border p-5 ${atual ? 'border-ok/40 bg-bench-1' : 'seam bg-bench-2'}`}>
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="text-[18px] font-semibold tracking-tight">{p.nome}</h2>
+                {atual && <span className="code text-[10.5px] uppercase tracking-[0.18em] text-ok">seu plano</span>}
+              </div>
+              <p className="mt-1 text-[13.5px] text-ink-3">{p.para}</p>
+              <p className="mt-4 flex items-baseline gap-1.5">
+                <span className="text-[13px] text-ink-4">R$</span>
+                <span className="text-[30px] font-semibold leading-none tracking-[-0.02em]" style={{ fontVariantNumeric: 'tabular-nums' }}>{p.preco}</span>
+                <span className="text-[13px] text-ink-4">/mês</span>
+              </p>
+              <ul className="mb-6 mt-4 space-y-1.5 text-[13.5px]">
+                {p.itens.map((i) => (
+                  <li key={i} className="flex items-start gap-2 text-ink-2">
+                    <Check size={13} className="mt-[4px] flex-none text-trace/70" strokeWidth={2.5} /> {i}
+                  </li>
+                ))}
+              </ul>
+              {atual ? (
+                <span className="mt-auto inline-flex h-11 items-center justify-center rounded-[10px] border seam text-[14px] text-ink-4">
+                  Plano ativo
+                </span>
+              ) : (
+                <a
+                  href={linkCheckout(p.id, s)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`mt-auto inline-flex h-11 items-center justify-center gap-2 rounded-[10px] text-[14px] font-medium ${p.destaque || !pago ? 'btn-primary !h-11' : 'btn-ghost !h-11'}`}
+                >
+                  {pago ? `Trocar para ${p.nome}` : `Assinar ${p.nome}`} <ArrowRight size={15} />
+                </a>
+              )}
+            </section>
+          )
+        })}
+      </div>
+
+      <p className="mt-4 text-[12.5px] text-ink-4">
+        O pagamento é processado pela Cakto (cartão ou PIX). O acesso libera assim que o pagamento é aprovado, sem
+        precisar recarregar.{' '}
+        <a href={linkSuporte(mensagem, 'Deepcar · assinatura')} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-trace hover:text-trace-hi">
+          <MessageCircle size={13} /> {temWhatsappSuporte ? 'Falar no WhatsApp' : 'Falar com o suporte'}
+        </a>{' '}
+        para trocar o cartão, cancelar ou tirar dúvidas.
+      </p>
     </div>
   )
 }

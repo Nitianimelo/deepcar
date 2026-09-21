@@ -12,7 +12,7 @@ const COOKIE = 'deepcar_sessao'
 const DIAS = 30
 
 /** Quanto tempo de acesso o plano free da. Trocar aqui muda o produto inteiro. */
-export const MINUTOS_FREE = 5
+export const MINUTOS_FREE = 10
 
 /** Planos pagos: nao tem relogio de teste. */
 export const PAGOS = new Set(['pro', 'full'])

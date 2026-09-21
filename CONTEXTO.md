@@ -18,7 +18,7 @@ Regras de trabalho estão em `AGENTE.md`.
     subtítulo "15 mil modelos de veículos" e números "60 montadoras" / "98% da frota nacional".
     Faixa de montadoras da landing com os logos nas cores das marcas, sobre cartões claros.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
-  - Plano **free = 5 minutos de acesso**, contados a partir do primeiro acesso; depois bloqueia a tela e a API responde 402.
+  - Plano **free = 10 minutos de acesso**, contados a partir do primeiro acesso; depois bloqueia a tela e a API responde 402.
   - **Pagamento pela Cakto**: produtos Pro (R$ 47,90) e Full (R$ 59,90), webhook em `/api/webhooks/cakto` que troca o
     plano sozinho, pendências para quem paga sem conta e aba "Assinaturas" no `/admin`.
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link) e cofre de chaves.
@@ -32,7 +32,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `c5531bc`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `b100d52`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -65,6 +65,24 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-21 · Aba "Plano" na conta e teste gratuito de 10 minutos
+- **Quem:** Claude Code (Opus 5), a pedido de Nitiani
+- **O que mudou:**
+  - `src/pages/Conta.tsx`: a tela ganhou abas **Conta** e **Plano**. Na aba Plano: o plano atual com o estado da
+    assinatura e a próxima cobrança; para quem está no teste, quanto resta dos 10 minutos; os dois planos lado a lado com
+    preço, itens e botão **Assinar** (ou **Trocar para Full** para quem já paga, e "Plano ativo" no plano vigente);
+    rodapé explicando que o pagamento é pela Cakto e link para o suporte (trocar cartão, cancelar). O checkout abre com
+    nome, e-mail e telefone preenchidos.
+  - `src/data/planos.ts` (novo): nome, preço, público e itens de cada plano num lugar só. A landing e a conta leem daqui,
+    e `PRECOS` em `src/lib/plano.ts` passou a derivar deste arquivo — antes o preço estava escrito em dois lugares.
+  - **Teste gratuito de 5 → 10 minutos**: `MINUTOS_FREE` em `api/_lib/sessao.js` e `src/lib/plano.ts` (as duas cópias
+    mudam juntas, regra do AGENTE.md §8). Vale para quem ainda não começou o teste; quem já tem `free_expira_em` gravado
+    mantém a janela antiga (o admin pode liberar um teste novo pelo `/admin`).
+- **Verificação:** build ok; oxlint 13 avisos (sem novos); no navegador, com sessão simulada: conta free vê "Assinar Pro"
+  e "Assinar Full" com os links reais e o e-mail preenchido; conta Pro vê "Plano ativo" no Pro e "Trocar para Full";
+  contador mostrando 7:00 dos 10 minutos. Capturas em 1280×900 e 390×844.
+- **Pendências:** nenhuma nova.
 
 ### 2026-09-21 · Pagamento pela Cakto: a assinatura troca o plano sozinha
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
