@@ -32,7 +32,7 @@ Regras de trabalho estão em `AGENTE.md`.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
 - **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
-- **Último deploy verificado:** commit `111fbbc`, estado `success` (2026-09-16).
+- **Último deploy verificado:** commit `c5531bc`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
 
@@ -45,8 +45,8 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
 - [ ] A foto da dobra `#placa` é gerada por IA: a tela do celular tem nomes de montadora com erro de grafia
       ("Chewolet", "Citrofo", "Alfa Roemo"). No tamanho exibido não se lê, mas vale trocar por foto real quando houver.
-- [ ] Preencher `VITE_CAKTO_CHECKOUT_PRO` e `VITE_CAKTO_CHECKOUT_FULL` na Vercel com os links `pay.cakto.com.br/...`
-      (o usuário copia do painel da Cakto). Sem eles, os botões de assinar caem no `/#planos`, como antes.
+- [ ] Fazer uma compra real de validação (pode estornar em seguida) para ver o caminho inteiro com produto verdadeiro:
+      o evento de teste da Cakto usa um produto fictício e por isso nunca chega a liberar plano.
 - [ ] Bloqueio de sistemas por plano (Pro sem diesel nem câmbio) e limite de dispositivos (2/4): fora do escopo desta
       entrega, pendente de decidir como separar leve/diesel nas seções Elétrica e Câmbio.
 - [ ] Portal do assinante (trocar cartão, cancelar) — hoje isso é feito pelo painel da Cakto.
@@ -101,9 +101,11 @@ Regras de trabalho estão em `AGENTE.md`.
   disparado pela própria Cakto (`webhook_event_test_create`, evento `purchase_approved`) chegou, foi autenticado e
   gravado em `cakto_eventos` como `erro: produto desconhecido` — o payload de teste da Cakto usa um produto fictício,
   então esse é o resultado certo. Registro de teste apagado depois.
-- **Links de checkout:** o `short_id` do produto **não** serve (`pay.cakto.com.br/A6aHnEn` responde "Produto não
-  encontrado"); o link vem do **id da oferta**, que a API só entrega com o escopo `offers`. Copiar do painel da Cakto.
-- **Pendências:** links de checkout nas variáveis da Vercel; bloqueio por plano e limite de dispositivos; portal do assinante.
+- **Links de checkout** (do painel, em Production e Preview na Vercel; o `short_id` do produto não serve):
+  `VITE_CAKTO_CHECKOUT_PRO = https://pay.cakto.com.br/3c9ck5a_1126774` e
+  `VITE_CAKTO_CHECKOUT_FULL = https://pay.cakto.com.br/vxd8vpe_1117560`. As duas páginas confirmam preço e
+  **renovação mensal**. Como são `VITE_*`, trocar o link exige novo deploy.
+- **Pendências:** bloqueio por plano e limite de dispositivos; portal do assinante; uma compra real de validação.
 
 ### 2026-09-21 · Cakto (gateway de pagamento) conectado via MCP
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani
