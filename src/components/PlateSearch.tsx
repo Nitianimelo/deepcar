@@ -12,7 +12,7 @@ export function PlateSearch({ className = '' }: { className?: string }) {
   function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (!ok) return
-    nav(`/app/veiculo/${placa.replace('-', '')}`)
+    nav(`/app/veiculo/${placa.replace('-', '')}`, { viewTransition: true })
   }
 
   return (

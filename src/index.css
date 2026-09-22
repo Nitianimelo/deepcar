@@ -239,6 +239,72 @@ body {
 .marquee-mask:hover .marquee { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .marquee { animation: none; } }
 
+/* ── Plataforma: movimento curto e funcional ─────────────────────────
+   Na ferramenta o movimento só diz onde a pessoa está e o que está carregando: 120–250 ms, sem enfeite. */
+
+/* carregando: brilho passando no formato do conteúdo (no lugar do pulsar) */
+@keyframes brilho-carga { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.skeleton {
+  background: linear-gradient(100deg, var(--color-bench-2) 30%, var(--color-bench-3) 50%, var(--color-bench-2) 70%);
+  background-size: 200% 100%;
+  animation: brilho-carga 1.4s ease-in-out infinite;
+}
+/* sobre cartão (bench-2) o bloco precisa ser um tom acima */
+.skeleton.sobre-cartao { background-image: linear-gradient(100deg, var(--color-bench-3) 30%, #354154 50%, var(--color-bench-3) 70%); }
+
+/* fatias do esquema: brilho na cor da folha até a imagem chegar, depois aparece suave */
+.fatia { position: relative; }
+.fatia:not([data-ok]) {
+  background: linear-gradient(100deg, var(--fatia-bg) 30%, var(--fatia-brilho) 50%, var(--fatia-bg) 70%);
+  background-size: 200% 100%;
+  animation: brilho-carga 1.6s ease-in-out infinite;
+}
+.fatia img { opacity: 0; transition: opacity 260ms ease; }
+.fatia[data-ok] img { opacity: 1; }
+
+/* palco do desenho: a pinça com dois dedos é do visualizador, não da página */
+.palco { touch-action: pan-x pan-y; }
+
+/* tela cheia do navegador: o elemento vira a tela inteira, com o fundo do app */
+.visualizador-cheio:fullscreen { background: var(--color-pit); }
+.visualizador-cheio::backdrop { background: var(--color-pit); }
+
+/* listas e menus que abrem */
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(0.985); } to { opacity: 1; transform: none; } }
+.pop-in { animation: pop-in 140ms cubic-bezier(.2,.7,.2,1); transform-origin: top left; }
+@keyframes surge { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.surge { animation: surge 220ms cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i, 0) * 35ms); }
+
+/* troca de tela dentro do app (View Transitions): a tela cruza rápido e o título do esquema
+   "voa" da linha da lista até o cabeçalho da página. Navegador sem suporte troca na hora.
+   A tela inteira só cruza (menu e barra ficam parados); a área de conteúdo, onde o navegador entende
+   :active-view-transition, também sobe 6 px. O nome vai no <main> só durante a troca: fixo, ele prenderia
+   dentro do <main> a sobreposição da tela cheia do esquema. */
+::view-transition-old(root) { animation: 140ms ease-out both vt-sai; }
+::view-transition-new(root) { animation: 140ms ease-out both vt-surge; }
+html:active-view-transition .app-conteudo { view-transition-name: conteudo; }
+::view-transition-old(conteudo) { animation: 120ms ease-out both vt-sai; }
+::view-transition-new(conteudo) { animation: 220ms cubic-bezier(.2,.7,.2,1) both vt-entra; }
+@keyframes vt-surge { from { opacity: 0; } }
+::view-transition-group(titulo-esquema) { animation-duration: 260ms; animation-timing-function: cubic-bezier(.2,.7,.2,1); }
+@keyframes vt-sai { to { opacity: 0; } }
+@keyframes vt-entra { from { opacity: 0; transform: translateY(6px); } }
+
+/* consulta de placa: linha de leitura passando pela placa enquanto o provedor responde */
+@keyframes varre { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+.varredura { position: relative; overflow: hidden; }
+.varredura::after {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(74, 141, 255, 0.35), transparent);
+  animation: varre 1.3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton, .fatia:not([data-ok]), .pop-in, .surge, .varredura::after { animation: none; }
+  .fatia img { transition: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
 /* ── Landing: movimento (components/landing/*) ──────────────────────
    Tudo aqui vale só para a página de vendas (.landing) e desliga com prefers-reduced-motion. */
 

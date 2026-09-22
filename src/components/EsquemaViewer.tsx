@@ -2,13 +2,35 @@
 // Regras que não mudam: as fatias são um desenho único, empilhadas sem vão (sobreposição de 1px) e
 // navegadas por rolagem contínua, âncora de componente e minimapa. Nada de paginação.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, ChevronDown, ChevronUp, FileText, Maximize2, Minimize2, Moon, Sun } from 'lucide-react'
+import { ArrowUp, ChevronDown, ChevronUp, Maximize2, Minimize2, Moon, Sun } from 'lucide-react'
 import { urlImagem, type EsquemaDetalhe } from '../lib/acervo'
 import { MarcaDagua } from './MarcaDagua'
+import { SeletorComponente } from './SeletorComponente'
 
 const STEPS = [0.5, 0.67, 0.75, 1, 1.25, 1.5, 2, 2.5, 3]
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
 const TEMA_KEY = 'deepcar.desenho.escuro'
+
+/* Tela cheia do navegador (API Fullscreen). O Safari do iPhone não tem para elementos comuns:
+   lá fica só a sobreposição que cobre o app, e o resto funciona igual. */
+type ComTelaCheia = HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void }
+type DocTelaCheia = Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => Promise<void> | void }
+const elementoTelaCheia = () => document.fullscreenElement ?? (document as DocTelaCheia).webkitFullscreenElement ?? null
+function pedirTelaCheia(el: ComTelaCheia): boolean {
+  const pedir = el.requestFullscreen?.bind(el) ?? el.webkitRequestFullscreen?.bind(el)
+  if (!pedir) return false
+  try { Promise.resolve(pedir()).catch(() => { /* recusado: segue a sobreposição */ }) } catch { return false }
+  return true
+}
+/** topo da área visível de quem rola, em coordenadas da janela */
+const topoDe = (sc: HTMLElement) => (sc === document.documentElement ? 0 : sc.getBoundingClientRect().top)
+
+function largarTelaCheia() {
+  const d = document as DocTelaCheia
+  if (!elementoTelaCheia()) return
+  const sair = d.exitFullscreen?.bind(d) ?? d.webkitExitFullscreen?.bind(d)
+  try { Promise.resolve(sair?.()).catch(() => {}) } catch { /* já saiu */ }
+}
 
 export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
   const raiz = useRef<HTMLDivElement>(null)
@@ -27,7 +49,9 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
   const fit = useRef(0)
   const [zoomUI, setZoomUI] = useState({ z: 1, real: false, pannable: false })
   const [atual, setAtual] = useState(itens[0]?.[0] ?? '')
+  /** tela cheia: o visualizador cobre a tela (e pede a tela cheia do navegador, onde houver) */
   const [leitura, setLeitura] = useState(false)
+  const [seletorAberto, setSeletorAberto] = useState(false)
   const [noDoc, setNoDoc] = useState(false)
   const [falhas, setFalhas] = useState<Set<number>>(new Set())
   const [escuro, setEscuro] = useState(() => {
@@ -59,10 +83,15 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
     const st = stage.current, inner = st?.firstElementChild as HTMLElement | null
     if (!st || !inner || !sheet.current) return
     const cs = getComputedStyle(inner)
+    // a largura muda (janela, tela cheia, menu recolhido): o ponto do desenho que estava no topo continua no topo
+    const dr = drawing.current, sc = scroller()
+    const antes = dr?.getBoundingClientRect()
+    const r = antes && antes.height ? (topoDe(sc) - antes.top) / antes.height : 0
     fit.current = st.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)
     sheet.current.style.width = `${fit.current * zoom.current}px`
+    if (dr && r > 0) sc.scrollTop += dr.getBoundingClientRect().top - topoDe(sc) + r * dr.getBoundingClientRect().height
     syncZoomUI()
-  }, [syncZoomUI])
+  }, [syncZoomUI, scroller])
 
   /* ---------- posição, progresso, minimapa ---------- */
   const ticking = useRef(false)
@@ -123,7 +152,7 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
     const item = itens.find((s) => s[0] === id), dr = drawing.current
     if (!item || !dr) return
     const sc = scroller()
-    const sTop = sc === document.documentElement ? 0 : sc.getBoundingClientRect().top
+    const sTop = topoDe(sc)
     const b = dr.getBoundingClientRect()
     const alvo = sc.scrollTop + (b.top - sTop) + (Math.max(0, item[2] - 18) / d.altura) * b.height - (toolbar.current?.offsetHeight ?? 50) - 14
     const reduz = matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -162,46 +191,120 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
     return () => st.removeEventListener('wheel', wheel)
   }, [applyZoom])
 
+  /* ---------- tela cheia: troca quem rola, preservando o ponto do desenho ----------
+     Toda saída (botão, Esc, tecla F, Esc do próprio navegador) passa por sair(), que guarda a posição antes.
+     Antes, o Esc saía sem guardar e o esquema voltava ao topo. */
+  const posAntes = useRef<number | null>(null)
+  const nativa = useRef(false)
+  const guardarPosicao = useCallback(() => {
+    const dr = drawing.current, sc = scroller()
+    if (!dr) return
+    const b = dr.getBoundingClientRect()
+    posAntes.current = b.height ? (topoDe(sc) - b.top) / b.height : null
+  }, [scroller])
+  const sair = useCallback(() => {
+    if (!leitura) return
+    // em tela cheia do navegador, primeiro devolve a tela e só termina no fullscreenchange: enquanto o
+    // navegador não sai, o visualizador segue fora do fluxo e a página ainda não tem altura para voltar ao ponto
+    if (nativa.current && elementoTelaCheia()) { largarTelaCheia(); return }
+    guardarPosicao()
+    nativa.current = false
+    setSeletorAberto(false)
+    setLeitura(false)
+  }, [leitura, guardarPosicao])
+  const alternarTelaCheia = useCallback(() => {
+    if (leitura) { sair(); return }
+    guardarPosicao()
+    // o pedido precisa sair no mesmo clique/tecla; o estilo de sobreposição vale com ou sem a tela cheia do navegador
+    nativa.current = !!raiz.current && pedirTelaCheia(raiz.current)
+    setSeletorAberto(false)
+    setLeitura(true)
+  }, [leitura, sair, guardarPosicao])
+
+  // o navegador saiu da tela cheia por conta própria (Esc dele, gesto do sistema): sai junto, sem perder a posição
+  useEffect(() => {
+    const mudou = () => { if (!elementoTelaCheia() && nativa.current) sair() }
+    document.addEventListener('fullscreenchange', mudou)
+    document.addEventListener('webkitfullscreenchange', mudou)
+    return () => {
+      document.removeEventListener('fullscreenchange', mudou)
+      document.removeEventListener('webkitfullscreenchange', mudou)
+    }
+  }, [sair])
+  // saiu da página ainda em tela cheia: devolve a tela ao navegador
+  useEffect(() => {
+    const el = raiz.current
+    return () => { if (el && elementoTelaCheia() === el) largarTelaCheia() }
+  }, [])
+
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
       const digitando = t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || t.isContentEditable)
-      if (e.key === 'Escape' && leitura) { setLeitura(false); return }
+      if (e.key === 'Escape' && leitura) { sair(); return }
       if (e.ctrlKey || e.metaKey || e.altKey || digitando) return
       if (e.key === '+' || e.key === '=') { e.preventDefault(); stepZoom(1) }
       else if (e.key === '-') { e.preventDefault(); stepZoom(-1) }
       else if (e.key === '0') { e.preventDefault(); applyZoom(1) }
+      else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); alternarTelaCheia() }
+      else if (e.key === '/' && itens.length > 1) { e.preventDefault(); setSeletorAberto(true) }
     }
     document.addEventListener('keydown', key)
     return () => document.removeEventListener('keydown', key)
-  }, [leitura, stepZoom, applyZoom])
+  }, [leitura, stepZoom, applyZoom, itens.length, sair, alternarTelaCheia])
 
-  /* ---------- modo leitura: troca quem rola, preservando o ponto do desenho ---------- */
-  const posAntes = useRef<number | null>(null)
-  const alternarLeitura = () => {
-    const dr = drawing.current, sc = scroller()
-    if (dr) {
-      const sTop = sc === document.documentElement ? 0 : sc.getBoundingClientRect().top
-      const b = dr.getBoundingClientRect()
-      posAntes.current = (sTop - b.top) / b.height
-    }
-    setLeitura((v) => !v)
-  }
   useLayoutEffect(() => {
     measureFit()
     const r = posAntes.current, dr = drawing.current
     if (r === null || !dr) return
     posAntes.current = null
     const sc = scroller()
-    const sTop = sc === document.documentElement ? 0 : sc.getBoundingClientRect().top
     const b = dr.getBoundingClientRect()
-    sc.scrollTop += b.top - sTop + Math.max(0, r) * b.height
+    sc.scrollTop += b.top - topoDe(sc) + Math.max(0, r) * b.height
     onScroll()
   }, [leitura]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ---------- arrastar para mover (mouse, quando o desenho excede a largura) ---------- */
   const pan = useRef<{ x: number; y: number } | null>(null)
   const [panning, setPanning] = useState(false)
+
+  /* ---------- pinça com dois dedos (celular/tablet): zoom do desenho, não da página ---------- */
+  useEffect(() => {
+    const st = stage.current
+    if (!st) return
+    let inicio: { d: number; z: number } | null = null
+    let raf = 0
+    const dist = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY)
+    const comeca = (e: TouchEvent) => {
+      if (e.touches.length === 2) { inicio = { d: dist(e.touches), z: zoom.current }; e.preventDefault() }
+    }
+    const move = (e: TouchEvent) => {
+      if (!inicio || e.touches.length !== 2) return
+      e.preventDefault()
+      const d = dist(e.touches)
+      const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2
+      const my = (e.touches[0].clientY + e.touches[1].clientY) / 2
+      const z = inicio.z * (d / inicio.d)
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => applyZoom(z, mx, my))
+    }
+    const fim = (e: TouchEvent) => { if (e.touches.length < 2) inicio = null }
+    // Safari: sem isto o gesto também amplia a página inteira
+    const gesto = (e: Event) => e.preventDefault()
+    st.addEventListener('touchstart', comeca, { passive: false })
+    st.addEventListener('touchmove', move, { passive: false })
+    st.addEventListener('touchend', fim)
+    st.addEventListener('touchcancel', fim)
+    st.addEventListener('gesturestart', gesto)
+    return () => {
+      cancelAnimationFrame(raf)
+      st.removeEventListener('touchstart', comeca)
+      st.removeEventListener('touchmove', move)
+      st.removeEventListener('touchend', fim)
+      st.removeEventListener('touchcancel', fim)
+      st.removeEventListener('gesturestart', gesto)
+    }
+  }, [applyZoom])
 
   /* ---------- minimapa ---------- */
   const mmDrag = useRef(false)
@@ -218,7 +321,7 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
   const fundoFolha = escuro ? '#10151c' : '#f3f6fa'
 
   return (
-    <div ref={raiz} className={leitura ? 'fixed inset-0 z-50 overflow-y-auto bg-pit px-2 pb-2 sm:px-4 sm:pb-4 xl:pr-[136px]' : 'xl:pr-[92px]'}>
+    <div ref={raiz} className={leitura ? 'visualizador-cheio fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-pit px-2 pb-2 sm:px-4 sm:pb-4 xl:pr-[136px]' : 'xl:pr-[92px]'}>
       <section
         ref={workspace}
         aria-label="Esquema elétrico completo"
@@ -229,61 +332,52 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
           ref={toolbar}
           className="no-print sticky top-0 z-10 flex min-h-[52px] items-center justify-between gap-2 rounded-t-xl border-b seam bg-bench-1/95 px-2 py-1.5 backdrop-blur-md sm:px-3"
         >
-          <div className="flex min-w-0 flex-1 items-center gap-2 text-ink-2">
-            <FileText size={16} className="hidden flex-none text-ink-4 sm:block" />
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 text-ink-2 sm:gap-2">
             {itens.length > 1 ? (
-              <select
-                value={atual}
-                onChange={(e) => { irPara(e.target.value); e.target.blur() }}
-                aria-label="Ir para o componente"
-                data-tip="Escolha um componente para ir direto a ele no desenho"
-                data-tip-side="bottom"
-                className="w-full min-w-[96px] cursor-pointer truncate rounded-md border border-transparent bg-transparent px-2 py-1.5 text-[13px] font-medium text-ink-1 hover:border-[var(--seam-1)] hover:bg-bench-3 sm:w-auto sm:max-w-[34vw]"
-              >
-                {d.secoes.map(([grupo, it]) =>
-                  grupo ? (
-                    <optgroup key={grupo} label={grupo}>
-                      {it.map(([id, nome]) => <option key={id} value={id}>{nome}</option>)}
-                    </optgroup>
-                  ) : it.map(([id, nome]) => <option key={id} value={id}>{nome}</option>),
-                )}
-              </select>
+              <SeletorComponente
+                secoes={d.secoes}
+                atual={atual}
+                aberto={seletorAberto}
+                onAbrir={setSeletorAberto}
+                onEscolher={irPara}
+              />
             ) : (
               <span className="px-2 text-[13px] font-medium text-ink-1">Desenho completo</span>
             )}
             {itens.length > 1 && (() => {
               const i = itens.findIndex((s) => s[0] === atual)
               return (
-                <span className="hidden items-center rounded-lg border seam bg-well/70 p-0.5 sm:flex" role="group" aria-label="Componente anterior ou próximo">
+                <span className="flex flex-none items-center rounded-lg border seam bg-well/70 p-0.5" role="group" aria-label="Componente anterior ou próximo">
                   <Btn onClick={() => irPara(itens[i - 1][0])} disabled={i <= 0} label="Componente anterior" tip="Voltar ao componente anterior"><ChevronUp size={16} /></Btn>
                   <Btn onClick={() => irPara(itens[i + 1][0])} disabled={i < 0 || i >= itens.length - 1} label="Próximo componente" tip="Avançar para o próximo componente"><ChevronDown size={16} /></Btn>
                 </span>
               )
             })()}
-            <output ref={pctRef} className="code hidden w-10 flex-none text-right text-[12px] text-ink-4 sm:block" data-tip="Quanto do esquema você já percorreu" data-tip-side="bottom">0%</output>
+            <output ref={pctRef} className="code hidden w-10 flex-none text-right text-[12px] text-ink-4 lg:block" data-tip="Quanto do esquema você já percorreu" data-tip-side="bottom">0%</output>
           </div>
 
           <div className="flex flex-none items-center gap-1" role="group" aria-label="Zoom e leitura">
-            <div className="flex items-center rounded-lg border seam bg-well/70 p-0.5">
+            {/* no celular o zoom é com dois dedos; os botões ficam a partir do tablet */}
+            <div className="hidden items-center rounded-lg border seam bg-well/70 p-0.5 sm:flex">
               <Btn onClick={() => stepZoom(-1)} disabled={zoomUI.z <= STEPS[0] + 1e-3} label="Diminuir zoom" tip="Afastar o desenho" kbd="−"><span className="text-[19px] leading-none">−</span></Btn>
               <output className="code w-11 text-center text-[12px] text-ink-1" aria-live="polite" data-tip="Zoom atual. Ctrl + rolagem do mouse também aproxima e afasta" data-tip-side="bottom">{Math.round(zoomUI.z * 100)}%</output>
               <Btn onClick={() => stepZoom(1)} disabled={zoomUI.z >= STEPS[STEPS.length - 1] - 1e-3} label="Aumentar zoom" tip="Aproximar o desenho" kbd="+"><span className="text-[19px] leading-none">+</span></Btn>
             </div>
             <Toggle className="hidden md:inline-flex" on={Math.abs(zoomUI.z - 1) < 1e-3} onClick={() => applyZoom(1)} label="Ajustar à largura" tip="Encaixa o desenho na largura da tela" kbd="0">Largura</Toggle>
             <Toggle className="hidden md:inline-flex" on={zoomUI.real} onClick={() => applyZoom((d.largura + sheetPad()) / fit.current)} label="Tamanho real" tip="Tamanho original do desenho, sem ampliar nem reduzir">1:1</Toggle>
-            <span className="mx-1 h-5 w-px bg-[var(--seam-3)]" aria-hidden="true" />
+            <span className="mx-1 hidden h-5 w-px bg-[var(--seam-3)] sm:block" aria-hidden="true" />
             <Btn onClick={() => setEscuro((v) => !v)} label={escuro ? 'Desenho claro' : 'Desenho escuro'} tip={escuro ? 'Ver o desenho com fundo claro, como no papel' : 'Ver o desenho com fundo escuro, mais confortável com pouca luz'}>
               {escuro ? <Sun size={16} /> : <Moon size={16} />}
             </Btn>
             <Toggle
               on={leitura}
-              onClick={alternarLeitura}
-              label={leitura ? 'Sair do modo de leitura' : 'Modo de leitura'}
-              tip={leitura ? 'Voltar à tela normal' : 'Esconde menus e usa a tela inteira para o desenho'}
-              kbd={leitura ? 'Esc' : undefined}
+              onClick={alternarTelaCheia}
+              label={leitura ? 'Sair da tela cheia' : 'Tela cheia'}
+              tip={leitura ? 'Voltar à tela normal, no mesmo ponto do desenho' : 'Esconde menus e barras e usa a tela inteira para o desenho'}
+              kbd={leitura ? 'Esc' : 'F'}
             >
               {leitura ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-              <span className="hidden lg:inline">{leitura ? 'Sair da leitura' : 'Modo de leitura'}</span>
+              <span className="hidden lg:inline">{leitura ? 'Sair da tela cheia' : 'Tela cheia'}</span>
             </Toggle>
           </div>
           <div
@@ -297,7 +391,7 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
         {/* palco */}
         <div
           ref={stage}
-          className={`overflow-x-auto overflow-y-hidden rounded-b-xl overscroll-x-contain ${zoomUI.pannable ? (panning ? 'cursor-grabbing select-none' : 'cursor-grab') : ''}`}
+          className={`palco overflow-x-auto overflow-y-hidden rounded-b-xl overscroll-x-contain ${zoomUI.pannable ? (panning ? 'cursor-grabbing select-none' : 'cursor-grab') : ''}`}
           onPointerDown={(e) => {
             if (e.pointerType !== 'mouse' || e.button !== 0 || !zoomUI.pannable) return
             pan.current = { x: e.clientX, y: e.clientY }
@@ -321,7 +415,11 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
               className="mx-auto rounded-[3px] border p-2 shadow-2xl sm:p-6"
               style={{ background: fundoFolha, borderColor: escuro ? '#1f2836' : '#c9d2de' }}
             >
-              <div ref={drawing} className="desenho relative" style={{ background: fundoFolha }}>
+              <div
+                ref={drawing}
+                className="desenho relative"
+                style={{ background: fundoFolha, '--fatia-bg': fundoFolha, '--fatia-brilho': escuro ? '#1b2330' : '#e6ebf2' } as React.CSSProperties}
+              >
                 {d.trechos.map((t, i) =>
                   falhas.has(i) ? (
                     <div
@@ -332,8 +430,10 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
                       Esta parte do desenho não pôde ser carregada.
                     </div>
                   ) : (
+                    // a fatia aparece suave quando termina de baixar; antes disso, um brilho na cor da folha
+                    // (sem isso a fatia vazia ficava clara no tema escuro, porque o filtro inverte o fundo)
+                    <div key={t.arquivo} className="fatia" style={{ marginTop: i ? -1 : 0 }}>
                     <img
-                      key={t.arquivo}
                       src={urlImagem(d, t)}
                       width={t.w}
                       height={t.h}
@@ -342,10 +442,12 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
                       fetchPriority={i === 0 ? 'high' : 'auto'}
                       decoding="async"
                       draggable={false}
+                      onLoad={(e) => { e.currentTarget.parentElement!.dataset.ok = '1' }}
                       onError={() => setFalhas((f) => new Set(f).add(i))}
-                      // fatias contíguas de um desenho único: sobrepor 1px elimina o fio que o arredondamento subpixel abre
-                      style={{ display: 'block', width: '100%', height: 'auto', marginTop: i ? -1 : 0, filter: filtro, background: fundoFolha, userSelect: 'none' }}
+                      // fatias contíguas de um desenho único: sobrepor 1px (no invólucro) elimina o fio do arredondamento subpixel
+                      style={{ display: 'block', width: '100%', height: 'auto', filter: filtro, background: fundoFolha, userSelect: 'none' }}
                     />
+                    </div>
                   ),
                 )}
                 <MarcaDagua escuro={escuro} />

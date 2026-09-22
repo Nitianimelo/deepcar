@@ -28,7 +28,8 @@ Regras de trabalho estão em `AGENTE.md`.
     Botão "Início" no menu lateral (e o logo leva para lá).
   - Busca geral `/app/busca?q=` em todos os sistemas (modelo, motor, código, gerenciamento, fabricação e nome do sistema).
   - Plataforma `/app`: seções de injeção (Leve/Diesel), ABS, elétrica (Leve/Diesel) e câmbio (Leve/Diesel), com catálogo do acervo no R2.
-  - Visualizador de esquemas (scroll contínuo, zoom, minimapa, modo leitura, claro/escuro) e impressão A4 com marca d'água.
+  - Visualizador de esquemas (scroll contínuo, zoom e pinça, minimapa, tela cheia, seletor de componentes com busca, claro/escuro) e impressão A4 com marca d'água.
+  - Busca rápida Ctrl+K / ⌘K em qualquer tela do app (placa, esquemas, últimas consultas).
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → modo simulado, com cache de 24 h em memória.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
@@ -67,6 +68,49 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-22 · Tela cheia do esquema corrigida, navegação por componente e movimento na plataforma
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** corrigir a tela cheia do esquema (estava com bug), facilitar a navegação e aplicar na plataforma interna
+  (início e esquemas) o movimento discreto recomendado.
+- **Bug da tela cheia (reproduzido e corrigido):** o "Modo de leitura" saía pelo **Esc sem guardar a posição** e o
+  esquema voltava ao topo (só o botão preservava). Além disso, não era tela cheia de verdade: a barra do navegador ficava.
+- **O que mudou:**
+  - `src/components/EsquemaViewer.tsx`:
+    - "Modo de leitura" virou **Tela cheia** (botão, tecla **F**): pede a tela cheia do navegador (API Fullscreen) e,
+      onde ela não existe (Safari do iPhone), fica a sobreposição de antes. Toda saída (botão, F, Esc, Esc do próprio
+      navegador) passa por `sair()`, que guarda o ponto do desenho. Em tela cheia do navegador a saída espera o
+      `fullscreenchange`: restaurar antes disso deixava a página sem altura e jogava ao topo (achado no teste).
+    - `measureFit` mantém no topo o mesmo ponto do desenho quando a largura muda (entrar/sair da tela cheia, girar o
+      tablet, recolher o menu).
+    - **Pinça com dois dedos** no celular/tablet amplia o desenho (não a página); os botões −/+ ficam do tablet para cima.
+    - Anterior/próximo componente agora aparece também no celular.
+    - Fatias do desenho: brilho na cor da folha enquanto baixam e aparecem suaves. Antes, no tema escuro, a fatia ainda
+      não carregada aparecia como bloco claro (o filtro de inversão clareava o fundo dela).
+  - `src/components/SeletorComponente.tsx` (novo): no lugar do `<select>`, botão com o componente atual e a posição
+    ("18/41") que abre lista com busca, agrupada, com setas/Enter e tecla **/** para abrir. Fica dentro do visualizador
+    para funcionar na tela cheia.
+  - `src/components/Tooltips.tsx`: o balão vai para dentro do elemento em tela cheia (senão sumia nela).
+  - `src/components/PaletaBusca.tsx` (novo) + `AppLayout.tsx`: **busca rápida Ctrl+K / ⌘K** de qualquer tela: placa
+    válida vira "Consultar placa", texto busca no catálogo inteiro (mesma regra do `/app/busca`), vazio mostra as últimas
+    consultas; botão "Buscar" na barra superior (a partir do tablet).
+  - Troca de telas com **View Transitions** (`viewTransition` nos links do menu, lista, início, placa e voltar): a tela
+    cruza em ~140 ms e o título do esquema "voa" da linha clicada até o cabeçalho (`src/lib/transicao.ts`, nome
+    `titulo-esquema` no `<h1>` do `EsquemaPage`). Navegador sem suporte troca na hora.
+  - Carregamentos: `animate-pulse` trocado por brilho passando (`.skeleton`) em seção, busca, esquema e placa. A consulta
+    de placa ganhou linha de leitura passando e, depois de 5 s, avisa que a base está demorando.
+  - Itens das últimas consultas e cartões de sistemas da placa entram em sequência rápida (`.surge`).
+  - `src/index.css`: bloco "Plataforma: movimento curto e funcional". Tudo desliga com `prefers-reduced-motion`.
+  - `AGENTE.md`: mapa do código com os componentes novos (inclusive os da landing do commit anterior).
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** `npm run build` ok; oxlint 13 avisos (os mesmos de antes; os novos que apareceram no meio foram
+  resolvidos). No navegador (WebKit, `vite` com o acervo do R2 e sessão simulada), esquema real Alfa Romeo 145:
+  tela cheia do navegador ativa; saída por botão, F e Esc voltando exatamente ao mesmo ponto (42,7% → 42,7%); busca
+  "sonda" + Enter no seletor pulou para a Sonda Lambda; no celular (390 px) barra com seletor, anterior/próximo, tema e
+  tela cheia, sem rolagem horizontal e sem blocos claros; Ctrl+K "gol 1.6" → 56 esquemas, Enter abre o esquema;
+  clique na lista abre o esquema com a transição; sem erros no console.
+- **Não testado:** pinça em aparelho real (o navegador de teste não simula dois dedos) e a tela cheia no iPad.
+- **Pendências:** nenhuma nova.
 
 ### 2026-09-22 · Landing com movimento: scroll, fundo animado e cards de plano
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

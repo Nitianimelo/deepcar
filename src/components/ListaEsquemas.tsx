@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { SECTION_META } from '../data/nav'
 import { adiantarEsquema, type Esquema } from '../lib/acervo'
+import { marcarTitulo } from '../lib/transicao'
 import { DetalhesEsquema } from './DetalhesEsquema'
 import { LogoMarca } from './LogoMarca'
 
@@ -56,6 +57,8 @@ function Linha({ e, primeira, mostrarLogo, mostrarSecao }: { e: Esquema; primeir
     <li className={primeira ? '' : 'border-t seam-soft'}>
       <Link
         to={`/app/esquema/${e.id}`}
+        viewTransition
+        onClick={marcarTitulo}
         onPointerEnter={() => adiantarEsquema(e.id)}
         onFocus={() => adiantarEsquema(e.id)}
         className="group grid items-center gap-1 px-5 py-3.5 transition-colors hover:bg-bench-3 md:grid-cols-[1.5fr_1fr_1.3fr_0.9fr_28px] md:gap-4"
@@ -70,7 +73,7 @@ function Linha({ e, primeira, mostrarLogo, mostrarSecao }: { e: Esquema; primeir
             {mostrarSecao && (
               <span className="code block text-[10.5px] uppercase tracking-[0.14em] text-trace-hi">{SECTION_META[e.secao]?.titulo}</span>
             )}
-            <span className="block break-words font-medium text-ink-1 md:truncate">{mostrarLogo ? `${e.marca} ` : ''}{e.modelo}</span>
+            <span data-titulo className="block break-words font-medium text-ink-1 md:truncate">{mostrarLogo ? `${e.marca} ` : ''}{e.modelo}</span>
             <DetalhesEsquema e={e} className="mt-1.5 md:hidden" />
           </span>
         </span>

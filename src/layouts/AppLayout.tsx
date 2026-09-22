@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import { PlateSearch } from '../components/PlateSearch'
+import { PaletaBusca } from '../components/PaletaBusca'
 import { Sidebar } from '../components/Sidebar'
 import { BloqueioFree, ContadorFree } from '../components/LimiteFree'
 import { useSessao } from '../lib/auth'
@@ -54,11 +55,13 @@ export default function AppLayout() {
 
           {/* no início a placa já é o campo principal da tela; aqui seria repetido */}
           {naoEInicio ? <PlateSearch className="flex-1 max-w-md" /> : <div className="flex-1" />}
+          {naoEInicio && <div className="hidden flex-1 md:block" />}
+          <PaletaBusca />
 
           <ContadorFree restante={limite.restante} />
         </header>
 
-        <main className="schematic-grid min-h-0 flex-1 overflow-y-auto">
+        <main className="app-conteudo schematic-grid min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>

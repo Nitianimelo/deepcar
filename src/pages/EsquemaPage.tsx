@@ -73,6 +73,7 @@ export default function EsquemaPage() {
     <div className="mx-auto max-w-[1280px] px-3 py-6 sm:px-8 sm:py-8">
       <Link
         to={carga.estado === 'ok' ? `${rotaSecao(secao)}?marca=${encodeURIComponent(carga.dados.marca)}` : rotaSecao(secao)}
+        viewTransition
         className="no-print inline-flex items-center gap-1.5 text-sm text-ink-3 hover:text-ink-1"
       >
         <ArrowLeft size={15} /> {meta.titulo}{carga.estado === 'ok' ? ` · ${carga.dados.marca}` : ''}
@@ -80,9 +81,9 @@ export default function EsquemaPage() {
 
       {carga.estado === 'carregando' && (
         <div aria-busy="true" className="mt-4 space-y-3">
-          <div className="h-8 w-72 animate-pulse rounded bg-bench-3" />
-          <div className="h-4 w-96 max-w-full animate-pulse rounded bg-bench-3" />
-          <div className="mt-6 h-[60vh] animate-pulse rounded-xl bg-bench-2" />
+          <div className="skeleton h-8 w-72 max-w-full rounded" />
+          <div className="skeleton h-4 w-96 max-w-full rounded" />
+          <div className="skeleton mt-6 h-[60vh] rounded-xl" />
         </div>
       )}
 
@@ -112,7 +113,7 @@ export default function EsquemaPage() {
                 </Link>
                 <div className="min-w-0">
                   <p className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">{d.marca} · {meta.trilha.join(' · ')}</p>
-                  <h1 className="mt-1.5 text-[26px] font-semibold tracking-tight sm:text-3xl">{d.marca} {d.modelo}</h1>
+                  <h1 className="mt-1.5 text-[26px] font-semibold tracking-tight sm:text-3xl" style={{ viewTransitionName: 'titulo-esquema' }}>{d.marca} {d.modelo}</h1>
                   {d.subtitulo && <p className="mt-1 text-ink-3">{subtituloCurto(d.subtitulo)}</p>}
                 </div>
               </div>

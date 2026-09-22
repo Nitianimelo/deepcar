@@ -54,7 +54,7 @@ export default function Busca() {
 
       {carga.estado === 'carregando' && temTermo && (
         <div aria-busy="true" className="mt-4 space-y-2">
-          {Array.from({ length: 6 }, (_, i) => <div key={i} className="h-14 animate-pulse rounded-xl bg-bench-2" />)}
+          {Array.from({ length: 6 }, (_, i) => <div key={i} className="skeleton h-14 rounded-xl" />)}
         </div>
       )}
 

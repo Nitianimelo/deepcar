@@ -5,6 +5,7 @@ import { consultarPlaca, formatarPlaca, normalizarPlaca, type Veiculo } from '..
 import { carregarTudo, useCarga, type Esquema } from '../lib/acervo'
 import { marcaCanonica, sistemasDisponiveis } from '../lib/compatibilidade'
 import { registrarRecente, veiculoGuardado } from '../lib/recentes'
+import { marcarTitulo } from '../lib/transicao'
 import { SECOES, SECTION_META } from '../data/nav'
 import { TracePad } from '../components/TracePad'
 import { LogoMarca } from '../components/LogoMarca'
@@ -54,14 +55,21 @@ const tituloVeiculo = (v: Veiculo) => [v.marca, v.modelo].filter(Boolean).join('
 const detalheVeiculo = (v: Veiculo) => [formatarPlaca(v.placa), anoDe(v)].filter(Boolean).join(' · ')
 
 function Carregando() {
+  // o provedor costuma responder em 1–3 s; passado disso, avisa em vez de deixar a tela parada sem explicação
+  const [demorando, setDemorando] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setDemorando(true), 5000)
+    return () => clearTimeout(t)
+  }, [])
   return (
-    <div className="mt-6 rounded-xl border seam bg-bench-2 p-6">
-      <div className="flex items-center gap-3 text-ink-3">
-        <span className="h-2 w-2 animate-pulse rounded-full bg-trace" />
-        Consultando base de veículos…
+    <div className="mt-6 rounded-xl border seam bg-bench-2 p-6" aria-busy="true">
+      <div className="flex items-center gap-3 text-ink-2">
+        <span className="h-2 w-2 flex-none rounded-full bg-trace pad-pulse" />
+        <span aria-live="polite">{demorando ? 'A base de veículos está demorando mais que o normal. Continuamos tentando…' : 'Consultando a placa na base de veículos…'}</span>
       </div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        {[0, 1, 2].map((i) => <div key={i} className="h-14 animate-pulse rounded-lg bg-bench-3" />)}
+      {/* linha de leitura passando sobre a ficha que vai aparecer */}
+      <div className="varredura mt-5 grid gap-3 rounded-lg sm:grid-cols-3">
+        {[0, 1, 2].map((i) => <div key={i} className="skeleton sobre-cartao h-14 rounded-lg" />)}
       </div>
     </div>
   )
@@ -132,7 +140,7 @@ function Resultado({ v }: { v: Veiculo }) {
         </div>
 
         {catalogo.estado === 'carregando' ? (
-          <div className="mt-4 h-24 animate-pulse rounded-xl bg-bench-2" aria-busy="true" />
+          <div className="skeleton mt-4 h-24 rounded-xl" aria-busy="true" />
         ) : sistemas.length === 0 ? (
           <div className="mt-4 rounded-xl border seam bg-bench-2 p-6 text-[14px]">
             <p className="text-ink-1">Ainda não há esquemas cadastrados para este veículo.</p>
@@ -140,10 +148,10 @@ function Resultado({ v }: { v: Veiculo }) {
           </div>
         ) : (
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {sistemas.map((s) => {
+            {sistemas.map((s, i) => {
               const Icon = s.icon
               return (
-                <div key={s.key} className="rounded-xl border seam bg-bench-2">
+                <div key={s.key} className="surge rounded-xl border seam bg-bench-2" style={{ '--i': i } as React.CSSProperties}>
                   <div className="flex items-center gap-2.5 border-b seam-soft px-4 py-3">
                     <Icon size={17} className="text-trace" />
                     <span className="font-medium">{SECTION_META[s.key].titulo}</span>
@@ -169,9 +177,9 @@ function ListaSistema({ esquemas }: { esquemas: Esquema[] }) {
       <ul>
         {lista.map((e) => (
           <li key={e.id} className="border-t seam-soft first:border-t-0">
-            <Link to={`/app/esquema/${e.id}`} className="group flex items-center gap-3 px-4 py-3 hover:bg-bench-3">
+            <Link to={`/app/esquema/${e.id}`} viewTransition onClick={marcarTitulo} className="group flex items-center gap-3 px-4 py-3 hover:bg-bench-3">
               <span className="min-w-0 flex-1">
-                <span className="block break-words text-[14px] font-medium text-ink-1">{e.marca} {e.modelo}</span>
+                <span data-titulo className="block break-words text-[14px] font-medium text-ink-1">{e.marca} {e.modelo}</span>
                 <DetalhesEsquema e={e} className="mt-1.5" />
               </span>
               <ChevronRight size={16} className="flex-none text-ink-4 group-hover:text-trace" />

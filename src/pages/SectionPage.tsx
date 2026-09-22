@@ -100,7 +100,7 @@ export default function SectionPage({ secao }: { secao: SectionKey }) {
 
       {estado === 'carregando' && (
         <div aria-busy="true" className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {Array.from({ length: 15 }, (_, i) => <div key={i} className="h-[124px] animate-pulse rounded-xl bg-bench-2" />)}
+          {Array.from({ length: 15 }, (_, i) => <div key={i} className="skeleton h-[124px] rounded-xl" />)}
         </div>
       )}
 

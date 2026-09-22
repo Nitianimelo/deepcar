@@ -63,6 +63,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
           <NavLink
             to="/app"
             end
+            viewTransition
             aria-label="Início"
             data-tip={collapsed ? 'Início: consultar por placa ou buscar' : 'Consultar por placa, buscar e últimas consultas'}
             data-tip-side="right"
@@ -111,6 +112,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
           )}
           <NavLink
             to="/app/conta"
+            viewTransition
             data-tip="Sua conta e preferências"
             data-tip-side={collapsed ? 'right' : 'top'}
             className={`nav-item h-auto py-2.5 ${collapsed ? 'justify-center px-0' : ''} ${contaAtiva ? 'nav-active' : ''}`}
@@ -158,6 +160,7 @@ function LeafItem({ leaf, collapsed, nested = false }: { leaf: NavLeaf; collapse
   return (
     <NavLink
       to={leaf.to}
+      viewTransition
       aria-label={leaf.label}
       data-tip={collapsed ? `${leaf.label}: ${SECTION_META[leaf.key].descricao}` : SECTION_META[leaf.key].descricao}
       data-tip-side="right"

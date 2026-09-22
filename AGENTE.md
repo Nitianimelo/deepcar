@@ -123,6 +123,10 @@ src/
   pages/                  Landing, Login, Cadastro, Admin, Inicio (/app), Busca, SectionPage, EsquemaPage, VeiculoPage, Conta
   layouts/AppLayout.tsx   casca do /app (sidebar, barra, LimiteFree)
   components/             ListaEsquemas (lista da seção e da busca), DetalhesEsquema, EsquemaViewer, PrintEsquema, Sidebar, LimiteFree, LogoMarca, Tooltips…
+  components/SeletorComponente.tsx  lista com busca dos componentes do esquema (tecla /), dentro do EsquemaViewer
+  components/PaletaBusca.tsx        busca rápida Ctrl+K / ⌘K de qualquer tela do app (placa, esquema, últimas consultas)
+  components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll), CardPlano: só a landing
+  lib/transicao.ts        marcarTitulo(): título que "voa" da lista ao cabeçalho do esquema (View Transitions)
   lib/auth.ts             cliente de sessão (cookie no servidor; localStorage só guarda retrato do perfil)
   lib/plano.ts            relógio do plano free no navegador (espelha MINUTOS_FREE)
   lib/validacao.ts        validação de cadastro no navegador (espelha api/_lib/validar.js)

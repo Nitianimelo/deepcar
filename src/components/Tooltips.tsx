@@ -158,6 +158,7 @@ export function TooltipLayer() {
       </span>
       <i aria-hidden="true" className="tip-seta absolute h-2.5 w-2.5" style={setaStyle} />
     </div>,
-    document.body,
+    // na tela cheia do navegador só o elemento em tela cheia aparece: o balão precisa estar dentro dele
+    (document.fullscreenElement as HTMLElement | null) ?? document.body,
   )
 }

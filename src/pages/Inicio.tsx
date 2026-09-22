@@ -5,6 +5,7 @@ import { ArrowRight, ChevronRight, FileText, ScanLine, Search } from 'lucide-rea
 import { getSession } from '../lib/auth'
 import { formatarPlaca, normalizarPlaca, placaValida } from '../lib/placa'
 import { limparRecentes, useRecentes, type Recente } from '../lib/recentes'
+import { marcarTitulo } from '../lib/transicao'
 
 export default function Inicio() {
   const primeiroNome = getSession()?.nome?.split(' ')[0]
@@ -46,7 +47,7 @@ function ConsultaPlaca() {
 
   function enviar(e: FormEvent) {
     e.preventDefault()
-    if (ok) nav(`/app/veiculo/${normalizarPlaca(placa)}`)
+    if (ok) nav(`/app/veiculo/${normalizarPlaca(placa)}`, { viewTransition: true })
   }
 
   return (
@@ -85,7 +86,7 @@ function BuscaTexto() {
 
   function enviar(e: FormEvent) {
     e.preventDefault()
-    nav(q.trim() ? `/app/busca?q=${encodeURIComponent(q.trim())}` : '/app/busca')
+    nav(q.trim() ? `/app/busca?q=${encodeURIComponent(q.trim())}` : '/app/busca', { viewTransition: true })
   }
 
   return (
@@ -138,25 +139,27 @@ function UltimasConsultas() {
         </p>
       ) : (
         <ul className="mt-3 overflow-hidden rounded-2xl border seam bg-bench-2">
-          {recentes.map((r) => <ItemRecente key={r.tipo === 'placa' ? `p-${r.placa}` : `e-${r.id}`} r={r} />)}
+          {recentes.map((r, i) => <ItemRecente key={r.tipo === 'placa' ? `p-${r.placa}` : `e-${r.id}`} r={r} i={i} />)}
         </ul>
       )}
     </section>
   )
 }
 
-function ItemRecente({ r }: { r: Recente }) {
+function ItemRecente({ r, i }: { r: Recente; i: number }) {
   const placa = r.tipo === 'placa'
   const Icone = placa ? ScanLine : FileText
   return (
-    <li className="border-t seam-soft first:border-t-0">
+    <li className="surge border-t seam-soft first:border-t-0" style={{ '--i': i } as React.CSSProperties}>
       <Link
         to={placa ? `/app/veiculo/${r.placa}` : `/app/esquema/${r.id}`}
+        viewTransition
+        onClick={placa ? undefined : marcarTitulo}
         className="group flex items-center gap-3.5 px-5 py-3.5 hover:bg-bench-3 sm:px-6"
       >
         <Icone size={16} className="flex-none text-ink-4 group-hover:text-trace" />
         <span className="min-w-0 flex-1">
-          <span className="block break-words text-[14.5px] text-ink-1">{r.titulo}</span>
+          <span data-titulo className="block break-words text-[14.5px] text-ink-1">{r.titulo}</span>
           <span className="code mt-0.5 block truncate text-[12px] text-ink-4">{r.detalhe}</span>
         </span>
         <span className="code flex-none text-[11.5px] text-ink-4">{quando(r.em)}</span>
