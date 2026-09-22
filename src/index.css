@@ -239,6 +239,109 @@ body {
 .marquee-mask:hover .marquee { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .marquee { animation: none; } }
 
+/* ── Landing: movimento (components/landing/*) ──────────────────────
+   Tudo aqui vale só para a página de vendas (.landing) e desliga com prefers-reduced-motion. */
+
+/* rolagem suave nos links âncora do menu, e as seções não ficam escondidas atrás do cabeçalho fixo */
+html:has(.landing) { scroll-behavior: smooth; }
+.landing section[id], .landing [id="plataforma"] { scroll-margin-top: 76px; }
+
+/* cabeçalho: ganha fundo mais denso e sombra depois de rolar; barra fina de progresso da leitura */
+.landing-header { transition: background-color 240ms ease, box-shadow 240ms ease; }
+.landing-header.is-rolado { background-color: rgba(21, 27, 36, 0.92); box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.55); }
+.landing-progresso {
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  transform-origin: 0 50%; transform: scaleX(var(--progresso, 0));
+  background: linear-gradient(90deg, var(--color-navy), var(--color-trace) 60%, var(--color-ok));
+  box-shadow: 0 0 12px rgba(74, 141, 255, 0.6);
+}
+
+/* entrada no scroll (Reveal.tsx) */
+.reveal {
+  opacity: 0; transform: translateY(32px); filter: blur(8px);
+  transition: opacity 700ms cubic-bezier(.2,.7,.2,1), transform 700ms cubic-bezier(.2,.7,.2,1), filter 700ms cubic-bezier(.2,.7,.2,1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal.is-in { opacity: 1; transform: none; filter: none; }
+
+/* luzes do fundo derivando devagar, como reflexo de painel */
+@keyframes deriva-a { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(4%, 3%, 0) scale(1.08); } }
+@keyframes deriva-b { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(-5%, -4%, 0) scale(1.12); } }
+.luz-a { animation: deriva-a 18s ease-in-out infinite; will-change: transform; }
+.luz-b { animation: deriva-b 22s ease-in-out infinite; will-change: transform; }
+/* a grade animada some nas bordas em vez de terminar num corte reto */
+.grade-mascara { mask-image: radial-gradient(ellipse 75% 70% at 45% 40%, #000 30%, transparent 80%); -webkit-mask-image: radial-gradient(ellipse 75% 70% at 45% 40%, #000 30%, transparent 80%); }
+.grade-mascara-centro { mask-image: radial-gradient(ellipse 60% 65% at 50% 55%, #000 20%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse 60% 65% at 50% 55%, #000 20%, transparent 75%); }
+
+/* dispositivos do topo flutuando de leve */
+@keyframes flutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.flutua { animation: flutua 7s ease-in-out infinite; }
+.flutua-2 { animation: flutua 8.5s ease-in-out -3s infinite; }
+
+/* cartões de plano (CardPlano.tsx) */
+@property --ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.plano {
+  isolation: isolate;
+  --mx: 50%; --my: -20%;
+  transition: transform 420ms cubic-bezier(.2,.7,.2,1), box-shadow 420ms ease, border-color 200ms ease;
+}
+/* holofote: preenchimento suave + borda acesa seguindo o ponteiro */
+.plano::before, .plano::after {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+  opacity: 0; transition: opacity 300ms ease;
+}
+.plano::before { z-index: -1; background: radial-gradient(460px circle at var(--mx) var(--my), rgba(74, 141, 255, 0.11), transparent 45%); }
+.plano::after {
+  padding: 1px;
+  background: radial-gradient(320px circle at var(--mx) var(--my), rgba(138, 184, 255, 0.75), transparent 55%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.plano-destaque::before { background: radial-gradient(460px circle at var(--mx) var(--my), rgba(63, 209, 143, 0.10), transparent 45%); }
+.plano-destaque::after { background: radial-gradient(320px circle at var(--mx) var(--my), rgba(63, 209, 143, 0.8), transparent 55%); }
+@media (hover: hover) {
+  .plano:hover { transform: translateY(-6px); box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03); }
+  .plano:hover::before, .plano:hover::after { opacity: 1; }
+}
+/* plano em destaque: borda viva girando + halo verde pulsando atrás */
+.plano-destaque { box-shadow: 0 30px 80px -40px rgba(15, 125, 84, 0.6); }
+@media (hover: hover) { .plano-destaque:hover { box-shadow: 0 40px 90px -36px rgba(15, 125, 84, 0.75); } }
+.plano-borda-viva {
+  position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background:
+    conic-gradient(from var(--ang), transparent 0deg, rgba(63, 209, 143, 0.95) 50deg, rgba(138, 184, 255, 0.7) 95deg, transparent 150deg, transparent 360deg),
+    linear-gradient(rgba(63, 209, 143, 0.28), rgba(63, 209, 143, 0.28));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: gira-borda 6s linear infinite;
+}
+@keyframes gira-borda { to { --ang: 360deg; } }
+.plano-halo {
+  position: absolute; inset: 8% 6%; z-index: -1; border-radius: 40px; pointer-events: none; filter: blur(60px);
+  background: radial-gradient(closest-side, rgba(15, 125, 84, 0.45), rgba(74, 141, 255, 0.18) 60%, transparent);
+  animation: halo 5s ease-in-out infinite;
+}
+@keyframes halo { 0%, 100% { opacity: 0.55; transform: scale(0.96); } 50% { opacity: 0.9; transform: scale(1.03); } }
+/* itens entram em sequência depois do cartão */
+.plano-itens li { opacity: 0; transform: translateX(-8px); transition: opacity 420ms ease, transform 420ms cubic-bezier(.2,.7,.2,1); transition-delay: calc(350ms + var(--i, 0) * 45ms); }
+.plano.is-visto .plano-itens li { opacity: 1; transform: none; }
+/* brilho que atravessa o botão do plano em destaque */
+.plano-destaque .plano-cta { position: relative; overflow: hidden; }
+.plano-destaque .plano-cta::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.28) 50%, transparent 65%);
+  transform: translateX(-120%); animation: brilho 4.5s ease-in-out 1.5s infinite;
+}
+@keyframes brilho { 0% { transform: translateX(-120%); } 30%, 100% { transform: translateX(120%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.landing) { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; filter: none; transition: none; }
+  .luz-a, .luz-b, .flutua, .flutua-2, .plano-borda-viva, .plano-halo, .plano-destaque .plano-cta::after { animation: none; }
+  .plano-itens li { opacity: 1; transform: none; transition: none; }
+  .plano:hover { transform: none; }
+}
+
 @keyframes trace-flow {
   from { stroke-dashoffset: 400; }
   to   { stroke-dashoffset: 0; }

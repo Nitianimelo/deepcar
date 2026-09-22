@@ -9,7 +9,7 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ---
 
-## Estado atual (atualizado em 2026-09-16)
+## Estado atual (atualizado em 2026-09-22)
 
 - **Produção:** Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub `Nitianimelo/deepcar`.
 - **Funcionando em produção:**
@@ -17,6 +17,8 @@ Regras de trabalho estão em `AGENTE.md`.
     Dobras: hero → cobertura (60 montadoras / 98% da frota + faixa de logos) → busca por placa (`#placa`) → planos → rodapé. Textos comerciais fixos:
     subtítulo "15 mil modelos de veículos" e números "60 montadoras" / "98% da frota nacional".
     Faixa de montadoras da landing com os logos nas cores das marcas, sobre cartões claros.
+    Movimento na landing (`src/components/landing/`): fundo com pulsos de corrente na grade, entrada das dobras no scroll,
+    barra de progresso no cabeçalho e cards de plano com holofote, borda viva no Full e preço contando.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
   - Plano **free = 10 minutos de acesso**, contados a partir do primeiro acesso; depois bloqueia a tela e a API responde 402.
   - **Pagamento pela Cakto**: produtos Pro (R$ 47,90) e Full (R$ 59,90), webhook em `/api/webhooks/cakto` que troca o
@@ -65,6 +67,37 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-22 · Landing com movimento: scroll, fundo animado e cards de plano
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** usar o MCP do 21st.dev para melhorar e animar o scroll, o fundo e os cards dos planos, deixando mais
+  profissional. Só a landing.
+- **Do 21st.dev:** consultados "Grid Beam" (cult-ui) e "Reveal" (asanshay); adaptados, não instalados. A cota grátis
+  do MCP é de 2 componentes por dia, então o "Card Spotlight" foi refeito em CSS a partir da descrição.
+- **O que mudou:**
+  - `src/components/landing/GridBeam.tsx` (novo): canvas com pulsos de luz correndo pelas linhas de uma grade (corrente
+    numa trilha), cruzamentos acendem quando dois pulsos se encontram. Paleta azul do produto com um fio de verde; células
+    quadradas pelo tamanho do bloco; **para** fora da tela, com a aba oculta e com `prefers-reduced-motion` (desenha um
+    quadro parado). Sem dependência nova (o original usava `cn`/shadcn).
+  - `src/components/landing/Reveal.tsx` (novo): entrada no scroll (sobe, aparece e desfoca → nítido) com atraso em
+    sequência, por IntersectionObserver + CSS, em vez da biblioteca `motion` do original.
+  - `src/components/landing/CardPlano.tsx` (novo): card de plano saiu de `Landing.tsx`. Holofote segue o ponteiro
+    (preenchimento + borda acesa), cartão sobe no hover, preço conta de 0 até o valor ao aparecer, itens entram em
+    sequência. No Full: borda viva girando (conic-gradient com `@property --ang`), halo verde pulsando atrás, selo com
+    ponto pulsando e brilho atravessando o botão.
+  - `src/pages/Landing.tsx`: hero com as luzes do fundo derivando devagar e o `GridBeam` no lugar da grade estática;
+    celular e tablet flutuando de leve (a animação fica no aparelho e a posição no invólucro, para os transforms não
+    brigarem); todas as dobras entram com `Reveal`; seção de planos com rótulo "Assinatura mensal" e o `GridBeam`
+    ao fundo. Cabeçalho ganha barra fina de progresso de leitura e fica mais denso com sombra depois de rolar.
+  - `src/index.css`: bloco "Landing: movimento" (rolagem suave nos links âncora só quando `.landing` existe,
+    `scroll-margin-top` para o cabeçalho fixo, `.reveal`, `.plano*`, animações). Tudo desliga com `prefers-reduced-motion`.
+  - Textos, preços e links não mudaram.
+- **Banco:** sem mudança.
+- **Variáveis/infra:** sem mudança. Nenhuma dependência nova.
+- **Verificação:** `npm run build` ok; oxlint 13 avisos (os mesmos; nada nos arquivos novos); no navegador (WebKit,
+  `vite preview`) 1440×900 e 390×844: hero, cabeçalho com progresso, cards com hover/holofote, contagem do preço,
+  itens e brilho do botão; sem rolagem horizontal no celular; sem erros no console.
+- **Pendências:** nenhuma.
 
 ### 2026-09-21 · Aba "Plano" na conta e teste gratuito de 10 minutos
 - **Quem:** Claude Code (Opus 5), a pedido de Nitiani

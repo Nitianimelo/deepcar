@@ -1,16 +1,19 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Check, ScanLine } from 'lucide-react'
+import { ArrowRight, ScanLine } from 'lucide-react'
 import { Phone, Tablet } from '../components/DeviceMockups'
 import { AppStoreBadge, PlayStoreBadge } from '../components/StoreBadges'
 import { CarBlueprint } from '../components/CarBlueprint'
 import { MarcasStrip } from '../components/MarcasStrip'
 import { formatarPlaca, placaValida } from '../lib/placa'
 import { PLANOS_VENDA } from '../data/planos'
+import { GridBeam } from '../components/landing/GridBeam'
+import { Reveal } from '../components/landing/Reveal'
+import { CardPlano } from '../components/landing/CardPlano'
 
 export default function Landing() {
   return (
-    <div className="min-h-full bg-pit text-ink-1">
+    <div className="landing min-h-full bg-pit text-ink-1">
       <Header />
       <Hero />
       <Cobertura />
@@ -23,8 +26,30 @@ export default function Landing() {
 
 /* ── Cabeçalho ─────────────────────────────────────────────────────── */
 function Header() {
+  const ref = useRef<HTMLElement>(null)
+
+  // um só ouvinte de rolagem, agrupado por quadro: grava o progresso numa variável CSS e marca o cabeçalho depois de rolar
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let raf = 0
+    const medir = () => {
+      raf = 0
+      const doc = document.documentElement
+      const max = doc.scrollHeight - window.innerHeight
+      el.style.setProperty('--progresso', String(max > 0 ? Math.min(1, window.scrollY / max) : 0))
+      el.classList.toggle('is-rolado', window.scrollY > 12)
+    }
+    const agendar = () => { if (!raf) raf = requestAnimationFrame(medir) }
+    medir()
+    window.addEventListener('scroll', agendar, { passive: true })
+    window.addEventListener('resize', agendar)
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', agendar); window.removeEventListener('resize', agendar) }
+  }, [])
+
   return (
-    <header className="sticky top-0 z-30 border-b seam bg-pit/85 backdrop-blur-md">
+    <header ref={ref} className="landing-header sticky top-0 z-30 border-b seam bg-pit/85 backdrop-blur-md">
+      <span aria-hidden="true" className="landing-progresso" />
       <div className="mx-auto flex h-[68px] max-w-[1200px] items-center gap-4 px-4 sm:gap-8 sm:px-8">
         <a href="#topo" className="flex items-center"><img src="/brand/logo-h-light.png" alt="Deepcar" className="h-6 sm:h-7" draggable={false} /></a>
         <nav className="ml-6 hidden items-center gap-7 text-[14px] text-ink-2 md:flex">
@@ -45,46 +70,49 @@ function Header() {
 function Hero() {
   return (
     <section id="topo" className="relative overflow-hidden">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(1100px 700px at 18% 10%, rgba(14,58,118,0.55) 0%, transparent 60%), radial-gradient(800px 600px at 90% 80%, rgba(74,141,255,0.12) 0%, transparent 60%)',
-        }}
-      />
-      <div className="schematic-grid pointer-events-none absolute inset-0 opacity-70" />
+      {/* luzes derivando devagar + grade com pulsos de corrente (GridBeam), dissolvida nas bordas */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="luz-a absolute -inset-[10%]" style={{ background: 'radial-gradient(1100px 700px at 18% 10%, rgba(14,58,118,0.55) 0%, transparent 60%)' }} />
+        <div className="luz-b absolute -inset-[10%]" style={{ background: 'radial-gradient(800px 600px at 90% 80%, rgba(74,141,255,0.14) 0%, transparent 60%)' }} />
+      </div>
+      <GridBeam celula={64} duracao={6} className="grade-mascara" />
 
       <div className="relative mx-auto grid max-w-[1200px] items-center gap-12 px-5 pb-16 pt-16 sm:px-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)] lg:gap-4 lg:pb-24 lg:pt-24">
         <div id="plataforma" className="max-w-[560px]">
-          <p className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Plataforma Deepcar</p>
-          <h1 className="mt-4 text-[clamp(2.4rem,5.2vw,4.2rem)] font-semibold leading-[1.02] tracking-[-0.025em]">
+          <Reveal as="p" index={0} className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Plataforma Deepcar</Reveal>
+          <Reveal as="h1" index={1} className="mt-4 text-[clamp(2.4rem,5.2vw,4.2rem)] font-semibold leading-[1.02] tracking-[-0.025em]">
             Inteligência automotiva para a sua oficina.
-          </h1>
-          <p className="mt-6 max-w-[48ch] text-[17px] leading-relaxed text-ink-2">
+          </Reveal>
+          <Reveal as="p" index={2} className="mt-6 max-w-[48ch] text-[17px] leading-relaxed text-ink-2">
             Informações técnicas de mais de 15 mil modelos de veículos: só precisa digitar a placa do carro.
             Injeção eletrônica, elétrica, ABS e câmbio. No celular, no tablet ou no computador da sua oficina.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          </Reveal>
+          <Reveal index={3} className="mt-8 flex flex-wrap items-center gap-3">
             <Link to="/cadastro" className="btn-cta inline-flex items-center gap-2 px-6">
               Criar conta grátis <ArrowRight size={17} />
             </Link>
             <a href="#cobertura" className="btn-ghost inline-flex h-12 items-center px-5">Ver cobertura</a>
-          </div>
+          </Reveal>
 
-          <div className="mt-12">
+          <Reveal index={4} className="mt-12">
             <p className="text-[14px] text-ink-3">Baixe nosso app</p>
             <div className="mt-3 flex flex-wrap gap-3">
               <AppStoreBadge />
               <PlayStoreBadge />
             </div>
-          </div>
+          </Reveal>
         </div>
 
         {/* dispositivos: tablet ao fundo sangrando pela direita, celular na frente */}
-        <div className="relative mx-auto h-[540px] w-full max-w-[420px] sm:h-[600px] sm:max-w-none lg:-mr-24 lg:h-[640px] lg:w-[820px] lg:max-w-none">
-          <Tablet scale={0.52} className="absolute right-0 top-2 hidden sm:block lg:right-0 lg:top-4" />
-          <Phone scale={0.55} className="absolute bottom-0 left-1/2 -translate-x-1/2 drop-shadow-2xl sm:left-4 sm:translate-x-0 lg:left-0" />
-        </div>
+        {/* a posição fica no invólucro; a flutuação anima o aparelho, para os dois transforms não brigarem */}
+        <Reveal index={2} className="relative mx-auto h-[540px] w-full max-w-[420px] sm:h-[600px] sm:max-w-none lg:-mr-24 lg:h-[640px] lg:w-[820px] lg:max-w-none">
+          <div className="absolute right-0 top-2 hidden sm:block lg:right-0 lg:top-4">
+            <Tablet scale={0.52} className="flutua-2" />
+          </div>
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 sm:left-4 sm:translate-x-0 lg:left-0">
+            <Phone scale={0.55} className="flutua drop-shadow-2xl" />
+          </div>
+        </Reveal>
       </div>
     </section>
   )
@@ -104,7 +132,7 @@ function BuscaPlaca() {
         style={{ background: 'radial-gradient(800px 500px at 85% 20%, rgba(14,58,118,0.45) 0%, transparent 60%)' }}
       />
       <div className="relative mx-auto grid max-w-[1200px] items-center gap-10 px-5 py-20 sm:px-8 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)] lg:gap-14 lg:py-28">
-        <div>
+        <Reveal>
           <p className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Busca por placa</p>
           <h2 className="mt-4 text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
             O manual técnico certo em um toque.
@@ -117,7 +145,7 @@ function BuscaPlaca() {
 
           <ol className="mt-9 space-y-5 border-t seam pt-8">
             {passos.map(([titulo, texto], i) => (
-              <li key={titulo} className="flex gap-4">
+              <Reveal as="li" key={titulo} index={i + 1} className="flex gap-4">
                 <span className="code mt-0.5 grid h-7 w-7 flex-none place-items-center rounded-full border border-trace/30 bg-trace/10 text-[12px] text-trace-hi">
                   {i + 1}
                 </span>
@@ -125,7 +153,7 @@ function BuscaPlaca() {
                   <span className="block text-[15.5px] font-medium text-ink-1">{titulo}</span>
                   <span className="block text-[14.5px] leading-relaxed text-ink-3">{texto}</span>
                 </span>
-              </li>
+              </Reveal>
             ))}
           </ol>
 
@@ -134,10 +162,10 @@ function BuscaPlaca() {
               Testar com uma placa <ArrowRight size={17} />
             </Link>
           </div>
-        </div>
+        </Reveal>
 
         {/* foto da oficina: sem moldura, sangrando pela direita e dissolvendo no fundo */}
-        <figure className="relative -mx-5 overflow-hidden sm:-mx-8 lg:mx-0 lg:-mr-[max(0px,calc((100vw-1200px)/2+2rem))] lg:rounded-l-[28px]">
+        <Reveal as="figure" index={1} className="relative -mx-5 overflow-hidden sm:-mx-8 lg:mx-0 lg:-mr-[max(0px,calc((100vw-1200px)/2+2rem))] lg:rounded-l-[28px]">
           <picture>
             <source type="image/webp" srcSet="/landing/oficina-placa-900.webp 900w, /landing/oficina-placa-1536.webp 1536w" sizes="(min-width: 1024px) 58vw, 100vw" />
             <img
@@ -164,7 +192,7 @@ function BuscaPlaca() {
             className="pointer-events-none absolute inset-0 hidden lg:block"
             style={{ background: 'linear-gradient(90deg, var(--color-pit) 0%, rgba(21,27,36,.5) 10%, transparent 34%)' }}
           />
-        </figure>
+        </Reveal>
       </div>
     </section>
   )
@@ -187,7 +215,7 @@ function Cobertura() {
     <section id="cobertura" className="relative border-t seam">
       <div className="mx-auto max-w-[1200px] px-5 pb-12 pt-20 sm:px-8 lg:pt-28">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
-          <div>
+          <Reveal>
             <h2 className="text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
               Toda a informação que você precisa.
             </h2>
@@ -200,9 +228,9 @@ function Cobertura() {
               <Numero valor="60" rotulo="montadoras" />
               <Numero valor="98%" rotulo="da frota nacional" />
             </dl>
-          </div>
+          </Reveal>
 
-          <div className="relative rounded-2xl border seam bg-bench-1 p-6 sm:p-8">
+          <Reveal index={1} className="relative rounded-2xl border seam bg-bench-1 p-6 sm:p-8">
             <CarBlueprint className="pointer-events-none absolute inset-x-6 top-4 opacity-[0.28]" />
             <div className="relative pt-40 sm:pt-48">
               <h3 className="text-[22px] font-semibold tracking-tight">Busque o que você precisa pela placa do veículo.</h3>
@@ -223,15 +251,15 @@ function Cobertura() {
               </form>
               <p className="code mt-3 text-[11.5px] text-ink-4">Placas Mercosul e padrão antigo. Sem cartão de crédito.</p>
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
 
       {/* montadoras */}
-      <div className="pb-20 pt-8 lg:pb-28">
+      <Reveal className="pb-20 pt-8 lg:pb-28">
         <p className="code mb-8 text-center text-[11px] uppercase tracking-[0.24em] text-ink-4">Montadoras no catálogo</p>
         <MarcasStrip />
-      </div>
+      </Reveal>
     </section>
   )
 }
@@ -245,69 +273,36 @@ function Numero({ valor, rotulo }: { valor: string; rotulo: string }) {
   )
 }
 
-/* ── Planos (sem valores por enquanto) ─────────────────────────────── */
+/* ── Planos ────────────────────────────────────────────────────────── */
 function Planos() {
   const planos = PLANOS_VENDA
   return (
-    <section id="planos" className="border-t seam">
-      <div className="mx-auto max-w-[1200px] px-5 py-20 sm:px-8 lg:py-28">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <h2 className="text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">Planos</h2>
+    <section id="planos" className="relative overflow-hidden border-t seam">
+      {/* fundo: a mesma grade de corrente do topo, mais fraca e concentrada atrás dos cartões */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{ background: 'radial-gradient(900px 520px at 50% 62%, rgba(14,58,118,0.42) 0%, transparent 65%)' }}
+      />
+      <GridBeam celula={72} duracao={8} forca={0.8} className="grade-mascara-centro" />
+
+      <div className="relative mx-auto max-w-[1200px] px-5 py-20 sm:px-8 lg:py-28">
+        <Reveal className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Assinatura mensal</p>
+            <h2 className="mt-4 text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">Planos</h2>
+          </div>
           <p className="max-w-[46ch] text-[15px] text-ink-3">
             A conta gratuita abre na hora, sem cartão, para você conhecer o acervo por dentro.
           </p>
-        </div>
+        </Reveal>
 
         <div className="mx-auto mt-12 grid max-w-[920px] items-stretch gap-5 md:grid-cols-2">
-          {planos.map((p) => (
-            <article
-              key={p.nome}
-              className={`relative flex flex-col overflow-hidden rounded-[18px] border bg-bench-1 p-7 sm:p-8 ${
-                p.destaque ? 'border-ok/35' : 'seam'
-              }`}
-              style={p.destaque ? { boxShadow: '0 30px 80px -40px rgba(15,125,84,.6)' } : undefined}
-            >
-              {/* filete de luz no topo do plano em destaque, no lugar do selo colorido */}
-              {p.destaque && (
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 top-0 h-px"
-                  style={{ background: 'linear-gradient(90deg, transparent, rgba(63,209,143,.7), transparent)' }}
-                />
-              )}
-
-              <header className="flex items-baseline justify-between gap-3">
-                <h3 className="text-[20px] font-semibold tracking-tight">{p.nome}</h3>
-                {p.destaque && (
-                  <span className="code text-[10.5px] uppercase tracking-[0.18em] text-ok">Mais completo</span>
-                )}
-              </header>
-              <p className="mt-1.5 min-h-[42px] max-w-[34ch] text-[14px] leading-relaxed text-ink-3">{p.para}</p>
-
-              <p className="mt-6 flex items-baseline gap-2 border-t seam-soft pt-6">
-                <span className="text-[14px] text-ink-4">R$</span>
-                <span className="text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink-1" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {p.preco}
-                </span>
-                <span className="text-[14px] text-ink-4">/mês</span>
-              </p>
-
-              {/* lista longa (Full) em duas colunas de texto: flui sem abrir buracos entre as linhas */}
-              <ul className={`mb-9 mt-7 border-t seam-soft pt-6 text-[14px] ${p.itens.length > 7 ? 'sm:columns-2 sm:gap-x-7' : ''}`}>
-                {p.itens.map((i) => (
-                  <li key={i} className="flex items-start gap-2.5 break-inside-avoid pb-2.5 text-ink-2 last:pb-0">
-                    <Check size={14} className="mt-[4px] flex-none text-trace/70" strokeWidth={2.5} /> {i}
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                to="/cadastro"
-                className={`mt-auto inline-flex h-12 items-center justify-center rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-cta' : 'btn-ghost !h-12 hover:!border-ok/40'}`}
-              >
-                Criar conta grátis
-              </Link>
-            </article>
+          {planos.map((p, i) => (
+            <Reveal key={p.nome} index={i + 1} className="relative">
+              {p.destaque && <span aria-hidden="true" className="plano-halo" />}
+              <CardPlano p={p} />
+            </Reveal>
           ))}
         </div>
       </div>
