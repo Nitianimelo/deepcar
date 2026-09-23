@@ -6,4 +6,4 @@ Disallow: /admin
 Disallow: /api/
 Disallow: /c/
 
-Sitemap: https://deepcar.vercel.app/sitemap.xml
+Sitemap: https://deepcar.app.br/sitemap.xml

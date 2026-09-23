@@ -11,7 +11,8 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Estado atual (atualizado em 2026-09-23)
 
-- **Produção:** Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub `Nitianimelo/deepcar`.
+- **Produção:** **https://deepcar.app.br** (Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub
+  `Nitianimelo/deepcar`). `www.deepcar.app.br` redireciona para o principal; `deepcar.vercel.app` continua respondendo.
 - **Funcionando em produção:**
   - Landing (`/`) com mockups de celular/tablet, selos das lojas e dois planos com chave **Mensal/Anual** (abre no anual):
     Pro (R$ 47,90/mês ou R$ 29,90/mês no anual) e Full (R$ 59,90/mês ou R$ 37,90/mês no anual). A tela mostra só o valor
@@ -76,6 +77,8 @@ Regras de trabalho estão em `AGENTE.md`.
       `beta.falcon-server.com.br/data-hub` é o definitivo. Plano grátis = 10 consultas/hora para todos os usuários juntos.
 - [ ] Limpar variáveis antigas na Vercel que não são mais lidas ou ficam por baixo do cofre: `FALCON_TOKEN` (o valor do
       cofre tem prioridade), `CONSULTARPLACA_EMAIL` e `CONSULTARPLACA_API_KEY` (provedor removido).
+- [ ] Trocar a "página de vendas" dos 4 produtos na Cakto para `https://deepcar.app.br/` (painel) e, numa próxima
+      versão do APK, o endereço da API do app Android.
 - [ ] Trocar o token do Falcon por um novo no painel deles e regravar no `/admin` (o atual circulou em conversa).
 - [ ] Cache de placas no Neon (modelo e ano não mudam: cada placa seria consultada uma única vez). Precisa de migração.
 - [ ] Coerência de texto: o hero diz "só precisa digitar a placa do carro", mas na tabela a busca pela placa aparece só no Full.
@@ -83,6 +86,27 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-23 · Domínio próprio deepcar.app.br
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** configurar o domínio `deepcar.app.br`, comprado no Registro.br, e deixar tudo funcionando nele.
+- **O que foi feito:**
+  - Vercel: `deepcar.app.br` e `www.deepcar.app.br` no projeto; `www` → redirecionamento 308 para `deepcar.app.br`;
+    certificado emitido (`vercel certs issue`). `deepcar.vercel.app` segue respondendo.
+  - Registro.br: DNS delegado para `ns1/ns2.vercel-dns.com` (feito pelo Nitiani). Saindo do DNS do próprio Registro.br
+    há um período de transição de ~1h35 antes da delegação valer.
+  - Cakto: webhook 69384 agora aponta para `https://deepcar.app.br/api/webhooks/cakto` (mesmo segredo, 4 produtos,
+    12 eventos). Evento de teste disparado pela Cakto chegou no domínio novo, foi autenticado e gravado (produto fictício
+    → "produto desconhecido", o esperado); registro de teste apagado.
+  - Código: `index.html` (canonical, Open Graph, Twitter, JSON-LD), `public/sitemap.xml` e `public/robots.txt` com o
+    domínio novo. Links de compartilhamento já saem com o domínio de quem acessa (`/c/…`).
+  - `AGENTE.md`: domínio na tabela de infraestrutura.
+- **Banco:** sem mudança. **Variáveis:** sem mudança.
+- **Verificação:** `https://deepcar.app.br` 200 com certificado; `https://www.deepcar.app.br` → 308 para o principal;
+  webhook com segredo errado → 401 no domínio novo; entrega real de teste da Cakto → gravada.
+- **Pendências:** "Página de vendas" dos 4 produtos na Cakto ainda aponta para `deepcar.vercel.app` (trocar no painel:
+  a API exige reenviar o produto inteiro e pode apagar imagem e ajustes). O app Android ainda usa `deepcar.vercel.app`
+  (funciona; trocar numa próxima versão do APK). Cadastrar `deepcar.app.br` no Google Search Console.
 
 ### 2026-09-23 · "Imprimir" trocado por "Compartilhar" com link que abre 2 vezes
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
