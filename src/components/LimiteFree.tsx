@@ -35,8 +35,7 @@ export function BloqueioFree() {
   const [ciclo, setCiclo] = useState<Ciclo>('anual')
   // a mesma tela fecha o acesso quando o anual vence (api/_lib/sessao.js → vencerAnual)
   const anualVenceu = sessao?.assinatura?.status === 'expirada'
-  const preco = (id: 'pro' | 'full') =>
-    ciclo === 'anual' ? `12x R$ ${precoDoCiclo(planoVenda(id), ciclo)}` : `R$ ${precoDoCiclo(planoVenda(id), ciclo)}/mês`
+  const preco = (id: 'pro' | 'full') => `R$ ${precoDoCiclo(planoVenda(id), ciclo)}/mês`
 
   // com a tela travada, rolar o que está atrás só confunde
   useEffect(() => {

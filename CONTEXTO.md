@@ -14,7 +14,8 @@ Regras de trabalho estão em `AGENTE.md`.
 - **Produção:** Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub `Nitianimelo/deepcar`.
 - **Funcionando em produção:**
   - Landing (`/`) com mockups de celular/tablet, selos das lojas e dois planos com chave **Mensal/Anual** (abre no anual):
-    Pro (R$ 47,90/mês ou 12x R$ 29,90) e Full (R$ 59,90/mês ou 12x R$ 37,90).
+    Pro (R$ 47,90/mês ou R$ 29,90/mês no anual) e Full (R$ 59,90/mês ou R$ 37,90/mês no anual). A tela mostra só o valor
+    por mês; o 12x (pagamento único de 12 meses) só aparece no checkout da Cakto.
     Dobras: hero → cobertura (60 montadoras / 98% da frota + faixa de logos) → busca por placa (`#placa`) → planos → rodapé. Textos comerciais fixos:
     subtítulo "15 mil modelos de veículos" e números "60 montadoras" / "98% da frota nacional".
     Faixa de montadoras da landing com os logos nas cores das marcas, sobre cartões claros.
@@ -52,7 +53,7 @@ Regras de trabalho estão em `AGENTE.md`.
       ("Chewolet", "Citrofo", "Alfa Roemo"). No tamanho exibido não se lê, mas vale trocar por foto real quando houver.
 - [ ] **Anual "sem juros" precisa ser ligado no painel da Cakto** (Pro Anual e Full Anual → parcelamento sem juros /
       produtor absorve os juros): a API pública ignora `absorbInstallmentInterest`. Enquanto estiver desligado, o cliente
-      paga juros no parcelado e o "12x R$ 29,90" da landing não bate com o checkout.
+      paga juros no parcelado e a parcela no checkout fica acima dos R$ 29,90 / R$ 37,90 por mês que a tela mostra.
 - [ ] Boleto não está habilitado na conta da Cakto (a API recusa `boleto` nos produtos). Habilitar no painel, se quiser.
 - [ ] Quem passa do mensal para o anual precisa cancelar a mensal pelo suporte (a tela avisa); não há cancelamento automático.
 - [ ] Fazer uma compra real de validação (pode estornar em seguida) para ver o caminho inteiro com produto verdadeiro:
@@ -75,6 +76,22 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-23 · Anual sem destaque de economia: só o valor por mês
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** tela mais limpa. Manter a chave Mensal/Anual, mas no anual mostrar só "R$ 37,90/mês" (Full) e
+  "R$ 29,90/mês" (Pro), sem economia, sem 12x e sem total: o cliente só vê que é dividido em 12x no checkout.
+- **O que mudou:**
+  - `CardPlano` (landing) e aba Plano da `Conta`: tiradas a mensalidade riscada, o "12x", o total por ano, o
+    "economize R$" e a linha "Cobrança mensal, cancele quando quiser"; os dois ciclos mostram "R$ X /mês".
+  - `SeletorCiclo`: sem o selo "−37%".
+  - `LimiteFree`: botões "Assinar Full · R$ 37,90/mês" no anual (antes "12x R$ 37,90").
+  - Rodapé da aba Plano: saiu a frase sobre 12x no cartão / à vista no PIX.
+  - `src/data/planos.ts`: removidos `totalAnual`, `economiaAnual`, `descontoAnual` e `reais`, sem uso.
+  - O resto continua igual: chave abrindo no anual, links de checkout, "válido até" para quem tem o anual, webhook.
+- **Banco / Variáveis / Cakto:** sem mudança.
+- **Verificação:** build ok; oxlint 13 avisos; capturas (WebKit) da landing no anual e no mensal e da tela de fim do teste.
+- **Pendências:** as mesmas (ligar "sem juros" nos anuais no painel da Cakto, para a parcela bater com o valor mostrado).
 
 ### 2026-09-23 · Planos anuais (Pro e Full em 12x) com chave Mensal/Anual
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

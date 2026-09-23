@@ -4,7 +4,7 @@
 
 export type PlanoPago = 'pro' | 'full'
 
-/** Mensal = assinatura recorrente. Anual = 12 meses pagos de uma vez, em até 12x no cartão. */
+/** Mensal = assinatura recorrente. Anual = 12 meses pagos de uma vez, em até 12x no cartão (o 12x só aparece no checkout). */
 export type Ciclo = 'mensal' | 'anual'
 
 export type PlanoVenda = {
@@ -12,7 +12,7 @@ export type PlanoVenda = {
   nome: string
   /** mensalidade do plano mensal */
   preco: string
-  /** valor de cada uma das 12 parcelas do plano anual */
+  /** preço por mês do plano anual (= cada uma das 12 parcelas no checkout) */
   precoAnual: string
   para: string
   itens: string[]
@@ -55,19 +55,5 @@ export const PLANOS_VENDA: PlanoVenda[] = [
 
 export const planoVenda = (id: PlanoPago) => PLANOS_VENDA.find((p) => p.id === id)!
 
-const numero = (preco: string) => Number(preco.replace(',', '.'))
-export const reais = (v: number) => v.toFixed(2).replace('.', ',')
-
 /** Preço por mês que aparece no cartão, conforme o ciclo escolhido. */
 export const precoDoCiclo = (p: PlanoVenda, ciclo: Ciclo) => (ciclo === 'anual' ? p.precoAnual : p.preco)
-
-/** Total do anual (12 parcelas): "358,80". */
-export const totalAnual = (p: PlanoVenda) => reais(numero(p.precoAnual) * 12)
-
-/** Quanto o anual poupa num ano, frente a 12 mensalidades: "216,00". */
-export const economiaAnual = (p: PlanoVenda) => reais((numero(p.preco) - numero(p.precoAnual)) * 12)
-
-/** Maior desconto do anual entre os planos, em %, arredondado para baixo (o selo não pode prometer mais). */
-export const descontoAnual = Math.max(
-  ...PLANOS_VENDA.map((p) => Math.floor((1 - numero(p.precoAnual) / numero(p.preco)) * 100)),
-)

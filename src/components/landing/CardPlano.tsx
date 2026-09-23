@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Check } from 'lucide-react'
-import { economiaAnual, precoDoCiclo, totalAnual, type Ciclo, type PlanoVenda } from '../../data/planos'
+import { precoDoCiclo, type Ciclo, type PlanoVenda } from '../../data/planos'
 
 /**
  * Conta até o preço ("47,90") em ~900 ms, com desaceleração no fim: de 0 quando o cartão aparece,
@@ -38,7 +38,6 @@ export function CardPlano({ p, ciclo = 'mensal' }: { p: PlanoVenda; ciclo?: Cicl
   const [visto, setVisto] = useState(false)
   const alvo = precoDoCiclo(p, ciclo)
   const preco = usePrecoContando(alvo, visto)
-  const anual = ciclo === 'anual'
 
   useEffect(() => {
     const el = ref.current
@@ -72,34 +71,18 @@ export function CardPlano({ p, ciclo = 'mensal' }: { p: PlanoVenda; ciclo?: Cicl
       </header>
       <p className="mt-1.5 min-h-[42px] max-w-[34ch] text-[14px] leading-relaxed text-ink-3">{p.para}</p>
 
-      <div className="mt-6 border-t seam-soft pt-6">
-        {/* no anual, a mensalidade cheia riscada mostra de onde vem o desconto */}
-        <p className={`code h-[18px] text-[13px] text-ink-4 transition-opacity duration-300 ${anual ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!anual}>
-          <s>R$ {p.preco}/mês</s>
-        </p>
-        <p className="mt-1 flex items-baseline gap-2">
-          {anual && <span className="text-[14px] text-ink-3">12x</span>}
-          <span className="text-[14px] text-ink-4">R$</span>
-          <span
-            className="text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink-1"
-            style={{ fontVariantNumeric: 'tabular-nums' }}
-            aria-label={anual ? `12 parcelas de ${alvo} reais` : `${alvo} reais por mês`}
-          >
-            {preco}
-          </span>
-          {!anual && <span className="text-[14px] text-ink-4">/mês</span>}
-        </p>
-        <p className="mt-2.5 min-h-[20px] text-[13px] text-ink-3">
-          {anual ? (
-            <>
-              R$ {totalAnual(p)} por ano no cartão ou à vista no Pix ·{' '}
-              <span className="whitespace-nowrap text-ok">economize R$ {economiaAnual(p)}</span>
-            </>
-          ) : (
-            'Cobrança mensal, cancele quando quiser.'
-          )}
-        </p>
-      </div>
+      {/* no anual mostra só o valor por mês: o parcelamento em 12x aparece no checkout */}
+      <p className="mt-6 flex items-baseline gap-2 border-t seam-soft pt-6">
+        <span className="text-[14px] text-ink-4">R$</span>
+        <span
+          className="text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink-1"
+          style={{ fontVariantNumeric: 'tabular-nums' }}
+          aria-label={`${alvo} reais por mês`}
+        >
+          {preco}
+        </span>
+        <span className="text-[14px] text-ink-4">/mês</span>
+      </p>
 
       {/* lista longa (Full) em duas colunas de texto: flui sem abrir buracos entre as linhas */}
       <ul className={`plano-itens mb-9 mt-7 border-t seam-soft pt-6 text-[14px] ${p.itens.length > 7 ? 'sm:columns-2 sm:gap-x-7' : ''}`}>

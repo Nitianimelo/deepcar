@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, Check, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
 import { linkCheckout, linkSuporte, MINUTOS_FREE, mmss, restanteFree, rotuloPlano, temWhatsappSuporte } from '../lib/plano'
-import { economiaAnual, PLANOS_VENDA, precoDoCiclo, totalAnual, type Ciclo } from '../data/planos'
+import { PLANOS_VENDA, precoDoCiclo, type Ciclo } from '../data/planos'
 import { SeletorCiclo } from '../components/SeletorCiclo'
 
 /** Como o estado da assinatura é lido na tela. */
@@ -174,16 +174,9 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
               </div>
               <p className="mt-1 text-[13.5px] text-ink-3">{p.para}</p>
               <p className="mt-4 flex items-baseline gap-1.5">
-                {anual && <span className="text-[13px] text-ink-3">12x</span>}
                 <span className="text-[13px] text-ink-4">R$</span>
                 <span className="text-[30px] font-semibold leading-none tracking-[-0.02em]" style={{ fontVariantNumeric: 'tabular-nums' }}>{precoDoCiclo(p, ciclo)}</span>
-                {!anual && <span className="text-[13px] text-ink-4">/mês</span>}
-                {anual && <s className="code ml-1 text-[12px] text-ink-4">R$ {p.preco}/mês</s>}
-              </p>
-              <p className="mt-1.5 text-[12.5px] text-ink-3">
-                {anual
-                  ? <>R$ {totalAnual(p)} por 12 meses · <span className="whitespace-nowrap text-ok">economize R$ {economiaAnual(p)}</span></>
-                  : 'Cobrança mensal, cancele quando quiser.'}
+                <span className="text-[13px] text-ink-4">/mês</span>
               </p>
               <ul className="mb-6 mt-4 space-y-1.5 text-[13.5px]">
                 {p.itens.map((i) => (
@@ -224,8 +217,8 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
       )}
 
       <p className="mt-4 text-[12.5px] text-ink-4">
-        O pagamento é processado pela Cakto. Mensal no cartão ou PIX; anual em até 12x no cartão ou à vista no PIX,
-        com 12 meses de acesso. O acesso libera assim que o pagamento é aprovado, sem precisar recarregar.{' '}
+        O pagamento é processado pela Cakto. O acesso libera assim que o pagamento é aprovado, sem precisar
+        recarregar.{' '}
         <a href={linkSuporte(mensagem, 'Deepcar · assinatura')} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-trace hover:text-trace-hi">
           <MessageCircle size={13} /> {temWhatsappSuporte ? 'Falar no WhatsApp' : 'Falar com o suporte'}
         </a>{' '}
