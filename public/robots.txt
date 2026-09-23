@@ -1,4 +1,5 @@
-# Página de vendas e telas de conta podem ser indexadas; a plataforma e a administração exigem login.
+# Página de vendas e cadastro podem ser indexados; a plataforma, a administração e os links compartilhados, não.
+# /login fica fora do sitemap e responde com X-Robots-Tag: noindex (vercel.json).
 User-agent: *
 Allow: /
 Disallow: /app

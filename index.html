@@ -5,14 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#151B24" />
 
-    <!-- aba do navegador e resultado do Google -->
+    <!-- aba do navegador e resultado do Google (título até ~60 caracteres, descrição até ~155) -->
     <title>Deepcar · Inteligência automotiva | Esquemas elétricos e diagramas</title>
-    <meta name="description" content="Esquemas elétricos e diagramas de injeção eletrônica, ABS, elétrica e câmbio, leve e diesel. Consulte pela placa no celular, tablet ou computador." />
+    <meta name="description" content="Esquemas elétricos de injeção eletrônica, ABS, elétrica e câmbio de mais de 15 mil modelos, do leve ao diesel. Consulte pela placa, direto na oficina." />
     <meta name="keywords" content="esquema elétrico automotivo, diagrama elétrico, esquemas elétricos, injeção eletrônica, ABS, câmbio automático, elétrica automotiva, diesel, consulta por placa, mecânico, oficina" />
-    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="author" content="Deepcar" />
+    <meta name="application-name" content="Deepcar" />
+    <meta name="apple-mobile-web-app-title" content="Deepcar" />
+    <meta name="format-detection" content="telephone=no" />
     <link rel="canonical" href="https://deepcar.app.br/" />
-    <link rel="icon" type="image/png" href="/brand/mark.png" />
-    <link rel="apple-touch-icon" href="/brand/mark.png" />
+    <link rel="alternate" hreflang="pt-BR" href="https://deepcar.app.br/" />
+    <link rel="alternate" hreflang="x-default" href="https://deepcar.app.br/" />
+
+    <!-- ícones: aba, favoritos, tela inicial do celular -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/brand/icone-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- prévia ao compartilhar o link (WhatsApp, Facebook, LinkedIn, Telegram) -->
     <meta property="og:type" content="website" />
@@ -20,30 +31,63 @@
     <meta property="og:site_name" content="Deepcar" />
     <meta property="og:url" content="https://deepcar.app.br/" />
     <meta property="og:title" content="Deepcar · Inteligência automotiva" />
-    <meta property="og:description" content="Esquemas elétricos e diagramas de injeção, ABS, elétrica e câmbio. Consulte pela placa, direto na oficina." />
+    <meta property="og:description" content="Esquemas elétricos e diagramas de injeção, ABS, elétrica e câmbio de mais de 15 mil modelos. Consulte pela placa, direto na oficina." />
     <meta property="og:image" content="https://deepcar.app.br/brand/compartilhar.jpg" />
+    <meta property="og:image:secure_url" content="https://deepcar.app.br/brand/compartilhar.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Deepcar: inteligência automotiva, esquemas elétricos e diagramas para a oficina" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Deepcar · Inteligência automotiva" />
-    <meta name="twitter:description" content="Esquemas elétricos e diagramas de injeção, ABS, elétrica e câmbio. Consulte pela placa, direto na oficina." />
+    <meta name="twitter:description" content="Esquemas elétricos e diagramas de injeção, ABS, elétrica e câmbio de mais de 15 mil modelos. Consulte pela placa, direto na oficina." />
     <meta name="twitter:image" content="https://deepcar.app.br/brand/compartilhar.jpg" />
+    <meta name="twitter:image:alt" content="Deepcar: inteligência automotiva, esquemas elétricos e diagramas para a oficina" />
 
-    <!-- dados estruturados: o Google entende que é um aplicativo, com os planos da página de vendas -->
+    <!-- dados estruturados: empresa, site e o aplicativo com os planos da página de vendas (src/data/planos.ts) -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Deepcar",
-        "alternateName": "Deepcar · Inteligência automotiva",
-        "url": "https://deepcar.app.br/",
-        "image": "https://deepcar.app.br/brand/compartilhar.jpg",
-        "description": "Esquemas elétricos e diagramas automotivos de injeção eletrônica, ABS, elétrica e câmbio, com consulta pela placa do veículo.",
-        "applicationCategory": "BusinessApplication",
-        "operatingSystem": "Web",
-        "inLanguage": "pt-BR",
-        "offers": { "@type": "AggregateOffer", "priceCurrency": "BRL", "lowPrice": "47.90", "highPrice": "59.90", "offerCount": "2" }
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://deepcar.app.br/#organizacao",
+            "name": "Deepcar",
+            "url": "https://deepcar.app.br/",
+            "logo": { "@type": "ImageObject", "url": "https://deepcar.app.br/brand/icone-512.png", "width": 512, "height": 512 }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://deepcar.app.br/#site",
+            "name": "Deepcar",
+            "alternateName": "Deepcar · Inteligência automotiva",
+            "url": "https://deepcar.app.br/",
+            "inLanguage": "pt-BR",
+            "publisher": { "@id": "https://deepcar.app.br/#organizacao" }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://deepcar.app.br/#aplicativo",
+            "name": "Deepcar",
+            "url": "https://deepcar.app.br/",
+            "image": "https://deepcar.app.br/brand/compartilhar.jpg",
+            "description": "Esquemas elétricos e diagramas automotivos de injeção eletrônica, ABS, elétrica e câmbio de mais de 15 mil modelos, do leve ao diesel, com consulta pela placa do veículo.",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web, Android, iOS",
+            "inLanguage": "pt-BR",
+            "publisher": { "@id": "https://deepcar.app.br/#organizacao" },
+            "offers": [
+              { "@type": "Offer", "name": "Plano Pro mensal", "price": "47.90", "priceCurrency": "BRL", "url": "https://deepcar.app.br/#planos",
+                "priceSpecification": { "@type": "UnitPriceSpecification", "price": "47.90", "priceCurrency": "BRL", "unitCode": "MON" } },
+              { "@type": "Offer", "name": "Plano Full mensal", "price": "59.90", "priceCurrency": "BRL", "url": "https://deepcar.app.br/#planos",
+                "priceSpecification": { "@type": "UnitPriceSpecification", "price": "59.90", "priceCurrency": "BRL", "unitCode": "MON" } },
+              { "@type": "Offer", "name": "Plano Pro anual", "price": "358.80", "priceCurrency": "BRL", "url": "https://deepcar.app.br/#planos",
+                "priceSpecification": { "@type": "UnitPriceSpecification", "price": "358.80", "priceCurrency": "BRL", "unitCode": "ANN" } },
+              { "@type": "Offer", "name": "Plano Full anual", "price": "454.80", "priceCurrency": "BRL", "url": "https://deepcar.app.br/#planos",
+                "priceSpecification": { "@type": "UnitPriceSpecification", "price": "454.80", "priceCurrency": "BRL", "unitCode": "ANN" } }
+            ]
+          }
+        ]
       }
     </script>
 
@@ -53,6 +97,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- para robôs e navegadores sem JavaScript: o essencial da página de vendas em texto -->
+    <noscript>
+      <h1>Deepcar · Inteligência automotiva para a sua oficina</h1>
+      <p>Esquemas elétricos e diagramas de mais de 15 mil modelos de veículos, de 60 montadoras e 98% da frota nacional:
+        injeção eletrônica, ABS, elétrica e câmbio, do leve ao diesel. Consulte pela placa no celular, no tablet ou no computador.</p>
+      <p>Planos Pro e Full, mensais ou anuais. <a href="/cadastro">Criar conta grátis</a> · <a href="/login">Entrar</a></p>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

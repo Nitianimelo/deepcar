@@ -9,6 +9,7 @@ import { BotaoCompartilhar } from '../components/CompartilharEsquema'
 import { registrarRecente } from '../lib/recentes'
 import { BloqueioPlano } from '../components/BloqueioPlano'
 import { useAcesso } from '../lib/acesso'
+import { useTitulo } from '../lib/seo'
 
 export default function EsquemaPage() {
   const id = useParams()['*'] ?? ''
@@ -24,6 +25,7 @@ export default function EsquemaPage() {
 function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
   const meta = SECTION_META[secao]
   const carga = useCarga(() => carregarEsquema(id), [id])
+  useTitulo(carga.estado === 'ok' ? `${carga.dados.marca} ${carga.dados.modelo} · ${meta?.titulo ?? ''} · Deepcar` : null)
 
   // entra nas últimas consultas da tela inicial
   const aberto = carga.estado === 'ok' ? carga.dados : null

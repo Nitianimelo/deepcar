@@ -121,6 +121,7 @@ server/                   lógica Node reaproveitável
   login.mjs               login ANTIGO por variáveis (usado só pelo Vite dev e pelo .exe)
   app-local.mjs           servidor do Deepcar.exe
   vitePlacaPlugin.mjs     /api/placa e /api/login no `npm run dev`
+  vitePaginasSeo.mjs      no build, grava dist/cadastro e dist/login com título/descrição/canônico próprios (SEO)
   viteAcervoPlugin.mjs    serve ACERVO_DIR em /acervo no `npm run dev`
 src/
   App.tsx                 rotas (lazy por página)
@@ -131,6 +132,7 @@ src/
   components/SeletorComponente.tsx  lista com busca dos componentes do esquema (tecla /), dentro do EsquemaViewer
   components/PaletaBusca.tsx        busca rápida Ctrl+K / ⌘K de qualquer tela do app (placa, esquema, últimas consultas)
   components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll), CardPlano: só a landing
+  lib/seo.ts              useTitulo(): título da aba ao navegar (páginas públicas já saem certas do build)
   lib/transicao.ts        marcarTitulo(): título que "voa" da lista ao cabeçalho do esquema (View Transitions)
   lib/auth.ts             cliente de sessão (cookie no servidor; localStorage só guarda retrato do perfil)
   lib/plano.ts            relógio do plano free no navegador (espelha MINUTOS_FREE) e reconferência da sessão
@@ -224,6 +226,9 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Prints do `capturar-telas.mjs` (Edge headless) cortam a largura: não confunda com layout quebrado (ver commit `31b1313`).
 - Pasta local dentro do iCloud Drive pode corromper o `.git` (arquivos duplicados tipo `index 2`). Prefira clonar fora do iCloud.
 - Deploy da Vercel não roda migração nem copia o acervo.
+- **SEO:** metatags e dados estruturados (JSON-LD) ficam no `index.html`; página pública nova = entrada em
+  `PAGINAS` de `server/vitePaginasSeo.mjs` + `public/sitemap.xml`. Mudou preço? Atualize também os `offers` do JSON-LD.
+  Rotas privadas respondem `X-Robots-Tag: noindex` (vercel.json), e `deepcar.vercel.app` inteiro também.
 
 ---
 

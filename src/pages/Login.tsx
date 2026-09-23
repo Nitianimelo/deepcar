@@ -6,8 +6,10 @@ import { linkSuporte } from '../lib/plano'
 import { CircuitArt } from '../components/CircuitArt'
 import { TracePad } from '../components/TracePad'
 import { CarBlueprint } from '../components/CarBlueprint'
+import { useTitulo } from '../lib/seo'
 
 export default function Login() {
+  useTitulo('Entrar · Deepcar')
   const nav = useNavigate()
   const loc = useLocation()
   const [email, setEmail] = useState('')

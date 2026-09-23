@@ -15,6 +15,7 @@ import {
 import { CircuitArt } from '../components/CircuitArt'
 import { TracePad } from '../components/TracePad'
 import { CarBlueprint } from '../components/CarBlueprint'
+import { useTitulo } from '../lib/seo'
 
 type NomeCampo = 'nome' | 'email' | 'whatsapp' | 'senha'
 type Form = Record<NomeCampo, string>
@@ -40,6 +41,7 @@ function validar(d: Form): Record<NomeCampo, string | null> {
 }
 
 export default function Cadastro() {
+  useTitulo('Criar conta grátis · Deepcar')
   const nav = useNavigate()
   const loc = useLocation()
   const [d, setD] = useState<Form>(VAZIO)

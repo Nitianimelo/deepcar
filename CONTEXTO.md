@@ -87,6 +87,31 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-09-23 · SEO: ícones, metatags, páginas próprias, dados estruturados, sitemap e robots
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** ajustar o SEO no que for possível pelo código (imagens, metatags, XML etc.); o Search Console fica com ele.
+- **O que mudou:**
+  - Ícones gerados da marca clara sobre o fundo do site (#151b24): `favicon.ico` (16/32/48), `brand/favicon-32.png`,
+    `brand/icone-192.png`, `brand/icone-512.png`, `brand/icone-maskable-512.png` (área segura do Android) e
+    `apple-touch-icon.png` (180). Saiu `public/favicon.svg`, que era o logo roxo padrão do Vite.
+  - `public/site.webmanifest` (nome, cores, ícones, abre em `/app`): o site pode ser "instalado" no celular.
+  - `index.html`: descrição com "15 mil modelos", `max-snippet`, autor, nome do app, `hreflang` pt-BR, ícones e manifest,
+    `og:image:type/secure_url`, `twitter:image:alt`; JSON-LD em `@graph` com Organization, WebSite e SoftwareApplication
+    com as **4 ofertas** (Pro/Full mensal e anual); `<noscript>` com o texto essencial para robôs sem JavaScript.
+  - `server/vitePaginasSeo.mjs` (novo, plugin do build): grava `dist/cadastro/index.html` ("Criar conta grátis ·
+    Deepcar", canônico `/cadastro`) e `dist/login/index.html` ("Entrar · Deepcar", `noindex`). Antes as duas entregavam
+    o HTML da home com o canônico da home.
+  - `src/lib/seo.ts` (`useTitulo`): título da aba no cadastro, login, seções e esquemas ("Alfa Romeo 145 · …").
+  - `vercel.json`: `X-Robots-Tag: noindex` em `/app`, `/admin`, `/c/*`, `/api/*` e `/login`, e no host
+    `deepcar.vercel.app` inteiro (continua no ar para o app Android, mas não disputa com o domínio no Google); cache de
+    uma semana para favicon, ícone do iOS e manifest.
+  - `public/sitemap.xml`: `/` e `/cadastro` com `lastmod` e imagens (prévia e foto da oficina); `/login` saiu.
+  - `public/robots.txt`: comentado; mantém `Disallow` de `/app`, `/admin`, `/api/`, `/c/`.
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** build ok; oxlint 10 avisos; JSON-LD e sitemap validados; conferido em produção (ver commit).
+- **Pendências (Nitiani):** Search Console com `deepcar.app.br` (a verificação por TXT pode ser gravada daqui, o DNS está
+  na Vercel) e envio do sitemap.
+
 ### 2026-09-23 · Domínio próprio deepcar.app.br
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** configurar o domínio `deepcar.app.br`, comprado no Registro.br, e deixar tudo funcionando nele.

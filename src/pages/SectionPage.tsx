@@ -8,6 +8,7 @@ import { ListaEsquemas } from '../components/ListaEsquemas'
 import { BloqueioPlano } from '../components/BloqueioPlano'
 import { useAcesso } from '../lib/acesso'
 import { LogoMarca } from '../components/LogoMarca'
+import { useTitulo } from '../lib/seo'
 
 export default function SectionPage({ secao }: { secao: SectionKey }) {
   if (!useAcesso().podeSecao(secao)) {
@@ -18,6 +19,7 @@ export default function SectionPage({ secao }: { secao: SectionKey }) {
 
 function Secao({ secao }: { secao: SectionKey }) {
   const meta = SECTION_META[secao]
+  useTitulo(`${meta.titulo} · Deepcar`)
 
   // montadora escolhida fica na URL: voltar do navegador retorna à grade
   const [params, setParams] = useSearchParams()
