@@ -34,7 +34,9 @@ Regras de trabalho estão em `AGENTE.md`.
     Botão "Início" no menu lateral (e o logo leva para lá).
   - Busca geral `/app/busca?q=` em todos os sistemas (modelo, motor, código, gerenciamento, fabricação e nome do sistema).
   - Plataforma `/app`: seções de injeção (Leve/Diesel), ABS, elétrica (Leve/Diesel) e câmbio (Leve/Diesel), com catálogo do acervo no R2.
-  - Visualizador de esquemas (scroll contínuo, zoom e pinça, minimapa, tela cheia, seletor de componentes com busca, claro/escuro) e impressão A4 com marca d'água.
+  - Visualizador de esquemas (scroll contínuo, zoom e pinça, minimapa, tela cheia, seletor de componentes com busca, claro/escuro) com marca d'água.
+  - **Compartilhar esquema** (no lugar do antigo Imprimir): link `/c/:token` que abre 2 vezes (por aparelho) e expira;
+    WhatsApp em destaque, e-mail, copiar e o compartilhar do celular. Quem recebe vê o esquema em tela cheia, sem conta.
   - Busca rápida Ctrl+K / ⌘K em qualquer tela do app (placa, esquemas, últimas consultas).
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → modo simulado, com cache de 24 h em memória.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
@@ -50,7 +52,7 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] `npm run dev` não suporta o fluxo de contas do Neon (`/api/login` antigo, sem `/api/registrar`, `/api/sessao`, `/api/admin/*`).
       Testar contas via `vercel dev` ou Preview Deployment.
 - [ ] Scripts de acervo e do executável dependem de caminhos Windows (`E:\`).
-- [ ] 13 avisos do oxlint (0 erros) em `src/`: `set-state-in-effect`, `exhaustive-deps`, `only-export-components`.
+- [ ] 10 avisos do oxlint (0 erros) em `src/`: `set-state-in-effect`, `exhaustive-deps`, `only-export-components`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
 - [ ] A foto da dobra `#placa` é gerada por IA: a tela do celular tem nomes de montadora com erro de grafia
       ("Chewolet", "Citrofo", "Alfa Roemo"). No tamanho exibido não se lê, mas vale trocar por foto real quando houver.
@@ -81,6 +83,41 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-23 · "Imprimir" trocado por "Compartilhar" com link que abre 2 vezes
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** tirar a função de imprimir do esquema e pôr no lugar "Compartilhar" (no celular: WhatsApp, e-mail etc.,
+  principalmente WhatsApp). O link só pode ser aberto 2 vezes e depois expira, com uma tela bonita; a tela do link
+  compartilhado em tela cheia e muito navegável.
+- **Banco:** `db/006_compartilhamentos.sql` **aplicado no Neon** — tabela `compartilhamentos` (sha-256 do código do
+  link, dono, esquema, título, `limite` 2, `aberturas`, `visitantes` jsonb, datas). Apaga em cascata com a conta.
+- **API:** `api/compartilhar.js` (novo; a Vercel Hobby aceita 12 funções e o projeto chegou a 12):
+  - `POST` cria o link: exige sessão com acesso e o sistema no plano da conta (Pro não compartilha diesel → 403);
+    no máximo 60 links por conta em 24 h (429). Devolve `https://<host>/c/<código de 24 caracteres>`.
+  - `GET ?t=&v=` abre: conta **1 abertura por aparelho** (`v` = id guardado no navegador de quem abre); o mesmo aparelho
+    recarregando em até 2 h não gasta outra; quem criou o link confere sem gastar; o incremento só acontece se ainda
+    houver vaga (dois abrindo juntos não passam de 2). Esgotado → **410**; código errado → 404. O preview do WhatsApp
+    não gasta abertura (ele só lê o HTML; a abertura acontece quando o app chama a API).
+- **Front:**
+  - `src/components/CompartilharEsquema.tsx` (novo): botão "Compartilhar" no cabeçalho do esquema; janela que sobe de
+    baixo no celular (centralizada no computador) com o esquema, **"Enviar pelo WhatsApp"** em destaque (verde, abre o
+    app com texto + link), E-mail, Copiar e "Mais" (compartilhar do sistema, onde houver), o link e o aviso "abre 2 vezes".
+    Cada abertura da janela gera um link novo.
+  - `src/pages/Compartilhado.tsx` (novo, rota `/c/:token`, sem login): **tela cheia** (`h-dvh`) com barra fina (logo,
+    modelo e sistema, "Enviado por Carlos · o link abre mais 1 vez", botão "Conhecer o Deepcar") e o mesmo
+    `EsquemaViewer` da plataforma — seletor de componentes, anterior/próximo, zoom, pinça, duplo clique, minimapa,
+    claro/escuro e tela cheia do navegador. Telas de **link expirado** ("Este link já foi aberto 2 vezes", fundo com a
+    grade animada da landing, "Criar conta grátis" / "Conhecer o Deepcar"), link inválido e erro de conexão.
+  - **Impressão removida:** `PrintEsquema.tsx` apagado, `useImpressao` e o atalho Ctrl+P saíram do `EsquemaPage`, CSS
+    das folhas A4 removido. Ctrl+P do navegador no esquema imprime a página **sem** o desenho (`.sem-impressao`).
+  - `public/robots.txt`: `Disallow: /c/`.
+- **Verificação:** build ok; oxlint 10 avisos (eram 13: dois saíram com o `PrintEsquema`). `vercel dev` + banco de
+  produção com conta descartável, 13 cenários: criar sem login → 401; Pro com câmbio diesel → 403; link criado; dono
+  abre sem gastar (2); 1ª abertura → restam 1; mesmo aparelho recarrega → continua 1; 2º aparelho → 0; 3º → 410; sem id
+  → 410; 2º aparelho recarrega → 200; código inexistente → 404; banco com 2/2 e só o sha-256. Conta e links apagados.
+  Capturas (WebKit, 1280 e 390 px): botão no esquema, janela de compartilhar, link aberto em tela cheia e link expirado.
+- **Pendências:** o esquema continua lido do R2 público (ver pendência do acervo); o link não tem prazo em dias, só as
+  2 aberturas.
 
 ### 2026-09-23 · Cada plano libera só o que promete (Pro × Full), controlado no /admin
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

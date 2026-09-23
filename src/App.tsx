@@ -20,6 +20,7 @@ const SectionPage = lazy(() => import('./pages/SectionPage'))
 const EsquemaPage = lazy(() => import('./pages/EsquemaPage'))
 const Conta = lazy(() => import('./pages/Conta'))
 const VeiculoPage = lazy(() => import('./pages/VeiculoPage'))
+const Compartilhado = lazy(() => import('./pages/Compartilhado'))
 
 export default function App() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/c/:token" element={<Compartilhado />} />
         <Route path="/app" element={<AppLayout />}>
           <Route index element={<Inicio />} />
           <Route path="busca" element={<Busca />} />

@@ -151,6 +151,18 @@ body {
 }
 .btn-ghost:hover { background: var(--color-bench-3); border-color: var(--seam-3); color: var(--color-ink-1); }
 
+/* compartilhar esquema (CompartilharEsquema.tsx): opções secundárias e entrada da janela */
+.opcao-compartilhar {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  height: 72px; border-radius: 16px; border: 1px solid var(--seam-1); background: var(--color-bench-1);
+  font-size: 13px; color: var(--color-ink-2);
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.opcao-compartilhar:hover { background: var(--color-bench-3); border-color: var(--seam-3); color: var(--color-ink-1); }
+@keyframes aparecer { from { opacity: 0; } }
+@keyframes subir { from { opacity: 0; transform: translateY(24px); } }
+@media (prefers-reduced-motion: reduce) { .opcao-compartilhar { transition: none; } }
+
 /* item de navegação */
 .nav-item {
   position: relative;
@@ -425,71 +437,12 @@ html:has(.landing) { scroll-behavior: smooth; }
 }
 
 /* ── Impressão ────────────────────────────────────────────────────
-   Páginas de esquema montam um documento próprio (.print-doc, components/PrintEsquema.tsx): na impressão só
-   ele aparece, em folhas A4 brancas. Nas demais páginas, imprime o conteúdo sem menus e em fundo branco. */
-.print-doc { display: none; }
-
-@page folha { size: A4 portrait; margin: 0; }
-
+   O esquema não é impresso (a função foi trocada por Compartilhar): Ctrl+P no esquema sai sem o desenho.
+   Nas demais telas imprime o conteúdo sem menus e em fundo branco. */
 @media print {
   html, body { height: auto !important; background: #fff !important; }
-  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-
-  /* com documento de impressão: esconde o app inteiro */
-  body:has(> .print-doc) > *:not(.print-doc) { display: none !important; }
-  .print-doc { display: block; }
-
-  /* sem documento (outras telas): versão simples */
-  body:not(:has(> .print-doc)) #root { height: auto; }
-  body:not(:has(> .print-doc)) aside,
-  body:not(:has(> .print-doc)) #root header,
-  body:not(:has(> .print-doc)) .no-print { display: none !important; }
-  body:not(:has(> .print-doc)) main { overflow: visible !important; background: none !important; }
+  #root { height: auto; }
+  aside, #root header, .no-print { display: none !important; }
+  main { overflow: visible !important; background: none !important; }
+  .sem-impressao { display: none !important; }
 }
-
-.folha {
-  page: folha;
-  position: relative;
-  box-sizing: border-box;
-  width: 210mm;
-  height: 296.5mm;
-  padding: 9mm 9mm 7mm;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: #fff;
-  color: #14233a;
-  font-family: var(--font-ui);
-  break-after: page;
-}
-.folha:last-child { break-after: auto; }
-
-/* cabeçalho completo (1ª folha) */
-.folha-cab-1 { height: 33mm; flex: none; box-sizing: border-box; border-bottom: 0.3mm solid #14233a; padding-bottom: 3mm; margin-bottom: 0; }
-.folha-topo { display: flex; align-items: center; justify-content: space-between; gap: 6mm; }
-.folha-logo { height: 8mm; width: auto; }
-.folha-sistema { font: 500 7pt/1 var(--font-code); letter-spacing: 0.14em; text-transform: uppercase; color: #5f6d80; white-space: nowrap; }
-.folha-titulo { margin: 3.2mm 0 0; font-size: 17pt; line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; color: #0e2a52; }
-.folha-specs { margin: 3.2mm 0 0; display: flex; flex-wrap: wrap; gap: 1.5mm 0; }
-.folha-specs > div { padding: 0 5mm 0 0; margin-right: 5mm; border-right: 0.2mm solid #d5dde8; }
-.folha-specs > div:last-child { border-right: 0; margin-right: 0; }
-.folha-specs dt { font: 500 6pt/1.2 var(--font-code); letter-spacing: 0.12em; text-transform: uppercase; color: #6b7a8f; }
-.folha-specs dd { margin: 0.8mm 0 0; font-size: 9pt; font-weight: 600; color: #14233a; }
-
-/* cabeçalho compacto (demais folhas) */
-.folha-cab-n { height: 15mm; flex: none; box-sizing: border-box; display: flex; align-items: center; gap: 4mm; border-bottom: 0.3mm solid #14233a; padding-bottom: 3mm; }
-.folha-logo-p { height: 5.5mm; width: auto; }
-.folha-cab-titulo { flex: 1; min-width: 0; padding-left: 4mm; border-left: 0.2mm solid #c9d2de; font-size: 10pt; font-weight: 600; color: #0e2a52; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-/* área do desenho */
-.folha-area { position: relative; flex: none; display: flex; justify-content: center; align-items: flex-start; padding-top: 0; }
-.folha-desenho { position: relative; overflow: hidden; margin-top: 3mm; outline: 0.2mm solid #d5dde8; background: #fff; }
-.folha-desenho img { position: absolute; left: 0; width: 100%; max-width: none; display: block; }
-.folha-repetido { position: absolute; z-index: 2; left: 0; right: 0; top: 0; background: rgba(31, 78, 140, 0.07); border-bottom: 0.25mm dashed #1f4e8c; }
-.folha-repetido span { position: absolute; right: 1.5mm; bottom: 0.8mm; font: 500 5.5pt/1 var(--font-code); letter-spacing: 0.1em; text-transform: uppercase; color: #1f4e8c; background: #fff; padding: 0.5mm 1.4mm; border-radius: 0.8mm; }
-
-/* rodapé */
-.folha-rodape { margin-top: auto; height: 5mm; flex: none; display: grid; grid-template-columns: 1fr auto auto; align-items: end; gap: 6mm; border-top: 0.2mm solid #d5dde8; padding-top: 1.8mm; font: 400 6.5pt/1 var(--font-ui); color: #6b7a8f; }
-.folha-continua { font-family: var(--font-code); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #1f4e8c; }
-.folha-num { font-family: var(--font-code); font-weight: 600; color: #14233a; }
-.folha .marca-dagua { background-color: rgba(20, 42, 73, 0.06) !important; }

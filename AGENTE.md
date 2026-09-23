@@ -106,6 +106,7 @@ api/                      funções serverless da Vercel (JavaScript, Node)
   _lib/assinatura.js      o que um pagamento faz com a conta (ativar, derrubar, atraso, pendente)
   _lib/planos.js          o que cada plano libera (sistemas, placa, aparelhos), acessoDe(), limitarDispositivos()
   admin/planos.js         GET/PUT das regras por plano (aba Planos do /admin)
+  compartilhar.js         link de esquema que abre 2 vezes: POST cria (sessão + sistema no plano), GET abre/expira
   webhooks/cakto.js       rota pública que recebe os eventos da Cakto
   admin/assinaturas.js    pendências sem conta e histórico de eventos
   login.js registrar.js sair.js sessao.js
@@ -122,9 +123,10 @@ server/                   lógica Node reaproveitável
   viteAcervoPlugin.mjs    serve ACERVO_DIR em /acervo no `npm run dev`
 src/
   App.tsx                 rotas (lazy por página)
-  pages/                  Landing, Login, Cadastro, Admin, Inicio (/app), Busca, SectionPage, EsquemaPage, VeiculoPage, Conta
+  pages/                  Landing, Login, Cadastro, Admin, Inicio (/app), Busca, SectionPage, EsquemaPage, VeiculoPage, Conta,
+                          Compartilhado (/c/:token, esquema recebido por link, sem conta, em tela cheia)
   layouts/AppLayout.tsx   casca do /app (sidebar, barra, LimiteFree)
-  components/             ListaEsquemas (lista da seção e da busca), DetalhesEsquema, EsquemaViewer, PrintEsquema, Sidebar, LimiteFree, LogoMarca, Tooltips…
+  components/             ListaEsquemas (lista da seção e da busca), DetalhesEsquema, EsquemaViewer, CompartilharEsquema, Sidebar, LimiteFree, LogoMarca, Tooltips…
   components/SeletorComponente.tsx  lista com busca dos componentes do esquema (tecla /), dentro do EsquemaViewer
   components/PaletaBusca.tsx        busca rápida Ctrl+K / ⌘K de qualquer tela do app (placa, esquema, últimas consultas)
   components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll), CardPlano: só a landing
@@ -148,11 +150,13 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 ```
 
 ### Rotas
-- Front: `/`, `/login`, `/cadastro`, `/admin`, `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
+- Front: `/`, `/login`, `/cadastro`, `/admin`, `/c/:token` (link compartilhado, público), `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
   `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`.
 - API: `POST /api/registrar`, `POST /api/login`, `POST /api/sair`, `GET /api/sessao`,
   `GET|POST|PATCH|DELETE /api/admin/usuarios`, `GET|PUT /api/admin/planos`, `GET|PUT|DELETE /api/admin/segredos`,
-  `POST /api/admin/inicializar`, `GET /api/placa/:placa`.
+  `POST /api/admin/inicializar`, `GET /api/placa/:placa`, `POST|GET /api/compartilhar`.
+- **Limite da Vercel (plano Hobby): 12 funções em `api/`** (sem contar `_lib/`), e o projeto já está com 12. Rota nova
+  precisa entrar num arquivo existente (por método ou `?acao=`) ou o deploy falha.
 
 ---
 
@@ -160,7 +164,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 
 - Tabelas: `usuarios` (plano `free|pro|full`, papel `usuario|admin`, `ativo`, `whatsapp`, `free_expira_em`, colunas
   `assinatura_*`, `assinatura_ciclo` `mensal|anual` e `plano_expira_em` = fim do anual), `sessoes` (sha-256 do token),
-  `segredos` (valores cifrados), `cakto_eventos`, `assinaturas_pendentes` (com `ciclo`). Função `limpar_sessoes()`.
+  `segredos` (valores cifrados), `cakto_eventos`, `assinaturas_pendentes` (com `ciclo`), `compartilhamentos`
+  (sha-256 do link, esquema, `limite` 2, `aberturas`, `visitantes` = aparelho → 1ª abertura). Função `limpar_sessoes()`.
 - **Acesso por plano:** tabela `planos_acesso` (plano → `secoes[]`, `placa`, `dispositivos`), editável no /admin → Planos.
   Padrão: Pro = injeção leve, ABS, elétrica leve, 2 aparelhos, sem placa; Full = tudo, 4 aparelhos; Free (teste) = tudo, 2.
   Admin sempre vê tudo. `sessoes.visto_em` guarda o último uso; o limite derruba o aparelho parado há mais tempo no login.
@@ -214,7 +219,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   no dev. Para testar contas: `npx vercel dev` (com as variáveis puxadas via `vercel env pull`) ou um Preview Deployment.
 - **Acervo local** depende de `ACERVO_DIR` (padrão `E:\deepcar-publicacao`, máquina Windows). Sem ele, catálogo vazio no dev.
 - `Iniciar-Local.ps1`, `exportar-acervo.mjs` e `empacotar-exe.mjs` usam caminhos `E:\` e ferramentas Windows.
-- `npm run lint` já tem 13 avisos (0 erros), principalmente `set-state-in-effect`, `exhaustive-deps` e `only-export-components`, espalhados por `src/`. Não são erros; não aumente a lista (compare a contagem antes e depois da mudança).
+- `npm run lint` já tem 10 avisos (0 erros), principalmente `set-state-in-effect`, `exhaustive-deps` e `only-export-components`, espalhados por `src/`. Não são erros; não aumente a lista (compare a contagem antes e depois da mudança).
 - Prints do `capturar-telas.mjs` (Edge headless) cortam a largura: não confunda com layout quebrado (ver commit `31b1313`).
 - Pasta local dentro do iCloud Drive pode corromper o `.git` (arquivos duplicados tipo `index 2`). Prefira clonar fora do iCloud.
 - Deploy da Vercel não roda migração nem copia o acervo.

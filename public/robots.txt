@@ -4,5 +4,6 @@ Allow: /
 Disallow: /app
 Disallow: /admin
 Disallow: /api/
+Disallow: /c/
 
 Sitemap: https://deepcar.vercel.app/sitemap.xml

@@ -1,54 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
+import { useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, LoaderCircle, Printer } from 'lucide-react'
+import { AlertTriangle, ArrowLeft } from 'lucide-react'
 import { SECTION_META, type SectionKey } from '../data/nav'
 import { carregarEsquema, rotaSecao, rotulo, subtituloCurto, useCarga } from '../lib/acervo'
 import { EsquemaViewer } from '../components/EsquemaViewer'
 import { LogoMarca } from '../components/LogoMarca'
-import { PrintEsquema } from '../components/PrintEsquema'
+import { BotaoCompartilhar } from '../components/CompartilharEsquema'
 import { registrarRecente } from '../lib/recentes'
 import { BloqueioPlano } from '../components/BloqueioPlano'
 import { useAcesso } from '../lib/acesso'
-
-/**
- * Impressão: monta o documento A4, espera as imagens e só então abre a janela do navegador.
- * Ctrl+P passa pelo mesmo caminho; imprimir pelo menu do navegador monta o documento na hora (sem esperar).
- */
-function useImpressao() {
-  const [ativo, setAtivo] = useState(false)
-  const modo = useRef<'botao' | 'menu' | null>(null)
-
-  const iniciar = useCallback(() => {
-    if (modo.current) return
-    modo.current = 'botao'
-    setAtivo(true)
-  }, [])
-
-  const pronto = useCallback(() => {
-    if (modo.current !== 'botao') return
-    window.addEventListener('afterprint', () => { modo.current = null; setAtivo(false) }, { once: true })
-    window.print()
-  }, [])
-
-  useEffect(() => {
-    const tecla = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') { e.preventDefault(); iniciar() }
-    }
-    const antes = () => { if (!modo.current) { modo.current = 'menu'; flushSync(() => setAtivo(true)) } }
-    const depois = () => { if (modo.current === 'menu') { modo.current = null; setAtivo(false) } }
-    window.addEventListener('keydown', tecla)
-    window.addEventListener('beforeprint', antes)
-    window.addEventListener('afterprint', depois)
-    return () => {
-      window.removeEventListener('keydown', tecla)
-      window.removeEventListener('beforeprint', antes)
-      window.removeEventListener('afterprint', depois)
-    }
-  }, [iniciar])
-
-  return { ativo, preparando: ativo && modo.current === 'botao', iniciar, pronto }
-}
 
 export default function EsquemaPage() {
   const id = useParams()['*'] ?? ''
@@ -64,7 +24,6 @@ export default function EsquemaPage() {
 function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
   const meta = SECTION_META[secao]
   const carga = useCarga(() => carregarEsquema(id), [id])
-  const impressao = useImpressao()
 
   // entra nas últimas consultas da tela inicial
   const aberto = carga.estado === 'ok' ? carga.dados : null
@@ -128,19 +87,7 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
                   {d.subtitulo && <p className="mt-1 text-ink-3">{subtituloCurto(d.subtitulo)}</p>}
                 </div>
               </div>
-              <button
-                onClick={impressao.iniciar}
-                disabled={impressao.preparando}
-                data-tip="Imprimir ou salvar em PDF, em folhas A4 com cabeçalho e numeração"
-                data-tip-kbd="Ctrl,P"
-                data-tip-side="bottom"
-                className="no-print btn-ghost inline-flex items-center gap-2 self-start disabled:cursor-wait disabled:opacity-80 sm:self-auto"
-              >
-                {impressao.preparando
-                  ? <><LoaderCircle size={16} className="animate-spin" /> Preparando…</>
-                  : <><Printer size={16} /> Imprimir</>}
-              </button>
-              {impressao.ativo && <PrintEsquema d={d} onPronto={impressao.pronto} />}
+              <BotaoCompartilhar d={d} />
             </div>
 
             <dl className={`mt-5 grid grid-cols-2 gap-3 ${d.specs.length ? '' : 'hidden'} md:grid-cols-4`}>
@@ -152,7 +99,7 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
               ))}
             </dl>
 
-            <div className="mt-6">
+            <div className="sem-impressao mt-6">
               <EsquemaViewer key={d.id} d={d} />
             </div>
           </>
