@@ -26,7 +26,10 @@ Regras de trabalho estão em `AGENTE.md`.
   - **Pagamento pela Cakto**: produtos Pro (R$ 47,90) e Full (R$ 59,90) mensais, e **Pro Anual (R$ 358,80) e Full Anual
     (R$ 454,80)** como compra única de 12 meses em até 12x; webhook em `/api/webhooks/cakto` que troca o plano sozinho,
     pendências para quem paga sem conta e aba "Assinaturas" no `/admin`. O anual vence sozinho (`vencerAnual`).
-  - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link) e cofre de chaves.
+  - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link,
+    aparelhos conectados e "desconectar"), aba **Planos** (o que cada plano libera) e cofre de chaves.
+  - **Acesso por plano:** Pro = injeção leve, ABS e elétrica leve, 2 aparelhos, sem placa; Full = tudo, 4 aparelhos;
+    Free (teste de 10 min) = tudo, 2 aparelhos. Sistemas fora do plano aparecem com cadeado e abrem a tela de upgrade.
   - Tela inicial `/app`: cards "Consultar por placa" e "Buscar esquema" e card "Últimas consultas" (localStorage, por conta).
     Botão "Início" no menu lateral (e o logo leva para lá).
   - Busca geral `/app/busca?q=` em todos os sistemas (modelo, motor, código, gerenciamento, fabricação e nome do sistema).
@@ -37,7 +40,7 @@ Regras de trabalho estão em `AGENTE.md`.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
-- **Banco (Neon):** migrações `001_inicial` a `004_plano_anual` aplicadas.
+- **Banco (Neon):** migrações `001_inicial` a `005_acesso_por_plano` aplicadas.
 - **Último deploy verificado:** commit `b100d52`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
@@ -58,11 +61,13 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Quem passa do mensal para o anual precisa cancelar a mensal pelo suporte (a tela avisa); não há cancelamento automático.
 - [ ] Fazer uma compra real de validação (pode estornar em seguida) para ver o caminho inteiro com produto verdadeiro:
       o evento de teste da Cakto usa um produto fictício e por isso nunca chega a liberar plano.
-- [ ] Bloqueio de sistemas por plano (Pro sem diesel nem câmbio) e limite de dispositivos (2/4): fora do escopo desta
-      entrega, pendente de decidir como separar leve/diesel nas seções Elétrica e Câmbio.
+- [ ] **Acervo sem trava no servidor:** os esquemas são lidos direto do R2 público (`VITE_ACERVO_URL`). O bloqueio por
+      plano dos sistemas é só na tela; quem copiar a URL de um JSON/imagem do R2 consegue baixar. Para travar de verdade:
+      Worker da Cloudflare na frente do bucket conferindo a sessão (ou URLs assinadas geradas por uma rota da API).
+      A busca pela placa já é barrada no servidor (403).
+- [ ] O webhook da Cakto nunca recebeu uma compra real (só o evento de teste, 21/09, respondido 200). Primeira venda:
+      conferir no /admin → Assinaturas.
 - [ ] Portal do assinante (trocar cartão, cancelar) — hoje isso é feito pelo painel da Cakto.
-- [ ] Planos da landing (Pro e Full) ainda não existem no sistema: o banco só conhece `free`/`pro`, não há plano `full`,
-      os sistemas não são liberados por plano e o limite de dispositivos (2 ou 4) não é aplicado. Os botões levam ao cadastro grátis.
 - [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado). No Início não acontece mais (o campo não aparece lá); nas outras telas continua.
 - [ ] Conferir numa placa real se chassi e procedência aparecem (nomes dos campos não estão na documentação pública
       do Falcon; se não aparecerem, mandar a resposta bruta para ajustar `achar()` em `provedores/falcon.mjs`). Confirmar com o Falcon se o endereço
@@ -76,6 +81,53 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-23 · Cada plano libera só o que promete (Pro × Full), controlado no /admin
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** conferir se os webhooks estão funcionando; aplicar as regras dos planos (o Pro só com o que ele diz, o Full
+  libera tudo), integrado à Cakto e com todo o controle no painel admin.
+- **Webhooks (conferido):** a Cakto registra 1 entrega em toda a história — o evento de teste de 21/09, respondido 200
+  (`produto desconhecido`, o certo para o produto fictício do teste). `cakto_eventos` vazio: **nenhuma compra real
+  aprovada ainda**. Existe 1 pedido real de 23/09, Pix do Plano Full (R$ 60,89 = 59,90 + taxa do Pix), `waiting_payment`,
+  de aeziltomar@hotmail.com; `pix_gerado` não está entre os eventos do webhook, então nada chega até ser pago.
+  Os 11 cenários de webhook foram rodados de novo depois desta mudança: todos ok.
+- **Banco:** `db/005_acesso_por_plano.sql` **aplicado no Neon** — tabela `planos_acesso` (plano → `secoes[]`, `placa`,
+  `dispositivos`) com os valores da página de vendas, e `sessoes.visto_em` (último uso do aparelho).
+  As contas nitiani@hotmail.com e aeziltomar@hotmail.com estavam em `pro` desde antes do pagamento (quando "pro" só
+  queria dizer "pago") e foram para `full` como plano manual, a pedido do Nitiani, para não perderem nada.
+- **API:**
+  - `_lib/planos.js` (novo): `SECOES`, `PADRAO`, `regras()` (cache de 1 min por instância), `acessoDe(u)` (admin = tudo,
+    sem limite) e `limitarDispositivos(u)` (mantém os N aparelhos usados mais recentemente).
+  - `_lib/sessao.js`: `publicoCompleto(u)` = `publico` + `acesso { secoes, placa, dispositivos }`, devolvido por login,
+    cadastro e `/api/sessao`; `usuarioDaSessao` grava `sessoes.visto_em` (no máximo a cada 5 min).
+  - `login.js`: depois de abrir a sessão, `limitarDispositivos` derruba o aparelho parado há mais tempo.
+  - `placa/[placa].js`: fora do plano → **403** `{ semPlaca: true }` (o servidor barra, não só a tela).
+  - `admin/planos.js` (novo): GET/PUT das regras, com validação das chaves e de 1–50 aparelhos (vazio = sem limite).
+  - `admin/usuarios.js`: PATCH aceita `encerrarSessoes` (botão "desconectar").
+- **Front:**
+  - `lib/acesso.tsx` (novo): `podeSecao`, `podePlaca`, `useAcesso()` e o contexto `SessaoAtual` que o `AppLayout` fornece.
+  - `components/BloqueioPlano.tsx` (novo): "Câmbio · Diesel não faz parte do plano Pro." + "Passar para o Full"
+    (checkout anual já preenchido) e "Ver planos" (`/app/conta?aba=plano`).
+  - Menu: sistemas fora do plano ficam com cadeado e dica "Disponível no plano Full". Seção, esquema (inclusive link
+    salvo ou das últimas consultas) e consulta de placa mostram o `BloqueioPlano`.
+  - Início: no lugar do campo de placa, "A busca pela placa faz parte do plano Full · Ver planos". Barra superior sem o
+    campo de placa e busca Ctrl+K sem a opção de placa para quem não tem. Busca geral e Ctrl+K procuram só nos
+    sistemas do plano ("Nos sistemas do seu plano").
+  - `lib/plano.ts` (`useLimiteFree`): a sessão é reconferida ao voltar para a aba **para todos** (não só free) e a cada
+    5 min no plano pago — o upgrade para Full aparece sem recarregar. Sessão derrubada (limite de aparelhos, admin,
+    senha nova) manda para o login com aviso.
+  - `lib/auth.ts`: `conferirSessao` só desconecta com 401; falha de rede mantém o perfil (antes deslogava offline).
+  - Conta: linha "Aparelhos: até N ao mesmo tempo". `/app/conta?aba=plano` abre direto na aba Plano.
+  - `/admin`: aba **Planos** (sistemas, busca pela placa e aparelhos por plano, com Desfazer/Salvar) e, em cada usuário,
+    "N de M aparelhos · desconectar".
+- **Cakto:** sem mudança — o produto comprado já define o plano (webhook), e o plano define o acesso.
+- **Verificação:** build ok; oxlint 13 avisos. `vercel dev` + banco de produção com contas descartáveis: Pro recebe
+  `acesso` certo, placa → 403; 3º login do Pro derruba o 1º aparelho (401) e mantém os 2 mais novos; admin lê/grava
+  regras, sistema inválido → 400, conta comum → 403, mudança vale na hora; admin muda para Full → 7 sistemas, placa e
+  4 aparelhos; "desconectar" derruba tudo. Regra do Pro restaurada e contas de teste apagadas. Capturas (WebKit):
+  início do Pro, câmbio diesel bloqueado, /admin usuários e aba Planos.
+- **Pendências:** trava do acervo no servidor (R2 público); a página de vendas é texto fixo e não acompanha o que
+  for mudado na aba Planos.
 
 ### 2026-09-23 · Anual sem destaque de economia: só o valor por mês
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

@@ -8,6 +8,8 @@ import { EsquemaViewer } from '../components/EsquemaViewer'
 import { LogoMarca } from '../components/LogoMarca'
 import { PrintEsquema } from '../components/PrintEsquema'
 import { registrarRecente } from '../lib/recentes'
+import { BloqueioPlano } from '../components/BloqueioPlano'
+import { useAcesso } from '../lib/acesso'
 
 /**
  * Impressão: monta o documento A4, espera as imagens e só então abre a janela do navegador.
@@ -51,6 +53,15 @@ function useImpressao() {
 export default function EsquemaPage() {
   const id = useParams()['*'] ?? ''
   const secao = id.split('/')[0] as SectionKey
+  const { podeSecao } = useAcesso()
+  // link salvo, recente ou compartilhado de um sistema fora do plano
+  if (SECTION_META[secao] && !podeSecao(secao)) {
+    return <BloqueioPlano titulo={SECTION_META[secao].trilha.join(' · ')} oQue={SECTION_META[secao].titulo} />
+  }
+  return <VerEsquema id={id} secao={secao} />
+}
+
+function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
   const meta = SECTION_META[secao]
   const carga = useCarga(() => carregarEsquema(id), [id])
   const impressao = useImpressao()

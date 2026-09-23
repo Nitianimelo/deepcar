@@ -5,9 +5,18 @@ import { SECTION_META, type SectionKey } from '../data/nav'
 import { adiantarCatalogo, carregarCatalogo, carregarMarcas, useCarga, type Esquema } from '../lib/acervo'
 import { filtrar, indexar } from '../lib/busca'
 import { ListaEsquemas } from '../components/ListaEsquemas'
+import { BloqueioPlano } from '../components/BloqueioPlano'
+import { useAcesso } from '../lib/acesso'
 import { LogoMarca } from '../components/LogoMarca'
 
 export default function SectionPage({ secao }: { secao: SectionKey }) {
+  if (!useAcesso().podeSecao(secao)) {
+    return <BloqueioPlano titulo={SECTION_META[secao].trilha.join(' · ')} oQue={SECTION_META[secao].titulo} />
+  }
+  return <Secao secao={secao} />
+}
+
+function Secao({ secao }: { secao: SectionKey }) {
   const meta = SECTION_META[secao]
 
   // montadora escolhida fica na URL: voltar do navegador retorna à grade

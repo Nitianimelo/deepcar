@@ -1,6 +1,6 @@
 // POST /api/registrar  { nome, email, whatsapp, senha }  → cria a conta (plano free) e já entra.
 import { sql, um } from './_lib/db.js'
-import { abrirJanelaFree, cifrarSenha, corpo, criarSessao, porCookie, publico } from './_lib/sessao.js'
+import { abrirJanelaFree, cifrarSenha, corpo, criarSessao, porCookie, publicoCompleto } from './_lib/sessao.js'
 import { emailValido, nomeValido, normalizarWhatsapp, senhaValida, SENHA_MINIMA } from './_lib/validar.js'
 import { consumirPendente } from './_lib/assinatura.js'
 
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     const comJanela = await abrirJanelaFree(comPlano)
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])
     porCookie(res, token, expira)
-    return res.status(201).json(publico(comJanela))
+    return res.status(201).json(await publicoCompleto(comJanela))
   } catch (err) {
     return res.status(err.status ?? 500).json({ erro: err.message ?? 'Não foi possível criar a conta.' })
   }

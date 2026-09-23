@@ -11,10 +11,17 @@ import { TracePad } from '../components/TracePad'
 import { LogoMarca } from '../components/LogoMarca'
 import { DetalhesEsquema } from '../components/DetalhesEsquema'
 import MARCAS from '../data/marcas.json'
+import { BloqueioPlano } from '../components/BloqueioPlano'
+import { useAcesso } from '../lib/acesso'
 
 type Estado = { fase: 'carregando' } | { fase: 'ok'; veiculo: Veiculo } | { fase: 'erro'; msg: string }
 
 export default function VeiculoPage() {
+  if (!useAcesso().podePlaca) return <BloqueioPlano titulo="Consulta por placa" oQue="A busca pela placa" />
+  return <ConsultaVeiculo />
+}
+
+function ConsultaVeiculo() {
   const { placa = '' } = useParams()
   const [estado, setEstado] = useState<Estado>({ fase: 'carregando' })
 

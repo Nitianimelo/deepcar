@@ -1,6 +1,7 @@
 // POST /api/login  { email, senha }  → sessão em cookie httpOnly.
 import { sql, um } from './_lib/db.js'
-import { abrirJanelaFree, conferirSenha, corpo, criarSessao, porCookie, publico, vencerAnual } from './_lib/sessao.js'
+import { abrirJanelaFree, conferirSenha, corpo, criarSessao, porCookie, publicoCompleto, vencerAnual } from './_lib/sessao.js'
+import { limitarDispositivos } from './_lib/planos.js'
 import { consumirPendente } from './_lib/assinatura.js'
 
 export const config = { runtime: 'nodejs' }
@@ -23,9 +24,11 @@ export default async function handler(req, res) {
     // quem entra pela primeira vez no plano free começa a contar os minutos agora
     const comJanela = await abrirJanelaFree(comPlano)
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])
+    // passou do limite de aparelhos do plano: cai o que estava parado havia mais tempo
+    await limitarDispositivos(comJanela)
     await sql`update usuarios set visto_em = now() where id = ${u.id}`
     porCookie(res, token, expira)
-    return res.status(200).json(publico(comJanela))
+    return res.status(200).json(await publicoCompleto(comJanela))
   } catch (err) {
     return res.status(err.status ?? 500).json({ erro: err.message ?? 'Falha no login.' })
   }

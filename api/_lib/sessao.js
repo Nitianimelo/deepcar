@@ -6,6 +6,7 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
 import { sql, um } from './db.js'
+import { acessoDe } from './planos.js'
 
 const scryptAsync = promisify(scrypt)
 const COOKIE = 'deepcar_sessao'
@@ -111,6 +112,9 @@ export async function usuarioDaSessao(req) {
       from sessoes s join usuarios u on u.id = s.usuario_id
      where s.token = ${digerir(token)} and s.expira_em > now()`)
   if (!linha || !linha.ativo) return null
+  // ultimo uso do aparelho (o limite de dispositivos derruba o parado ha mais tempo); no maximo 1 escrita a cada 5 min
+  await sql`update sessoes set visto_em = now()
+             where token = ${digerir(token)} and (visto_em is null or visto_em < now() - interval '5 minutes')`
   return vencerAnual(linha)
 }
 
@@ -167,5 +171,11 @@ export const publico = (u) => ({
       }
     : null,
 })
+
+/** `publico` mais o que o plano libera: e o que login, cadastro e /api/sessao devolvem. */
+export async function publicoCompleto(u) {
+  const a = await acessoDe(u)
+  return { ...publico(u), acesso: { secoes: a.secoes, placa: a.placa, dispositivos: a.dispositivos } }
+}
 
 export const corpo = (req) => (typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body ?? {}))

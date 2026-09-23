@@ -2,7 +2,7 @@
 //
 //   GET    /api/admin/usuarios            lista (com busca ?q=)
 //   POST   /api/admin/usuarios            cria { nome, email, senha, whatsapp, plano, papel, oficina }
-//   PATCH  /api/admin/usuarios?id=...     muda { plano, papel, ativo, nome, oficina, senha, whatsapp, liberarFree }
+//   PATCH  /api/admin/usuarios?id=...     muda { plano, papel, ativo, nome, oficina, senha, whatsapp, liberarFree, encerrarSessoes }
 //   DELETE /api/admin/usuarios?id=...     remove (as sessões vão junto)
 import { sql, um } from '../_lib/db.js'
 import { cifrarSenha, corpo, exigir } from '../_lib/sessao.js'
@@ -100,8 +100,8 @@ export default async function handler(req, res) {
         returning id, email, nome, oficina, plano, papel, ativo, criado_em, visto_em, whatsapp, free_expira_em,
                   assinatura_status, assinatura_plano, assinatura_renova_em, assinatura_em_atraso, assinatura_origem, assinatura_ciclo, plano_expira_em`)
       if (!atualizado) return res.status(404).json({ erro: 'Usuário não encontrado.' })
-      // desativado ou com senha nova: as sessões abertas caem
-      if (d.ativo === false || d.senha) await sql`delete from sessoes where usuario_id = ${id}`
+      // desativado, com senha nova ou a pedido ("desconectar aparelhos"): as sessões abertas caem
+      if (d.ativo === false || d.senha || d.encerrarSessoes === true) await sql`delete from sessoes where usuario_id = ${id}`
       return res.status(200).json(atualizado)
     }
 

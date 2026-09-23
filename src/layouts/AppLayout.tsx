@@ -7,6 +7,7 @@ import { Sidebar } from '../components/Sidebar'
 import { BloqueioFree, ContadorFree } from '../components/LimiteFree'
 import { useSessao } from '../lib/auth'
 import { useLimiteFree } from '../lib/plano'
+import { podePlaca, SessaoAtual } from '../lib/acesso'
 
 const COLLAPSE_KEY = 'deepcar.sidebar.collapsed'
 
@@ -30,8 +31,14 @@ export default function AppLayout() {
     if (conferindo) return <div aria-busy="true" className="min-h-full" />
     return <Navigate to="/login" replace state={{ from: loc.pathname }} />
   }
+  if (limite.perdida) {
+    return <Navigate to="/login" replace state={{ from: loc.pathname, aviso: 'Sua sessão foi encerrada: a conta entrou em outro aparelho além do limite do plano, ou foi desconectada pelo suporte. Entre de novo para continuar.' }} />
+  }
+  // a mais nova que se sabe: a do relógio é reconferida no foco e em intervalos
+  const atual = limite.sessao ?? session
 
   return (
+    <SessaoAtual.Provider value={atual}>
     <div className="flex h-full min-h-0">
       <Sidebar
         collapsed={collapsed}
@@ -54,7 +61,7 @@ export default function AppLayout() {
           </button>
 
           {/* no início a placa já é o campo principal da tela; aqui seria repetido */}
-          {naoEInicio ? <PlateSearch className="flex-1 max-w-md" /> : <div className="flex-1" />}
+          {naoEInicio && podePlaca(atual) ? <PlateSearch className="flex-1 max-w-md" /> : <div className="flex-1" />}
           {naoEInicio && <div className="hidden flex-1 md:block" />}
           <PaletaBusca />
 
@@ -68,5 +75,6 @@ export default function AppLayout() {
 
       {limite.bloqueado && <BloqueioFree />}
     </div>
+    </SessaoAtual.Provider>
   )
 }

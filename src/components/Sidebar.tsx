@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronsLeft, ChevronsRight, House, LogOut, ShieldCheck, UserRound, X } from 'lucide-react'
+import { ChevronDown, ChevronsLeft, ChevronsRight, House, Lock, LogOut, ShieldCheck, UserRound, X } from 'lucide-react'
 import { NAV, SECTION_META, type NavGroup, type NavLeaf } from '../data/nav'
 import { TracePad } from './TracePad'
 import { getSession, logout } from '../lib/auth'
+import { useAcesso } from '../lib/acesso'
 
 type Props = {
   collapsed: boolean
@@ -157,12 +158,15 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
 
 function LeafItem({ leaf, collapsed, nested = false }: { leaf: NavLeaf; collapsed: boolean; nested?: boolean }) {
   const Icon = leaf.icon
+  // fora do plano o item continua no menu (mostra o que existe), com cadeado; a página oferece o Full
+  const bloqueado = !useAcesso().podeSecao(leaf.key)
+  const dica = bloqueado ? 'Disponível no plano Full' : SECTION_META[leaf.key].descricao
   return (
     <NavLink
       to={leaf.to}
       viewTransition
-      aria-label={leaf.label}
-      data-tip={collapsed ? `${leaf.label}: ${SECTION_META[leaf.key].descricao}` : SECTION_META[leaf.key].descricao}
+      aria-label={bloqueado ? `${leaf.label} (fora do seu plano)` : leaf.label}
+      data-tip={collapsed ? `${leaf.label}: ${dica}` : dica}
       data-tip-side="right"
       className={({ isActive }) =>
         [
@@ -176,8 +180,9 @@ function LeafItem({ leaf, collapsed, nested = false }: { leaf: NavLeaf; collapse
       {({ isActive }) => (
         <>
           {isActive && !collapsed && <TracePad />}
-          <Icon size={nested ? 17 : 19} className="nav-icon" />
-          {!collapsed && <span>{leaf.label}</span>}
+          <Icon size={nested ? 17 : 19} className={`nav-icon ${bloqueado ? 'opacity-50' : ''}`} />
+          {!collapsed && <span className={`flex-1 ${bloqueado ? 'text-ink-4' : ''}`}>{leaf.label}</span>}
+          {!collapsed && bloqueado && <Lock size={13} className="flex-none text-ink-4" aria-hidden="true" />}
         </>
       )}
     </NavLink>

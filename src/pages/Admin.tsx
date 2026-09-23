@@ -2,10 +2,11 @@
 // Toda a autorização é do servidor (api/admin/*): aqui a checagem só evita mostrar a tela.
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { BadgeDollarSign, Check, Copy, Eye, EyeOff, KeyRound, Link2, Loader2, MessageCircle, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
+import { BadgeDollarSign, Check, Copy, Eye, EyeOff, KeyRound, Layers, Link2, Loader2, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
 import { useSessao } from '../lib/auth'
 import { mmss, rotuloPlano } from '../lib/plano'
 import { mascararWhatsapp, SENHA_MINIMA } from '../lib/validacao'
+import { SECTION_META, type SectionKey } from '../data/nav'
 
 type Plano = 'free' | 'pro' | 'full'
 
@@ -59,6 +60,9 @@ type Evento = {
 
 type Segredo = { chave: string; descricao: string | null; atualizado_em: string; por: string | null }
 
+type RegraPlano = { secoes: string[]; placa: boolean; dispositivos: number | null }
+type RespostaPlanos = { secoes: string[]; planos: Record<Plano, RegraPlano> }
+
 async function api(url: string, init?: RequestInit) {
   const res = await fetch(url, {
     credentials: 'same-origin',
@@ -81,7 +85,7 @@ function teste(ate: string | null) {
 
 export default function Admin() {
   const { session, conferindo } = useSessao()
-  const [aba, setAba] = useState<'usuarios' | 'assinaturas' | 'chaves'>('usuarios')
+  const [aba, setAba] = useState<'usuarios' | 'planos' | 'assinaturas' | 'chaves'>('usuarios')
 
   if (!session) return conferindo ? <div aria-busy="true" className="min-h-screen" /> : <Navigate to="/login" replace />
   if (session.papel !== 'admin') return <Navigate to="/app" replace />
@@ -94,7 +98,7 @@ export default function Admin() {
           <span className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Administração</span>
         </div>
         <div className="flex items-center gap-1 rounded-lg border seam bg-bench-2 p-1">
-          {([['usuarios', 'Usuários', Users], ['assinaturas', 'Assinaturas', BadgeDollarSign], ['chaves', 'Chaves de API', KeyRound]] as const).map(([k, rotulo, Icone]) => (
+          {([['usuarios', 'Usuários', Users], ['planos', 'Planos', Layers], ['assinaturas', 'Assinaturas', BadgeDollarSign], ['chaves', 'Chaves de API', KeyRound]] as const).map(([k, rotulo, Icone]) => (
             <button
               key={k}
               type="button"
@@ -109,6 +113,7 @@ export default function Admin() {
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
         {aba === 'usuarios' && <AbaUsuarios meuEmail={session.email} />}
+        {aba === 'planos' && <AbaPlanos />}
         {aba === 'assinaturas' && <AbaAssinaturas />}
         {aba === 'chaves' && <AbaChaves />}
       </main>
@@ -123,6 +128,16 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
   const [erro, setErro] = useState('')
   const [novo, setNovo] = useState(false)
   const [senhaDe, setSenhaDe] = useState<Usuario | null>(null)
+  const [limites, setLimites] = useState<Record<string, number | null>>({})
+
+  useEffect(() => {
+    api('/api/admin/planos')
+      .then((r) => {
+        const planos = (r as RespostaPlanos).planos
+        setLimites(Object.fromEntries(Object.entries(planos).map(([k, v]) => [k, v.dispositivos])))
+      })
+      .catch(() => { /* só enfeite da coluna: sem isso mostra só o número */ })
+  }, [])
 
   const buscar = useCallback(async (termo: string) => {
     setCarregando(true)
@@ -141,7 +156,7 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
     return () => clearTimeout(t)
   }, [q, buscar])
 
-  async function mudar(u: Usuario, campos: Partial<Usuario> & { senha?: string; liberarFree?: boolean }) {
+  async function mudar(u: Usuario, campos: Partial<Usuario> & { senha?: string; liberarFree?: boolean; encerrarSessoes?: boolean }) {
     const antes = lista
     setLista((l) => l.map((x) => (x.id === u.id ? { ...x, ...campos } : x))) // resposta imediata
     try {
@@ -264,6 +279,25 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
                   >
                     {u.ativo ? 'Ativo' : 'Bloqueado'}
                   </button>
+                  <span className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-ink-4">
+                    <MonitorSmartphone size={12} className="flex-none" />
+                    {u.sessoes ?? 0}
+                    {u.papel !== 'admin' && limites[u.plano] ? ` de ${limites[u.plano]}` : ''} aparelho{(u.sessoes ?? 0) === 1 ? '' : 's'}
+                    {!!u.sessoes && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Desconectar todos os aparelhos de ${u.nome}? A pessoa precisa entrar de novo.`)) {
+                            void mudar(u, { encerrarSessoes: true, sessoes: 0 })
+                          }
+                        }}
+                        data-tip="Encerra as sessões abertas em todos os aparelhos"
+                        className="text-trace hover:text-trace-hi"
+                      >
+                        desconectar
+                      </button>
+                    )}
+                  </span>
                 </td>
                 <td className="code px-3 py-3 text-[12px] text-ink-3">{data(u.criado_em)}</td>
                 <td className="code px-3 py-3 text-[12px] text-ink-3">{data(u.visto_em)}</td>
@@ -450,6 +484,161 @@ function EstadoAssinatura({ u }: { u: Usuario }) {
 }
 
 /** Pagamentos que chegaram sem conta e o histórico do que a Cakto mandou. */
+/**
+ * O que cada plano libera. Vale para todas as contas do plano, venham da Cakto ou do /admin;
+ * administrador sempre vê tudo. A página de vendas é texto fixo (src/data/planos.ts) e não muda daqui.
+ */
+function AbaPlanos() {
+  const PLANOS: Plano[] = ['free', 'pro', 'full']
+  const [dados, setDados] = useState<RespostaPlanos | null>(null)
+  const [rascunho, setRascunho] = useState<Record<Plano, RegraPlano> | null>(null)
+  const [erro, setErro] = useState('')
+  const [salvando, setSalvando] = useState(false)
+  const [salvo, setSalvo] = useState(false)
+
+  useEffect(() => {
+    api('/api/admin/planos')
+      .then((r) => {
+        setDados(r as RespostaPlanos)
+        setRascunho((r as RespostaPlanos).planos)
+      })
+      .catch((e) => setErro(e instanceof Error ? e.message : 'Falha ao carregar.'))
+  }, [])
+
+  const mudou = (p: Plano) => !!dados && !!rascunho && JSON.stringify(dados.planos[p]) !== JSON.stringify(rascunho[p])
+  const algoMudou = PLANOS.some(mudou)
+
+  function alternar(p: Plano, secao: string) {
+    setSalvo(false)
+    setRascunho((r) => {
+      if (!r) return r
+      const tem = r[p].secoes.includes(secao)
+      return { ...r, [p]: { ...r[p], secoes: tem ? r[p].secoes.filter((x) => x !== secao) : [...r[p].secoes, secao] } }
+    })
+  }
+  const ajustar = (p: Plano, campos: Partial<RegraPlano>) => {
+    setSalvo(false)
+    setRascunho((r) => (r ? { ...r, [p]: { ...r[p], ...campos } } : r))
+  }
+
+  async function salvar() {
+    if (!rascunho) return
+    setSalvando(true)
+    try {
+      let ultima: RespostaPlanos | null = null
+      for (const p of PLANOS.filter(mudou)) {
+        ultima = (await api('/api/admin/planos', { method: 'PUT', body: JSON.stringify({ plano: p, ...rascunho[p] }) })) as RespostaPlanos
+      }
+      if (ultima) { setDados(ultima); setRascunho(ultima.planos) }
+      setErro('')
+      setSalvo(true)
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível salvar.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  const caixa = (marcado: boolean, onChange: () => void, rotulo: string) => (
+    <label className="inline-grid h-9 w-9 cursor-pointer place-items-center rounded-md hover:bg-bench-3">
+      <input type="checkbox" checked={marcado} onChange={onChange} aria-label={rotulo} className="peer sr-only" />
+      <span className={`grid h-[18px] w-[18px] place-items-center rounded border peer-focus-visible:ring-2 peer-focus-visible:ring-trace/50 ${marcado ? 'border-trace bg-trace text-white' : 'seam-strong bg-well'}`}>
+        {marcado && <Check size={12} strokeWidth={3} />}
+      </span>
+    </label>
+  )
+
+  return (
+    <>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-[26px] font-semibold tracking-tight">Planos</h1>
+          <p className="mt-1 max-w-[62ch] text-ink-3">
+            O que cada plano libera. Vale para todas as contas do plano, pagas pela Cakto ou definidas aqui no /admin.
+            Administrador sempre vê tudo.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {salvo && !algoMudou && <span className="inline-flex items-center gap-1.5 text-[13px] text-ok"><Check size={14} /> Salvo</span>}
+          <button type="button" disabled={!algoMudou || salvando} onClick={() => setRascunho(dados?.planos ?? null)} className="btn-ghost disabled:opacity-40">
+            Desfazer
+          </button>
+          <button type="button" disabled={!algoMudou || salvando} onClick={() => void salvar()} className="btn-primary inline-flex items-center gap-2 px-5 disabled:opacity-40">
+            {salvando && <Loader2 size={15} className="animate-spin" />} Salvar
+          </button>
+        </div>
+      </div>
+
+      {erro && <p role="alert" className="mt-4 rounded-lg border border-fault/30 bg-fault/10 px-4 py-3 text-sm text-fault">{erro}</p>}
+
+      {!rascunho || !dados ? (
+        <div className="mt-6 grid place-items-center py-16 text-ink-4"><Loader2 size={18} className="animate-spin" /></div>
+      ) : (
+        <div className="mt-5 overflow-x-auto rounded-xl border seam bg-bench-2">
+          <table className="w-full min-w-[560px] text-[14px]">
+            <thead>
+              <tr className="code border-b seam-soft text-[11px] uppercase tracking-[0.14em] text-ink-4">
+                <th className="px-5 py-3 text-left font-normal">Liberado</th>
+                {PLANOS.map((p) => (
+                  <th key={p} className="w-28 px-3 py-3 text-center font-normal">
+                    {rotuloPlano(p)}{mudou(p) && <span className="ml-1 text-warn" data-tip="Alterado, falta salvar">•</span>}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dados.secoes.map((secao) => (
+                <tr key={secao} className="border-t seam-soft">
+                  <td className="px-5 py-1.5 text-ink-2">{SECTION_META[secao as SectionKey]?.titulo ?? secao}</td>
+                  {PLANOS.map((p) => (
+                    <td key={p} className="px-3 py-1.5 text-center">
+                      {caixa(rascunho[p].secoes.includes(secao), () => alternar(p, secao), `${SECTION_META[secao as SectionKey]?.titulo ?? secao} no plano ${rotuloPlano(p)}`)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              <tr className="border-t seam">
+                <td className="px-5 py-1.5 text-ink-2">Busca pela placa</td>
+                {PLANOS.map((p) => (
+                  <td key={p} className="px-3 py-1.5 text-center">
+                    {caixa(rascunho[p].placa, () => ajustar(p, { placa: !rascunho[p].placa }), `Busca pela placa no plano ${rotuloPlano(p)}`)}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-t seam-soft">
+                <td className="px-5 py-2.5 text-ink-2">
+                  Aparelhos conectados
+                  <span className="block text-[12px] text-ink-4">Ao passar do limite, cai o aparelho parado há mais tempo. Vazio = sem limite.</span>
+                </td>
+                {PLANOS.map((p) => (
+                  <td key={p} className="px-3 py-2.5 text-center">
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      inputMode="numeric"
+                      className="field mx-auto h-9 w-16 px-2 text-center text-[14px]"
+                      value={rascunho[p].dispositivos ?? ''}
+                      placeholder="∞"
+                      aria-label={`Aparelhos no plano ${rotuloPlano(p)}`}
+                      onChange={(e) => ajustar(p, { dispositivos: e.target.value === '' ? null : Math.max(1, Math.min(50, Number(e.target.value) || 1)) })}
+                    />
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <p className="mt-4 text-[12.5px] text-ink-4">
+        A mudança vale no próximo acesso de cada conta (em até 1 minuto). O limite de aparelhos é aplicado quando alguém
+        entra num aparelho novo. Os itens escritos na página de vendas não mudam daqui.
+      </p>
+    </>
+  )
+}
+
 function AbaAssinaturas() {
   const [pendentes, setPendentes] = useState<Pendente[]>([])
   const [eventos, setEventos] = useState<Evento[]>([])

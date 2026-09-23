@@ -15,6 +15,8 @@ export default function Login() {
   const [mostrar, setMostrar] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(false)
+  // o app manda para cá quem teve a sessão encerrada (limite de aparelhos do plano, admin, senha nova)
+  const aviso = (loc.state as { aviso?: string } | null)?.aviso
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -68,6 +70,11 @@ export default function Login() {
             <h2 className="text-2xl font-semibold tracking-tight">Entrar</h2>
             <p className="mt-1.5 text-ink-3 text-sm">Acesse com a conta da sua oficina.</p>
 
+            {aviso && !erro && (
+              <p role="status" className="mt-6 rounded-lg border border-warn/30 bg-warn/10 px-3.5 py-2.5 text-[13.5px] text-ink-1">
+                {aviso}
+              </p>
+            )}
             <form onSubmit={onSubmit} className="mt-7 space-y-4" noValidate>
               <label className="block">
                 <span className="mb-1.5 block text-[13px] font-medium text-ink-2">E-mail</span>

@@ -104,6 +104,8 @@ api/                      funções serverless da Vercel (JavaScript, Node)
   _lib/validar.js         validação de cadastro (regra que vale de verdade)
   _lib/cakto.js           webhook da Cakto: prova a origem, evento→ação, produto→plano
   _lib/assinatura.js      o que um pagamento faz com a conta (ativar, derrubar, atraso, pendente)
+  _lib/planos.js          o que cada plano libera (sistemas, placa, aparelhos), acessoDe(), limitarDispositivos()
+  admin/planos.js         GET/PUT das regras por plano (aba Planos do /admin)
   webhooks/cakto.js       rota pública que recebe os eventos da Cakto
   admin/assinaturas.js    pendências sem conta e histórico de eventos
   login.js registrar.js sair.js sessao.js
@@ -128,7 +130,9 @@ src/
   components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll), CardPlano: só a landing
   lib/transicao.ts        marcarTitulo(): título que "voa" da lista ao cabeçalho do esquema (View Transitions)
   lib/auth.ts             cliente de sessão (cookie no servidor; localStorage só guarda retrato do perfil)
-  lib/plano.ts            relógio do plano free no navegador (espelha MINUTOS_FREE)
+  lib/plano.ts            relógio do plano free no navegador (espelha MINUTOS_FREE) e reconferência da sessão
+  lib/acesso.tsx          podeSecao()/podePlaca() e useAcesso(): cadeado no menu e telas fora do plano
+  components/BloqueioPlano.tsx  tela "não faz parte do seu plano" (seção, esquema e placa)
   lib/validacao.ts        validação de cadastro no navegador (espelha api/_lib/validar.js)
   lib/acervo.ts           leitura do acervo (VITE_ACERVO_URL ou /acervo)
   lib/busca.ts            busca de texto no catálogo (normalizar, indexar, filtrar)
@@ -147,7 +151,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Front: `/`, `/login`, `/cadastro`, `/admin`, `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
   `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`.
 - API: `POST /api/registrar`, `POST /api/login`, `POST /api/sair`, `GET /api/sessao`,
-  `GET|POST|PATCH|DELETE /api/admin/usuarios`, `GET|PUT|DELETE /api/admin/segredos`,
+  `GET|POST|PATCH|DELETE /api/admin/usuarios`, `GET|PUT /api/admin/planos`, `GET|PUT|DELETE /api/admin/segredos`,
   `POST /api/admin/inicializar`, `GET /api/placa/:placa`.
 
 ---
@@ -157,6 +161,11 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Tabelas: `usuarios` (plano `free|pro|full`, papel `usuario|admin`, `ativo`, `whatsapp`, `free_expira_em`, colunas
   `assinatura_*`, `assinatura_ciclo` `mensal|anual` e `plano_expira_em` = fim do anual), `sessoes` (sha-256 do token),
   `segredos` (valores cifrados), `cakto_eventos`, `assinaturas_pendentes` (com `ciclo`). Função `limpar_sessoes()`.
+- **Acesso por plano:** tabela `planos_acesso` (plano → `secoes[]`, `placa`, `dispositivos`), editável no /admin → Planos.
+  Padrão: Pro = injeção leve, ABS, elétrica leve, 2 aparelhos, sem placa; Full = tudo, 4 aparelhos; Free (teste) = tudo, 2.
+  Admin sempre vê tudo. `sessoes.visto_em` guarda o último uso; o limite derruba o aparelho parado há mais tempo no login.
+  **O servidor barra a placa (403); os sistemas são barrados só na tela**, porque o acervo é lido direto do R2 público
+  (ver Pendências no CONTEXTO.md). Mudar as chaves de seção exige mudar `src/data/nav.ts` e `api/_lib/planos.js` juntos.
 - **Plano anual:** a Cakto não avisa o fim de uma compra única. Quem corta é `vencerAnual()` em `api/_lib/sessao.js`,
   a cada sessão conferida e no login (plano volta a `free`, `assinatura_status = 'expirada'`).
 - **Toda mudança de schema = novo arquivo** `db/NNN_descricao.sql` (próximo número em sequência).
@@ -190,6 +199,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Regras duplicadas navegador/servidor **precisam mudar juntas**:
   - `MINUTOS_FREE`: `api/_lib/sessao.js` ↔ `src/lib/plano.ts`
   - validação de cadastro: `api/_lib/validar.js` ↔ `src/lib/validacao.ts`
+  - chaves das seções: `src/data/nav.ts` ↔ `api/_lib/planos.js` (`SECOES`) ↔ `db/005` (valores iniciais)
   A regra que vale é a do servidor; a do navegador só dá resposta imediata.
 - Páginas novas entram com `lazy()` em `src/App.tsx` (a landing é a única no pacote inicial).
 - Estilo: tokens de `src/index.css`; não espalhar cores fixas.

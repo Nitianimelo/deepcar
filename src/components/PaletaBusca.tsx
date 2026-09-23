@@ -9,6 +9,7 @@ import { carregarTudo, fmt, useCarga } from '../lib/acervo'
 import { filtrar, indexar, termosDe } from '../lib/busca'
 import { formatarPlaca, normalizarPlaca, placaValida } from '../lib/placa'
 import { useRecentes } from '../lib/recentes'
+import { useAcesso } from '../lib/acesso'
 
 const MAX = 8
 
@@ -56,14 +57,18 @@ function Janela({ onFechar }: { onFechar: () => void }) {
   const [marcado, setMarcado] = useState(0)
   const recentes = useRecentes()
 
-  const carga = useCarga(() => carregarTudo(SECOES), [])
+  // placa e sistemas conforme o plano: fora dele a opção nem aparece
+  const { podeSecao, podePlaca } = useAcesso()
+  const secoes = SECOES.filter(podeSecao)
+  const chaveSecoes = secoes.join(',')
+  const carga = useCarga(() => carregarTudo(secoes), [chaveSecoes]) // eslint-disable-line react-hooks/exhaustive-deps
   const indice = useMemo(() => (carga.estado === 'ok' ? indexar(carga.dados, { comSecao: true }) : []), [carga])
   const temTermo = termosDe(q).length > 0
 
   const { opcoes, total } = useMemo(() => {
     const saida: Opcao[] = []
     const placa = formatarPlaca(q.trim())
-    if (placaValida(placa)) {
+    if (podePlaca && placaValida(placa)) {
       saida.push({ chave: 'placa', icone: 'placa', titulo: `Consultar placa ${placa}`, detalhe: 'Identifica o veículo e mostra os sistemas compatíveis', para: `/app/veiculo/${normalizarPlaca(placa)}` })
     }
     if (!temTermo) {
@@ -92,7 +97,7 @@ function Janela({ onFechar }: { onFechar: () => void }) {
       saida.push({ chave: 'todos', icone: 'todos', titulo: `Ver todos os ${fmt(achados.length)} resultados`, para: `/app/busca?q=${encodeURIComponent(q.trim())}` })
     }
     return { opcoes: saida, total: achados.length }
-  }, [q, temTermo, recentes, indice])
+  }, [q, temTermo, recentes, indice, podePlaca])
 
   useEffect(() => { campo.current?.focus() }, [])
   useEffect(() => { lista.current?.querySelector<HTMLElement>(`[data-i="${marcado}"]`)?.scrollIntoView({ block: 'nearest' }) }, [marcado])

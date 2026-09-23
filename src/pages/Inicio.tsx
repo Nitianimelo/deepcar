@@ -1,11 +1,12 @@
 // Tela inicial da plataforma: os dois jeitos de começar (placa ou busca) e as últimas consultas.
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, ChevronRight, FileText, ScanLine, Search } from 'lucide-react'
+import { ArrowRight, ChevronRight, FileText, Lock, ScanLine, Search } from 'lucide-react'
 import { getSession } from '../lib/auth'
 import { formatarPlaca, normalizarPlaca, placaValida } from '../lib/placa'
 import { limparRecentes, useRecentes, type Recente } from '../lib/recentes'
 import { marcarTitulo } from '../lib/transicao'
+import { useAcesso } from '../lib/acesso'
 
 export default function Inicio() {
   const primeiroNome = getSession()?.nome?.split(' ')[0]
@@ -41,6 +42,28 @@ function Rotulo({ children, dica }: { children: string; dica: string }) {
 }
 
 function ConsultaPlaca() {
+  if (!useAcesso().podePlaca) return <PlacaForaDoPlano />
+  return <CampoPlaca />
+}
+
+/** Mesmo lugar e altura do campo, para o painel não mudar de forma: só o convite para o Full. */
+function PlacaForaDoPlano() {
+  return (
+    <div className="min-w-0 p-5 sm:p-6">
+      <Rotulo dica="Plano Full">Consulta por placa</Rotulo>
+      <Link
+        to="/app/conta?aba=plano"
+        className="mt-3 flex h-16 items-center gap-3 rounded-xl border border-dashed seam-strong bg-well px-4 text-[14px] text-ink-3 transition-colors hover:border-trace/50 hover:text-ink-1"
+      >
+        <Lock size={16} className="flex-none text-ink-4" />
+        <span className="min-w-0 flex-1">A busca pela placa faz parte do plano Full.</span>
+        <span className="flex-none text-trace">Ver planos</span>
+      </Link>
+    </div>
+  )
+}
+
+function CampoPlaca() {
   const nav = useNavigate()
   const [placa, setPlaca] = useState('')
   const ok = placaValida(placa)

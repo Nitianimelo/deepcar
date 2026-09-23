@@ -3,6 +3,7 @@
 import { consultarPlaca, VARIAVEIS_PLACA } from '../../server/placa/index.mjs'
 import { ambienteCom } from '../_lib/segredos.js'
 import { exigir } from '../_lib/sessao.js'
+import { acessoDe } from '../_lib/planos.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -13,7 +14,13 @@ export default async function handler(req, res) {
   }
   // consulta de placa custa cota do provedor: só para quem está logado e com acesso
   // em dia — free com os minutos vencidos recebe 402 e a tela pede a assinatura
-  if (!(await exigir(req, res, { acesso: true }))) return
+  const u = await exigir(req, res, { acesso: true })
+  if (!u) return
+  // busca pela placa e item do plano (Full na pagina de vendas): o Pro recebe 403 e a tela oferece o upgrade
+  if (!(await acessoDe(u)).placa) {
+    res.setHeader('Cache-Control', 'no-store')
+    return res.status(403).json({ erro: 'A busca pela placa não faz parte do seu plano.', semPlaca: true })
+  }
   try {
     const env = await ambienteCom(...VARIAVEIS_PLACA)
     const veiculo = await consultarPlaca(req.query.placa, env)

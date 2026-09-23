@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, Check, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
 import { linkCheckout, linkSuporte, MINUTOS_FREE, mmss, restanteFree, rotuloPlano, temWhatsappSuporte } from '../lib/plano'
@@ -27,7 +27,9 @@ const PREFS = [
 export default function Conta() {
   const nav = useNavigate()
   const s = getSession()
-  const [aba, setAba] = useState<'conta' | 'plano'>('conta')
+  const [params] = useSearchParams()
+  // ?aba=plano: link do cadeado dos sistemas fora do plano
+  const [aba, setAba] = useState<'conta' | 'plano'>(params.get('aba') === 'plano' ? 'plano' : 'conta')
   const restante = restanteFree(s)
   if (!s) return null
 
@@ -84,6 +86,9 @@ export default function Conta() {
           <h2 className="flex items-center gap-2 font-medium"><ShieldCheck size={17} className="text-ok" /> Acesso</h2>
           <dl className="mt-3 space-y-2 text-[14px]">
             <Row k="Sessão" v="Este dispositivo" />
+            {s.acesso && s.papel !== 'admin' && (
+              <Row k="Aparelhos" v={s.acesso.dispositivos ? `até ${s.acesso.dispositivos} ao mesmo tempo` : 'sem limite'} />
+            )}
             <Row k="Autenticação" v="E-mail e senha" />
           </dl>
         </section>

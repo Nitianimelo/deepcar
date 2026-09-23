@@ -21,6 +21,15 @@ export type Assinatura = {
   validoAte?: string | null
 }
 
+/** O que o plano libera, como o servidor calculou (api/_lib/planos.js). */
+export type Acesso = {
+  /** chaves das seções do menu (src/data/nav.ts) */
+  secoes: string[]
+  placa: boolean
+  /** aparelhos conectados ao mesmo tempo; nulo = sem limite */
+  dispositivos: number | null
+}
+
 export type Session = {
   nome: string
   email: string
@@ -32,6 +41,8 @@ export type Session = {
   freeExpiraEm: string | null
   /** Nulo = nunca assinou (ou plano dado à mão antes da integração de pagamento). */
   assinatura?: Assinatura | null
+  /** Ausente em perfis guardados antes do controle por plano: a tela libera e o servidor corrige ao conferir. */
+  acesso?: Acesso
 }
 
 function guardarPerfil(s: Session | null) {
@@ -99,15 +110,21 @@ export async function logout() {
   guardarPerfil(null)
 }
 
-/** Confere a sessão no servidor. Devolve o perfil ou null. */
+/**
+ * Confere a sessão no servidor. Devolve o perfil, ou null quando o servidor diz que não há sessão (401).
+ * Falha de rede ou do servidor não derruba ninguém: fica o retrato local até a próxima conferência.
+ */
 export async function conferirSessao(): Promise<Session | null> {
   try {
     const s = (await json('/api/sessao')) as Session
     guardarPerfil(s)
     return s
-  } catch {
-    guardarPerfil(null)
-    return null
+  } catch (err) {
+    if ((err as ErroApi).status === 401) {
+      guardarPerfil(null)
+      return null
+    }
+    return getSession()
   }
 }
 

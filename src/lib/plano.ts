@@ -81,6 +81,9 @@ export function mmss(ms: number) {
 export function useLimiteFree(inicial: Session | null) {
   const [sessao, setSessao] = useState<Session | null>(inicial)
   const [agora, setAgora] = useState(() => Date.now())
+  // a sessão caiu no servidor (outro aparelho passou do limite do plano, admin desconectou, senha trocada)
+  const [perdida, setPerdida] = useState(false)
+  const aplicar = (s: Session | null) => (s ? setSessao(s) : setPerdida(true))
 
   useEffect(() => { setSessao(inicial) }, [inicial])
 
@@ -94,22 +97,21 @@ export function useLimiteFree(inicial: Session | null) {
     return () => clearInterval(t)
   }, [temRelogio])
 
-  // enquanto for free, pergunta ao servidor de minuto em minuto quem é o dono da conta
+  // pergunta ao servidor quem é o dono da conta: de minuto em minuto no free, a cada 5 no pago
+  // (troca de plano, sistema liberado no /admin, sessão derrubada pelo limite de aparelhos)
   const ehFree = sessao?.plano === 'free'
   useEffect(() => {
-    if (!ehFree) return
     let vivo = true
     const t = setInterval(() => {
-      void conferirSessao().then((s) => { if (vivo && s) setSessao(s) })
-    }, 60_000)
+      void conferirSessao().then((s) => { if (vivo) aplicar(s) })
+    }, ehFree ? 60_000 : 300_000)
     return () => { vivo = false; clearInterval(t) }
   }, [ehFree])
 
-  // voltou da aba do checkout: confere na hora, em vez de esperar o minuto
+  // voltou da aba do checkout (ou de outro app): confere na hora, em vez de esperar o intervalo
   useEffect(() => {
-    if (!ehFree) return
     const olhar = () => {
-      if (document.visibilityState === 'visible') void conferirSessao().then((s) => s && setSessao(s))
+      if (document.visibilityState === 'visible') void conferirSessao().then(aplicar)
     }
     window.addEventListener('visibilitychange', olhar)
     window.addEventListener('focus', olhar)
@@ -117,7 +119,7 @@ export function useLimiteFree(inicial: Session | null) {
       window.removeEventListener('visibilitychange', olhar)
       window.removeEventListener('focus', olhar)
     }
-  }, [ehFree])
+  }, [])
 
   // ao bater zero, confere uma vez: pode ter virado pro há dez segundos
   useEffect(() => {
@@ -127,5 +129,5 @@ export function useLimiteFree(inicial: Session | null) {
     return () => { vivo = false }
   }, [bloqueado])
 
-  return { restante, bloqueado, sessao }
+  return { restante, bloqueado, sessao, perdida }
 }
