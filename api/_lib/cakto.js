@@ -98,13 +98,20 @@ export function acaoDoEvento(evento) {
   return null
 }
 
-/** Qual plano o produto comprado libera. Ids ficam no cofre para mudar sem deploy. */
+/** Produto na Cakto → plano e ciclo. O mensal e assinatura recorrente; o anual e compra unica de 12 meses. */
+const PRODUTOS = [
+  ['CAKTO_PRODUTO_PRO', 'pro', 'mensal'],
+  ['CAKTO_PRODUTO_FULL', 'full', 'mensal'],
+  ['CAKTO_PRODUTO_PRO_ANUAL', 'pro', 'anual'],
+  ['CAKTO_PRODUTO_FULL_ANUAL', 'full', 'anual'],
+]
+
+/** Qual plano (e por quanto tempo) o produto comprado libera. Ids ficam no cofre para mudar sem deploy. */
 export async function planoDoProduto(produtoId) {
   if (!produtoId) return null
-  const [pro, full] = await Promise.all([segredo('CAKTO_PRODUTO_PRO'), segredo('CAKTO_PRODUTO_FULL')])
-  if (full && produtoId === full) return 'full'
-  if (pro && produtoId === pro) return 'pro'
-  return null
+  const ids = await Promise.all(PRODUTOS.map(([chave]) => segredo(chave)))
+  const i = ids.findIndex((id) => id && id === produtoId)
+  return i < 0 ? null : { plano: PRODUTOS[i][1], ciclo: PRODUTOS[i][2] }
 }
 
 const texto = (v) => {

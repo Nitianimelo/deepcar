@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const [pendentes, eventos] = await Promise.all([
-        sql`select p.id, p.email, p.nome, p.whatsapp, p.plano, p.valor, p.criado_em, p.assinatura_id, p.pedido_id
+        sql`select p.id, p.email, p.nome, p.whatsapp, p.plano, p.ciclo, p.valor, p.criado_em, p.assinatura_id, p.pedido_id
               from assinaturas_pendentes p
              where p.status = 'pendente'
              order by p.criado_em desc

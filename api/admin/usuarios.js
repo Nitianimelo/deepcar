@@ -30,6 +30,7 @@ export default async function handler(req, res) {
         select u.id, u.email, u.nome, u.oficina, u.plano, u.papel, u.ativo, u.criado_em, u.visto_em,
                u.whatsapp, u.free_expira_em, u.assinatura_status, u.assinatura_plano,
                u.assinatura_renova_em, u.assinatura_em_atraso, u.assinatura_origem,
+               u.assinatura_ciclo, u.plano_expira_em,
                (select count(*)::int from sessoes s where s.usuario_id = u.id and s.expira_em > now()) as sessoes
           from usuarios u
          where ${q} = '%%' or u.email ilike ${q} or u.nome ilike ${q} or u.oficina ilike ${q}
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
                 ${PAPEIS.includes(d.papel) ? d.papel : 'usuario'},
                 ${normalizarWhatsapp(d.whatsapp)})
         returning id, email, nome, oficina, plano, papel, ativo, criado_em, visto_em, whatsapp, free_expira_em,
-                  assinatura_status, assinatura_plano, assinatura_renova_em, assinatura_em_atraso, assinatura_origem`)
+                  assinatura_status, assinatura_plano, assinatura_renova_em, assinatura_em_atraso, assinatura_origem, assinatura_ciclo, plano_expira_em`)
       return res.status(201).json(novo)
     }
 
@@ -97,7 +98,7 @@ export default async function handler(req, res) {
           assinatura_atualizada_em = case when ${manual}::boolean then now() else assinatura_atualizada_em end
         where id = ${id}
         returning id, email, nome, oficina, plano, papel, ativo, criado_em, visto_em, whatsapp, free_expira_em,
-                  assinatura_status, assinatura_plano, assinatura_renova_em, assinatura_em_atraso, assinatura_origem`)
+                  assinatura_status, assinatura_plano, assinatura_renova_em, assinatura_em_atraso, assinatura_origem, assinatura_ciclo, plano_expira_em`)
       if (!atualizado) return res.status(404).json({ erro: 'Usuário não encontrado.' })
       // desativado ou com senha nova: as sessões abertas caem
       if (d.ativo === false || d.senha) await sql`delete from sessoes where usuario_id = ${id}`

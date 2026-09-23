@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, Check, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
 import { linkCheckout, linkSuporte, MINUTOS_FREE, mmss, restanteFree, rotuloPlano, temWhatsappSuporte } from '../lib/plano'
-import { PLANOS_VENDA } from '../data/planos'
+import { economiaAnual, PLANOS_VENDA, precoDoCiclo, totalAnual, type Ciclo } from '../data/planos'
+import { SeletorCiclo } from '../components/SeletorCiclo'
 
 /** Como o estado da assinatura é lido na tela. */
 const ESTADOS: Record<string, string> = {
@@ -14,6 +15,7 @@ const ESTADOS: Record<string, string> = {
   reembolsada: 'reembolsada',
   chargeback: 'contestada',
   manual: 'liberada pelo suporte',
+  expirada: 'anual vencido',
 }
 
 // Preferências reais, guardadas neste navegador (as mesmas chaves que o visualizador e o layout leem).
@@ -111,6 +113,10 @@ export default function Conta() {
 function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
   const pago = s.plano === 'pro' || s.plano === 'full'
   const mensagem = `Olá! Sou ${s.nome} (${s.email}) e quero falar sobre a assinatura do Deepcar.`
+  const cicloAtual: Ciclo = s.assinatura?.ciclo === 'anual' ? 'anual' : 'mensal'
+  // quem já paga abre no ciclo que tem; quem ainda não paga abre no anual, que é o mais barato
+  const [ciclo, setCiclo] = useState<Ciclo>(pago ? cicloAtual : 'anual')
+  const validoAte = s.assinatura?.validoAte ? new Date(s.assinatura.validoAte).toLocaleDateString('pt-BR') : null
 
   return (
     <div className="mt-6">
@@ -119,12 +125,17 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Plano atual</p>
-            <p className="mt-1 text-[22px] font-semibold tracking-tight">{rotuloPlano(s.plano)}</p>
+            <p className="mt-1 text-[22px] font-semibold tracking-tight">
+              {rotuloPlano(s.plano)}
+              {pago && s.assinatura?.ciclo && <span className="ml-2 text-[15px] font-normal text-ink-3">{s.assinatura.ciclo}</span>}
+            </p>
           </div>
           {s.assinatura && (
-            <span className={`code text-[12px] ${s.assinatura.emAtraso ? 'text-warn' : 'text-ok'}`}>
+            <span className={`code text-[12px] ${s.assinatura.emAtraso ? 'text-warn' : s.assinatura.status === 'expirada' ? 'text-fault' : 'text-ok'}`}>
               {ESTADOS[s.assinatura.status] ?? s.assinatura.status}
-              {s.assinatura.renovaEm && ` · renova ${new Date(s.assinatura.renovaEm).toLocaleDateString('pt-BR')}`}
+              {pago && cicloAtual === 'anual' && validoAte
+                ? ` · válido até ${validoAte}`
+                : s.assinatura.renovaEm && ` · renova ${new Date(s.assinatura.renovaEm).toLocaleDateString('pt-BR')}`}
             </span>
           )}
         </div>
@@ -145,9 +156,16 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
       </section>
 
       {/* planos */}
+      <div className="mt-6 flex justify-center">
+        <SeletorCiclo ciclo={ciclo} onChange={setCiclo} />
+      </div>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         {PLANOS_VENDA.map((p) => {
-          const atual = s.plano === p.id
+          // quem tem o anual já pagou o ano: o plano dele fica "ativo" nas duas abas, sem convite a pagar a mensal
+          const atual = s.plano === p.id && (cicloAtual === ciclo || cicloAtual === 'anual')
+          const anual = ciclo === 'anual'
+          // mesmo plano, outro ciclo: o botão vira "passar para anual/mensal"
+          const mesmoPlano = s.plano === p.id
           return (
             <section key={p.id} className={`flex flex-col rounded-xl border p-5 ${atual ? 'border-ok/40 bg-bench-1' : 'seam bg-bench-2'}`}>
               <div className="flex items-baseline justify-between gap-3">
@@ -156,9 +174,16 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
               </div>
               <p className="mt-1 text-[13.5px] text-ink-3">{p.para}</p>
               <p className="mt-4 flex items-baseline gap-1.5">
+                {anual && <span className="text-[13px] text-ink-3">12x</span>}
                 <span className="text-[13px] text-ink-4">R$</span>
-                <span className="text-[30px] font-semibold leading-none tracking-[-0.02em]" style={{ fontVariantNumeric: 'tabular-nums' }}>{p.preco}</span>
-                <span className="text-[13px] text-ink-4">/mês</span>
+                <span className="text-[30px] font-semibold leading-none tracking-[-0.02em]" style={{ fontVariantNumeric: 'tabular-nums' }}>{precoDoCiclo(p, ciclo)}</span>
+                {!anual && <span className="text-[13px] text-ink-4">/mês</span>}
+                {anual && <s className="code ml-1 text-[12px] text-ink-4">R$ {p.preco}/mês</s>}
+              </p>
+              <p className="mt-1.5 text-[12.5px] text-ink-3">
+                {anual
+                  ? <>R$ {totalAnual(p)} por 12 meses · <span className="whitespace-nowrap text-ok">economize R$ {economiaAnual(p)}</span></>
+                  : 'Cobrança mensal, cancele quando quiser.'}
               </p>
               <ul className="mb-6 mt-4 space-y-1.5 text-[13.5px]">
                 {p.itens.map((i) => (
@@ -173,12 +198,17 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
                 </span>
               ) : (
                 <a
-                  href={linkCheckout(p.id, s)}
+                  href={linkCheckout(p.id, s, ciclo)}
                   target="_blank"
                   rel="noreferrer"
                   className={`mt-auto inline-flex h-11 items-center justify-center gap-2 rounded-[10px] text-[14px] font-medium ${p.destaque || !pago ? 'btn-primary !h-11' : 'btn-ghost !h-11'}`}
                 >
-                  {pago ? `Trocar para ${p.nome}` : `Assinar ${p.nome}`} <ArrowRight size={15} />
+                  {!pago
+                    ? `Assinar ${p.nome}${anual ? ' anual' : ''}`
+                    : mesmoPlano
+                      ? `Passar para ${anual ? 'anual' : 'mensal'}`
+                      : `Trocar para ${p.nome}${anual ? ' anual' : ''}`}{' '}
+                  <ArrowRight size={15} />
                 </a>
               )}
             </section>
@@ -186,9 +216,16 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
         })}
       </div>
 
+      {pago && cicloAtual === 'mensal' && ciclo === 'anual' && (
+        <p className="mt-4 rounded-lg border border-warn/25 bg-warn/5 px-3.5 py-2.5 text-[12.5px] text-ink-2">
+          Já paga o mensal? Depois que o anual for aprovado, fale com o suporte para cancelar a cobrança mensal: ela
+          não para sozinha.
+        </p>
+      )}
+
       <p className="mt-4 text-[12.5px] text-ink-4">
-        O pagamento é processado pela Cakto (cartão ou PIX). O acesso libera assim que o pagamento é aprovado, sem
-        precisar recarregar.{' '}
+        O pagamento é processado pela Cakto. Mensal no cartão ou PIX; anual em até 12x no cartão ou à vista no PIX,
+        com 12 meses de acesso. O acesso libera assim que o pagamento é aprovado, sem precisar recarregar.{' '}
         <a href={linkSuporte(mensagem, 'Deepcar · assinatura')} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-trace hover:text-trace-hi">
           <MessageCircle size={13} /> {temWhatsappSuporte ? 'Falar no WhatsApp' : 'Falar com o suporte'}
         </a>{' '}

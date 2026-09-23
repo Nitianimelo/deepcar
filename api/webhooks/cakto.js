@@ -82,22 +82,25 @@ export default async function handler(req, res) {
     }
 
     if (acao === 'ativar') {
-      const plano = await planoDoProduto(d.produtoId)
-      if (!plano) {
+      const produto = await planoDoProduto(d.produtoId)
+      if (!produto) {
         // nunca adivinhar plano por preco: fica visivel no /admin para resolver a mao
         console.error('[cakto] produto desconhecido:', d.produtoId)
         await concluir(id, 'erro', { detalhe: `produto desconhecido: ${d.produtoId}`, plano: null })
         return res.status(200).json({ ok: true, pendente: true })
       }
-      const r = await ativarPlano(plano, { ...d, eventoId: id })
+      const { plano, ciclo } = produto
+      const r = await ativarPlano(plano, { ...d, ciclo, eventoId: id })
       await concluir(id, r.estado === 'aplicado' ? 'aplicado' : r.estado === 'pendente' ? 'pendente' : 'ignorado', {
-        plano, usuarioId: r.usuarioId, detalhe: r.detalhe ?? null,
+        plano, usuarioId: r.usuarioId, detalhe: r.detalhe ?? (ciclo === 'anual' ? 'anual' : null),
       })
       return res.status(200).json({ ok: true, estado: r.estado })
     }
 
     if (acao === 'derrubar') {
-      const r = await derrubarParaFree(MOTIVOS[d.evento] ?? 'cancelada', d)
+      // o ciclo diz o que caiu: reembolso do anual nao derruba uma mensal ativa, e vice-versa
+      const produto = await planoDoProduto(d.produtoId)
+      const r = await derrubarParaFree(MOTIVOS[d.evento] ?? 'cancelada', { ...d, ciclo: produto?.ciclo ?? null })
       await concluir(id, r.estado === 'aplicado' ? 'aplicado' : 'ignorado', {
         usuarioId: r.usuarioId, detalhe: r.detalhe ?? null,
       })

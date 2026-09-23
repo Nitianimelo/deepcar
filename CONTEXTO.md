@@ -9,11 +9,12 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ---
 
-## Estado atual (atualizado em 2026-09-22)
+## Estado atual (atualizado em 2026-09-23)
 
 - **Produção:** Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub `Nitianimelo/deepcar`.
 - **Funcionando em produção:**
-  - Landing (`/`) com mockups de celular/tablet, selos das lojas e dois planos com preço: Pro (R$ 47,90/mês) e Full (R$ 59,90/mês).
+  - Landing (`/`) com mockups de celular/tablet, selos das lojas e dois planos com chave **Mensal/Anual** (abre no anual):
+    Pro (R$ 47,90/mês ou 12x R$ 29,90) e Full (R$ 59,90/mês ou 12x R$ 37,90).
     Dobras: hero → cobertura (60 montadoras / 98% da frota + faixa de logos) → busca por placa (`#placa`) → planos → rodapé. Textos comerciais fixos:
     subtítulo "15 mil modelos de veículos" e números "60 montadoras" / "98% da frota nacional".
     Faixa de montadoras da landing com os logos nas cores das marcas, sobre cartões claros.
@@ -21,8 +22,9 @@ Regras de trabalho estão em `AGENTE.md`.
     barra de progresso no cabeçalho e cards de plano com holofote, borda viva no Full e preço contando.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
   - Plano **free = 10 minutos de acesso**, contados a partir do primeiro acesso; depois bloqueia a tela e a API responde 402.
-  - **Pagamento pela Cakto**: produtos Pro (R$ 47,90) e Full (R$ 59,90), webhook em `/api/webhooks/cakto` que troca o
-    plano sozinho, pendências para quem paga sem conta e aba "Assinaturas" no `/admin`.
+  - **Pagamento pela Cakto**: produtos Pro (R$ 47,90) e Full (R$ 59,90) mensais, e **Pro Anual (R$ 358,80) e Full Anual
+    (R$ 454,80)** como compra única de 12 meses em até 12x; webhook em `/api/webhooks/cakto` que troca o plano sozinho,
+    pendências para quem paga sem conta e aba "Assinaturas" no `/admin`. O anual vence sozinho (`vencerAnual`).
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link) e cofre de chaves.
   - Tela inicial `/app`: cards "Consultar por placa" e "Buscar esquema" e card "Últimas consultas" (localStorage, por conta).
     Botão "Início" no menu lateral (e o logo leva para lá).
@@ -34,7 +36,7 @@ Regras de trabalho estão em `AGENTE.md`.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
-- **Banco (Neon):** migrações `001_inicial` e `002_whatsapp_e_teste_free`.
+- **Banco (Neon):** migrações `001_inicial` a `004_plano_anual` aplicadas.
 - **Último deploy verificado:** commit `b100d52`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
@@ -48,6 +50,11 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
 - [ ] A foto da dobra `#placa` é gerada por IA: a tela do celular tem nomes de montadora com erro de grafia
       ("Chewolet", "Citrofo", "Alfa Roemo"). No tamanho exibido não se lê, mas vale trocar por foto real quando houver.
+- [ ] **Anual "sem juros" precisa ser ligado no painel da Cakto** (Pro Anual e Full Anual → parcelamento sem juros /
+      produtor absorve os juros): a API pública ignora `absorbInstallmentInterest`. Enquanto estiver desligado, o cliente
+      paga juros no parcelado e o "12x R$ 29,90" da landing não bate com o checkout.
+- [ ] Boleto não está habilitado na conta da Cakto (a API recusa `boleto` nos produtos). Habilitar no painel, se quiser.
+- [ ] Quem passa do mensal para o anual precisa cancelar a mensal pelo suporte (a tela avisa); não há cancelamento automático.
 - [ ] Fazer uma compra real de validação (pode estornar em seguida) para ver o caminho inteiro com produto verdadeiro:
       o evento de teste da Cakto usa um produto fictício e por isso nunca chega a liberar plano.
 - [ ] Bloqueio de sistemas por plano (Pro sem diesel nem câmbio) e limite de dispositivos (2/4): fora do escopo desta
@@ -68,6 +75,50 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-23 · Planos anuais (Pro e Full em 12x) com chave Mensal/Anual
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** acrescentar Pro e Full anuais — Pro 12x R$ 29,90 e Full 12x R$ 37,90 — com uma chave que troca os preços
+  entre mensal e anual na landing e no painel, e deixar cadastrado e funcionando na Cakto (1 a 12x, Pix etc.).
+- **Na Cakto (produção):** dois produtos novos, **pagamento único** (a credencial não tem escopo de ofertas, então não dá
+  para criar assinatura com recorrência anual pela API; e compra única é o que permite parcelar em 12x):
+  - "Plataforma Deepcar - Plano Pro Anual" `9ba85bad-6609-4237-bb09-518fbea7f01d`, R$ 358,80, checkout
+    `https://pay.cakto.com.br/6ccodaw`
+  - "Plataforma Deepcar - Plano Full Anual" `f9302199-9ff2-4b8c-a4d2-ac27bae48983`, R$ 454,80, checkout
+    `https://pay.cakto.com.br/uigfpmf`
+  - Parcelamento até 12x (confirmado no checkout), cartão, Pix, PicPay, Apple Pay, Google Pay e 3DS. **Boleto recusado**
+    pela API (não habilitado na conta). **"Sem juros" não pega pela API** (ver Pendências). Garantia padrão 7 dias.
+  - Webhook 69384 agora cobre os 4 produtos (mesmos 12 eventos; `secret` conferido igual antes e depois).
+  - Um produto duplicado de teste foi criado e apagado (`80192dfd…`, status `deleted`).
+- **Banco:** `db/004_plano_anual.sql` **aplicado no Neon** — `usuarios.assinatura_ciclo` (`mensal|anual`),
+  `usuarios.plano_expira_em`, `assinaturas_pendentes.ciclo`; contas pagas antigas marcadas como `mensal`.
+- **Cofre:** `CAKTO_PRODUTO_PRO_ANUAL` e `CAKTO_PRODUTO_FULL_ANUAL` gravados (e os dois mensais conferidos).
+- **Vercel:** `VITE_CAKTO_CHECKOUT_PRO_ANUAL` e `VITE_CAKTO_CHECKOUT_FULL_ANUAL` em Production e Preview.
+- **API:**
+  - `_lib/cakto.js`: `planoDoProduto()` devolve `{ plano, ciclo }` (tabela `PRODUTOS` com as 4 chaves do cofre).
+  - `_lib/assinatura.js`: `aplicarNaConta()` grava o ciclo; no anual soma 1 ano a partir do fim do anual que ainda vale
+    (renovar antes não perde dias) ou da data do pagamento (pendência consumida depois); a mesma compra reentregue não
+    soma outro ano. `derrubarParaFree()` respeita quem tem os dois ciclos: cancelar a mensal mantém o anual no prazo, e
+    reembolso do anual mantém uma mensal ativa. Pendências guardam o ciclo.
+  - `_lib/sessao.js`: `vencerAnual()` — anual vencido volta a `free` (`assinatura_status = 'expirada'`, sem teste novo)
+    na sessão conferida e no login; admin e plano manual não vencem. `publico()` expõe `assinatura.ciclo` e `validoAte`.
+  - `admin/usuarios.js` e `admin/assinaturas.js` devolvem ciclo e validade.
+- **Front:**
+  - `src/data/planos.ts`: `precoAnual` por plano, `precoDoCiclo`, `totalAnual`, `economiaAnual`, `descontoAnual` (37%).
+  - `src/components/SeletorCiclo.tsx` (novo): chave Mensal/Anual (radiogroup, setas do teclado, selo −37%).
+  - Landing: chave acima dos cartões (abre no **anual**); `CardPlano` mostra "12x R$ 29,90", a mensalidade cheia riscada,
+    o total por ano e quanto economiza; o preço anima do valor atual ao novo quando a chave troca.
+  - Conta → Plano: chave, preço por ciclo, "Assinar Pro anual" / "Passar para anual" / "Trocar para Full anual",
+    "válido até dd/mm/aaaa" para o anual e aviso para cancelar a mensal ao passar para o anual.
+  - Tela de fim do teste (`LimiteFree`): chave e botões por ciclo; quando o anual vence, o título vira "Seu plano anual terminou."
+  - `/admin`: pastilha "· anual · até dd/mm/aaaa" e estado "anual vencido"; pendências marcam "anual".
+- **Verificação:** build ok; oxlint 13 avisos (sem novos). Webhook testado com `vercel dev` contra o banco de produção e
+  conta descartável, 11 cenários conferindo o banco a cada passo: anual sem conta → pendente com ciclo; cadastro consome →
+  pro/anual +1 ano; reentrega do mesmo pedido não soma; nova compra anual soma (+2 anos); mensal por cima e cancelada →
+  anual segura; vencimento → free/expirada; recompra após vencer → +1 ano de hoje; reembolso do anual → free; mensal
+  aprovada/cancelada segue igual. Dados de teste apagados. Capturas (WebKit) da landing em 1280 e 390 px nas duas
+  posições da chave, da Conta com anual ativo e da tela de anual vencido.
+- **Pendências:** ligar "sem juros" nos dois produtos anuais no painel da Cakto; boleto; compra real de validação do anual.
 
 ### 2026-09-22 · Tela cheia do esquema corrigida, navegação por componente e movimento na plataforma
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

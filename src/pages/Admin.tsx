@@ -27,6 +27,8 @@ type Usuario = {
   assinatura_renova_em?: string | null
   assinatura_em_atraso?: boolean
   assinatura_origem?: string | null
+  assinatura_ciclo?: 'mensal' | 'anual' | null
+  plano_expira_em?: string | null
 }
 
 type Pendente = {
@@ -39,6 +41,7 @@ type Pendente = {
   criado_em: string
   assinatura_id: string | null
   pedido_id: string | null
+  ciclo?: 'mensal' | 'anual' | null
 }
 
 type Evento = {
@@ -430,6 +433,7 @@ const ESTADOS: Record<string, { rotulo: string; cor: string }> = {
   reembolsada: { rotulo: 'reembolsada', cor: 'text-fault' },
   chargeback: { rotulo: 'contestada', cor: 'text-fault' },
   manual: { rotulo: 'plano manual', cor: 'text-ink-4' },
+  expirada: { rotulo: 'anual vencido', cor: 'text-fault' },
 }
 
 function EstadoAssinatura({ u }: { u: Usuario }) {
@@ -437,7 +441,10 @@ function EstadoAssinatura({ u }: { u: Usuario }) {
   return (
     <span className={`mt-1.5 block text-[11.5px] ${e.cor}`}>
       {e.rotulo}
-      {u.assinatura_renova_em && ` · renova ${data(u.assinatura_renova_em)}`}
+      {u.assinatura_ciclo === 'anual' && u.assinatura_status !== 'expirada' && ' · anual'}
+      {u.assinatura_ciclo === 'anual' && u.plano_expira_em
+        ? ` · até ${data(u.plano_expira_em)}`
+        : u.assinatura_renova_em && ` · renova ${data(u.assinatura_renova_em)}`}
     </span>
   )
 }
@@ -525,7 +532,7 @@ function AbaAssinaturas() {
                   <span className="block font-medium text-ink-1">{p.nome ?? '—'}</span>
                   <span className="code block text-[12px] text-ink-4">{p.email}</span>
                 </td>
-                <td className="px-3 py-3">{rotuloPlano(p.plano)}</td>
+                <td className="px-3 py-3">{rotuloPlano(p.plano)}{p.ciclo === 'anual' && ' anual'}</td>
                 <td className="code px-3 py-3 text-[13px] text-ink-3">{p.valor ? `R$ ${Number(p.valor).toFixed(2).replace('.', ',')}` : '—'}</td>
                 <td className="code px-3 py-3 text-[12px] text-ink-3">{data(p.criado_em)}</td>
                 <td className="px-3 py-3 text-right">

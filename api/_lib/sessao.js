@@ -28,6 +28,24 @@ export async function abrirJanelaFree(u) {
   return { ...u, free_expira_em: ate }
 }
 
+/**
+ * Compra anual passou da data: volta para o free na hora, sem esperar evento (a Cakto nao avisa
+ * o fim de uma compra unica). Plano dado a mao pelo /admin e administrador nao vencem.
+ * Roda a cada sessao conferida e no login, entao ninguem fica pago um minuto alem do prazo.
+ */
+export async function vencerAnual(u) {
+  if (!u || !PAGOS.has(u.plano) || u.assinatura_ciclo !== 'anual' || !u.plano_expira_em) return u
+  if (new Date(u.plano_expira_em) > new Date() || u.papel === 'admin') return u
+  if ((u.assinatura_origem ?? 'cakto') !== 'cakto') return u
+  const agora = new Date()
+  await sql`
+    update usuarios set plano = 'free', assinatura_status = 'expirada', free_expira_em = ${agora},
+           assinatura_atualizada_em = now()
+     where id = ${u.id} and assinatura_ciclo = 'anual' and plano_expira_em <= now()
+       and papel <> 'admin' and coalesce(assinatura_origem, 'cakto') = 'cakto'`
+  return { ...u, plano: 'free', assinatura_status: 'expirada', free_expira_em: agora }
+}
+
 /** Teste gratuito ja vencido? Plano pago nunca vence. */
 export const freeAcabou = (u) =>
   !PAGOS.has(u.plano) && !!u.free_expira_em && new Date(u.free_expira_em) <= new Date()
@@ -88,11 +106,12 @@ export async function usuarioDaSessao(req) {
   if (!token) return null
   const linha = await um(sql`
     select u.id, u.email, u.nome, u.oficina, u.plano, u.papel, u.ativo, u.whatsapp, u.free_expira_em,
-           u.assinatura_status, u.assinatura_plano, u.assinatura_renova_em, u.assinatura_em_atraso
+           u.assinatura_status, u.assinatura_plano, u.assinatura_renova_em, u.assinatura_em_atraso,
+           u.assinatura_ciclo, u.plano_expira_em, u.assinatura_origem
       from sessoes s join usuarios u on u.id = s.usuario_id
      where s.token = ${digerir(token)} and s.expira_em > now()`)
   if (!linha || !linha.ativo) return null
-  return linha
+  return vencerAnual(linha)
 }
 
 export async function encerrarSessao(req) {
@@ -142,6 +161,9 @@ export const publico = (u) => ({
         plano: u.assinatura_plano ?? null,
         renovaEm: u.assinatura_renova_em ? new Date(u.assinatura_renova_em).toISOString() : null,
         emAtraso: !!u.assinatura_em_atraso,
+        ciclo: u.assinatura_ciclo ?? null,
+        // fim do anual (ISO); nulo no mensal, que vale ate o evento de cancelamento
+        validoAte: u.plano_expira_em ? new Date(u.plano_expira_em).toISOString() : null,
       }
     : null,
 })

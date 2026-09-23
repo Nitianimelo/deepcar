@@ -4,32 +4,41 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Check } from 'lucide-react'
-import type { PlanoVenda } from '../../data/planos'
+import { economiaAnual, precoDoCiclo, totalAnual, type Ciclo, type PlanoVenda } from '../../data/planos'
 
-/** Conta de 0 até o preço ("47,90") em ~900 ms, com desaceleração no fim. Sem animação quando o sistema pede. */
+/**
+ * Conta até o preço ("47,90") em ~900 ms, com desaceleração no fim: de 0 quando o cartão aparece,
+ * e do valor atual quando a chave Mensal/Anual troca. Sem animação quando o sistema pede.
+ */
 function usePrecoContando(preco: string, ativo: boolean) {
   const alvo = Number(preco.replace(',', '.'))
   const [parado] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const [valor, setValor] = useState(parado ? alvo : 0)
+  const atual = useRef(valor)
   useEffect(() => {
     if (!ativo || parado) return
+    const de = atual.current
     let raf = 0
     const t0 = performance.now()
     const passo = (agora: number) => {
-      const p = Math.min(1, (agora - t0) / 900)
-      setValor(alvo * (1 - Math.pow(1 - p, 3)))
+      const p = Math.min(1, (agora - t0) / (de ? 500 : 900))
+      atual.current = de + (alvo - de) * (1 - Math.pow(1 - p, 3))
+      setValor(atual.current)
       if (p < 1) raf = requestAnimationFrame(passo)
     }
     raf = requestAnimationFrame(passo)
     return () => cancelAnimationFrame(raf)
   }, [ativo, alvo, parado])
-  return valor.toFixed(2).replace('.', ',')
+  // sem animação o número acompanha a chave direto, sem passar por estado
+  return (parado ? alvo : valor).toFixed(2).replace('.', ',')
 }
 
-export function CardPlano({ p }: { p: PlanoVenda }) {
+export function CardPlano({ p, ciclo = 'mensal' }: { p: PlanoVenda; ciclo?: Ciclo }) {
   const ref = useRef<HTMLElement>(null)
   const [visto, setVisto] = useState(false)
-  const preco = usePrecoContando(p.preco, visto)
+  const alvo = precoDoCiclo(p, ciclo)
+  const preco = usePrecoContando(alvo, visto)
+  const anual = ciclo === 'anual'
 
   useEffect(() => {
     const el = ref.current
@@ -63,17 +72,34 @@ export function CardPlano({ p }: { p: PlanoVenda }) {
       </header>
       <p className="mt-1.5 min-h-[42px] max-w-[34ch] text-[14px] leading-relaxed text-ink-3">{p.para}</p>
 
-      <p className="mt-6 flex items-baseline gap-2 border-t seam-soft pt-6">
-        <span className="text-[14px] text-ink-4">R$</span>
-        <span
-          className="text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink-1"
-          style={{ fontVariantNumeric: 'tabular-nums' }}
-          aria-label={`${p.preco} reais`}
-        >
-          {preco}
-        </span>
-        <span className="text-[14px] text-ink-4">/mês</span>
-      </p>
+      <div className="mt-6 border-t seam-soft pt-6">
+        {/* no anual, a mensalidade cheia riscada mostra de onde vem o desconto */}
+        <p className={`code h-[18px] text-[13px] text-ink-4 transition-opacity duration-300 ${anual ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!anual}>
+          <s>R$ {p.preco}/mês</s>
+        </p>
+        <p className="mt-1 flex items-baseline gap-2">
+          {anual && <span className="text-[14px] text-ink-3">12x</span>}
+          <span className="text-[14px] text-ink-4">R$</span>
+          <span
+            className="text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink-1"
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+            aria-label={anual ? `12 parcelas de ${alvo} reais` : `${alvo} reais por mês`}
+          >
+            {preco}
+          </span>
+          {!anual && <span className="text-[14px] text-ink-4">/mês</span>}
+        </p>
+        <p className="mt-2.5 min-h-[20px] text-[13px] text-ink-3">
+          {anual ? (
+            <>
+              R$ {totalAnual(p)} por ano no cartão ou à vista no Pix ·{' '}
+              <span className="whitespace-nowrap text-ok">economize R$ {economiaAnual(p)}</span>
+            </>
+          ) : (
+            'Cobrança mensal, cancele quando quiser.'
+          )}
+        </p>
+      </div>
 
       {/* lista longa (Full) em duas colunas de texto: flui sem abrir buracos entre as linhas */}
       <ul className={`plano-itens mb-9 mt-7 border-t seam-soft pt-6 text-[14px] ${p.itens.length > 7 ? 'sm:columns-2 sm:gap-x-7' : ''}`}>

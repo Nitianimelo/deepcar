@@ -1,6 +1,6 @@
 // POST /api/login  { email, senha }  → sessão em cookie httpOnly.
 import { sql, um } from './_lib/db.js'
-import { abrirJanelaFree, conferirSenha, corpo, criarSessao, porCookie, publico } from './_lib/sessao.js'
+import { abrirJanelaFree, conferirSenha, corpo, criarSessao, porCookie, publico, vencerAnual } from './_lib/sessao.js'
 import { consumirPendente } from './_lib/assinatura.js'
 
 export const config = { runtime: 'nodejs' }
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       return res.status(401).json({ erro: 'E-mail ou senha incorretos.' })
     }
     // pagamento que chegou enquanto a pessoa estava fora (ou vinculado no /admin)
-    const comPlano = await consumirPendente(u)
+    const comPlano = await consumirPendente(await vencerAnual(u))
     // quem entra pela primeira vez no plano free começa a contar os minutos agora
     const comJanela = await abrirJanelaFree(comPlano)
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])

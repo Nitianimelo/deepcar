@@ -1,7 +1,7 @@
 // Regras do plano free vistas pelo navegador. O corte que vale é do servidor
 // (api/_lib/sessao.js): aqui é só o relógio na tela e o texto que a pessoa lê.
 import { useEffect, useState } from 'react'
-import { PLANOS_VENDA, type PlanoPago } from '../data/planos'
+import { PLANOS_VENDA, type Ciclo, type PlanoPago } from '../data/planos'
 import { conferirSessao, type Plano, type Session } from './auth'
 
 export const MINUTOS_FREE = 10
@@ -17,17 +17,23 @@ export const PRECOS: Record<PlanoPago, string> = Object.fromEntries(
   PLANOS_VENDA.map((p) => [p.id, p.preco]),
 ) as Record<PlanoPago, string>
 
-const CHECKOUT: Record<PlanoPago, string | undefined> = {
-  pro: import.meta.env.VITE_CAKTO_CHECKOUT_PRO as string | undefined,
-  full: import.meta.env.VITE_CAKTO_CHECKOUT_FULL as string | undefined,
+const CHECKOUT: Record<Ciclo, Record<PlanoPago, string | undefined>> = {
+  mensal: {
+    pro: import.meta.env.VITE_CAKTO_CHECKOUT_PRO as string | undefined,
+    full: import.meta.env.VITE_CAKTO_CHECKOUT_FULL as string | undefined,
+  },
+  anual: {
+    pro: import.meta.env.VITE_CAKTO_CHECKOUT_PRO_ANUAL as string | undefined,
+    full: import.meta.env.VITE_CAKTO_CHECKOUT_FULL_ANUAL as string | undefined,
+  },
 }
 
 /**
  * Checkout da Cakto com os dados da conta preenchidos — é o que faz o e-mail do pagamento
  * bater com o da conta e o plano entrar sozinho. Sem link configurado, cai nos planos da landing.
  */
-export function linkCheckout(plano: PlanoPago, s: Session | null) {
-  const base = CHECKOUT[plano]
+export function linkCheckout(plano: PlanoPago, s: Session | null, ciclo: Ciclo = 'mensal') {
+  const base = CHECKOUT[ciclo][plano]
   if (!base) return '/#planos'
   const q = new URLSearchParams()
   if (s?.email) q.set('email', s.email)

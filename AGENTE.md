@@ -40,8 +40,8 @@ Node na Vercel (`api/`) e Postgres no **Neon**.
 | Banco | Neon (Postgres), ligado à Vercel pela integração | schema em `db/*.sql`, **não** é aplicado pelo deploy |
 | Acervo (catálogo, esquemas, imagens) | Cloudflare R2 | **não** está no git nem na Vercel; front lê de `VITE_ACERVO_URL` |
 | Segredos de infraestrutura | Variáveis de ambiente da Vercel | `DATABASE_URL`, `SESSAO_SEGREDO`, `SEGREDOS_CHAVE` |
-| Chaves de API de terceiros | Cofre no banco (tabela `segredos`), editável em `/admin` | `FALCON_TOKEN`, `CAKTO_WEBHOOK_SECRET`, `CAKTO_PRODUTO_PRO/FULL` |
-| Pagamento | Cakto (produtos Pro e Full), webhook em `/api/webhooks/cakto` | troca o plano sozinha; MCP `cakto` no escopo de usuário |
+| Chaves de API de terceiros | Cofre no banco (tabela `segredos`), editável em `/admin` | `FALCON_TOKEN`, `CAKTO_WEBHOOK_SECRET`, `CAKTO_PRODUTO_PRO/FULL`, `CAKTO_PRODUTO_PRO_ANUAL/FULL_ANUAL` |
+| Pagamento | Cakto: Pro e Full **mensais** (assinatura) e **anuais** (compra única de 12 meses, até 12x); webhook em `/api/webhooks/cakto` | troca o plano sozinha; MCP `cakto` no escopo de usuário |
 
 Branch `main` não tem proteção: qualquer push publica. Por isso as regras da seção 0.
 
@@ -154,8 +154,11 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 
 ## 6. Banco de dados (Neon)
 
-- Tabelas: `usuarios` (plano `free|pro`, papel `usuario|admin`, `ativo`, `whatsapp`, `free_expira_em`),
-  `sessoes` (sha-256 do token), `segredos` (valores cifrados). Função `limpar_sessoes()`.
+- Tabelas: `usuarios` (plano `free|pro|full`, papel `usuario|admin`, `ativo`, `whatsapp`, `free_expira_em`, colunas
+  `assinatura_*`, `assinatura_ciclo` `mensal|anual` e `plano_expira_em` = fim do anual), `sessoes` (sha-256 do token),
+  `segredos` (valores cifrados), `cakto_eventos`, `assinaturas_pendentes` (com `ciclo`). Função `limpar_sessoes()`.
+- **Plano anual:** a Cakto não avisa o fim de uma compra única. Quem corta é `vencerAnual()` em `api/_lib/sessao.js`,
+  a cada sessão conferida e no login (plano volta a `free`, `assinatura_status = 'expirada'`).
 - **Toda mudança de schema = novo arquivo** `db/NNN_descricao.sql` (próximo número em sequência).
   **Nunca edite** um arquivo já aplicado em produção.
 - Migrações **idempotentes**: `if not exists`, `add column if not exists`, `create or replace`.

@@ -6,7 +6,8 @@ import { AppStoreBadge, PlayStoreBadge } from '../components/StoreBadges'
 import { CarBlueprint } from '../components/CarBlueprint'
 import { MarcasStrip } from '../components/MarcasStrip'
 import { formatarPlaca, placaValida } from '../lib/placa'
-import { PLANOS_VENDA } from '../data/planos'
+import { PLANOS_VENDA, type Ciclo } from '../data/planos'
+import { SeletorCiclo } from '../components/SeletorCiclo'
 import { GridBeam } from '../components/landing/GridBeam'
 import { Reveal } from '../components/landing/Reveal'
 import { CardPlano } from '../components/landing/CardPlano'
@@ -276,6 +277,7 @@ function Numero({ valor, rotulo }: { valor: string; rotulo: string }) {
 /* ── Planos ────────────────────────────────────────────────────────── */
 function Planos() {
   const planos = PLANOS_VENDA
+  const [ciclo, setCiclo] = useState<Ciclo>('anual')
   return (
     <section id="planos" className="relative overflow-hidden border-t seam">
       {/* fundo: a mesma grade de corrente do topo, mais fraca e concentrada atrás dos cartões */}
@@ -289,7 +291,7 @@ function Planos() {
       <div className="relative mx-auto max-w-[1200px] px-5 py-20 sm:px-8 lg:py-28">
         <Reveal className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Assinatura mensal</p>
+            <p className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Mensal ou anual</p>
             <h2 className="mt-4 text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">Planos</h2>
           </div>
           <p className="max-w-[46ch] text-[15px] text-ink-3">
@@ -297,11 +299,15 @@ function Planos() {
           </p>
         </Reveal>
 
-        <div className="mx-auto mt-12 grid max-w-[920px] items-stretch gap-5 md:grid-cols-2">
+        <Reveal index={1} className="mt-10 flex justify-center">
+          <SeletorCiclo ciclo={ciclo} onChange={setCiclo} />
+        </Reveal>
+
+        <div className="mx-auto mt-8 grid max-w-[920px] items-stretch gap-5 md:grid-cols-2">
           {planos.map((p, i) => (
             <Reveal key={p.nome} index={i + 1} className="relative">
               {p.destaque && <span aria-hidden="true" className="plano-halo" />}
-              <CardPlano p={p} />
+              <CardPlano p={p} ciclo={ciclo} />
             </Reveal>
           ))}
         </div>

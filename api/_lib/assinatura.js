@@ -30,12 +30,20 @@ export async function acharDono({ assinaturaId, clienteId, email }) {
   return null
 }
 
-/** Grava o plano pago na conta. Usado pelo webhook, pelo cadastro e pelo /admin. */
+/**
+ * Grava o plano pago na conta. Usado pelo webhook, pelo cadastro e pelo /admin.
+ *
+ * `d.ciclo = 'anual'` e compra unica de 12 meses: soma um ano a partir do fim do anual que ainda
+ * estiver valendo (quem renova antes nao perde dias) ou a partir de `d.inicio` (data do pagamento,
+ * para a pendencia consumida depois). A mesma compra entregue de novo nao soma outro ano.
+ */
 export async function aplicarNaConta(usuarioId, plano, d = {}) {
+  const anual = d.ciclo === 'anual'
   // uma assinatura pertence a uma conta so: se mudou de dono, solta a anterior
   if (d.assinaturaId) {
     await sql`update usuarios set assinatura_id = null where assinatura_id = ${d.assinaturaId} and id <> ${usuarioId}`
   }
+  const inicio = d.inicio ?? new Date()
   return um(sql`
     update usuarios set
       plano = ${plano},
@@ -44,7 +52,16 @@ export async function aplicarNaConta(usuarioId, plano, d = {}) {
       cakto_cliente_id = coalesce(${d.clienteId ?? null}, cakto_cliente_id),
       assinatura_plano = ${plano},
       assinatura_status = 'ativa',
-      assinatura_renova_em = coalesce(${d.renovaEm ?? null}, assinatura_renova_em),
+      assinatura_ciclo = ${anual ? 'anual' : 'mensal'},
+      plano_expira_em = case
+        when not ${anual}::boolean then plano_expira_em
+        when ${d.pedidoId ?? null}::text is not null and assinatura_pedido_id = ${d.pedidoId ?? null}::text
+             and plano_expira_em is not null then plano_expira_em
+        else greatest(${inicio}::timestamptz, coalesce(plano_expira_em, ${inicio}::timestamptz)) + interval '1 year'
+      end,
+      -- o anual nao renova sozinho: a data que importa e plano_expira_em
+      assinatura_renova_em = case when ${anual}::boolean then null
+                                  else coalesce(${d.renovaEm ?? null}, assinatura_renova_em) end,
       assinatura_em_atraso = false,
       assinatura_origem = ${d.origem ?? 'cakto'},
       assinatura_atualizada_em = now(),
@@ -83,12 +100,13 @@ export async function ativarPlano(plano, d) {
 async function guardarPendente(plano, d) {
   return um(sql`
     insert into assinaturas_pendentes
-      (email, nome, whatsapp, plano, assinatura_id, pedido_id, produto_id, cliente_id, valor, renova_em, evento_id)
-    values (${d.email}, ${d.nome ?? null}, ${d.whatsapp ?? null}, ${plano}, ${d.assinaturaId ?? null},
+      (email, nome, whatsapp, plano, ciclo, assinatura_id, pedido_id, produto_id, cliente_id, valor, renova_em, evento_id)
+    values (${d.email}, ${d.nome ?? null}, ${d.whatsapp ?? null}, ${plano}, ${d.ciclo ?? 'mensal'}, ${d.assinaturaId ?? null},
             ${d.pedidoId ?? null}, ${d.produtoId ?? null}, ${d.clienteId ?? null}, ${d.valor ?? null},
             ${d.renovaEm ?? null}, ${d.eventoId ?? null})
     on conflict (lower(email)) where status = 'pendente' do update
       set plano = excluded.plano,
+          ciclo = excluded.ciclo,
           nome = coalesce(excluded.nome, assinaturas_pendentes.nome),
           whatsapp = coalesce(excluded.whatsapp, assinaturas_pendentes.whatsapp),
           assinatura_id = coalesce(excluded.assinatura_id, assinaturas_pendentes.assinatura_id),
@@ -106,6 +124,9 @@ async function guardarPendente(plano, d) {
  * `free_expira_em = now()` e proposital — deixar nulo daria 5 minutos de teste novo a cada
  * estorno, repetivel. O admin rebaixando a mao continua zerando o relogio (api/admin/usuarios.js).
  * Nao mexe em administrador nem em plano concedido a mao pelo /admin.
+ *
+ * Quem tem os dois ciclos nao perde o que ainda vale: cancelar a mensal mantem um anual dentro do
+ * prazo, e o reembolso do anual mantem uma mensal ativa. `d.ciclo` e o ciclo do produto do evento.
  */
 export async function derrubarParaFree(motivo, d) {
   const dono = await acharDono(d)
@@ -116,6 +137,21 @@ export async function derrubarParaFree(motivo, d) {
     }
     return { estado: 'pendente', detalhe: 'sem conta para derrubar' }
   }
+
+  const anualValendo = dono.plano_expira_em && new Date(dono.plano_expira_em) > new Date()
+  if (d.ciclo !== 'anual' && anualValendo) {
+    await sql`
+      update usuarios set assinatura_ciclo = 'anual', assinatura_status = 'ativa', assinatura_em_atraso = false,
+             assinatura_renova_em = null, assinatura_atualizada_em = now()
+       where id = ${dono.id}`
+    return { estado: 'ignorado', usuarioId: dono.id, detalhe: 'mensal caiu, anual ainda vale' }
+  }
+  if (d.ciclo === 'anual') {
+    const mensalViva = dono.assinatura_ciclo === 'mensal' && ['ativa', 'em_atraso'].includes(dono.assinatura_status)
+    await sql`update usuarios set plano_expira_em = null, assinatura_atualizada_em = now() where id = ${dono.id}`
+    if (mensalViva) return { estado: 'ignorado', usuarioId: dono.id, detalhe: 'anual caiu, mensal ainda ativa' }
+  }
+
   const atualizado = await um(sql`
     update usuarios set
       plano = 'free',
@@ -160,6 +196,8 @@ export async function consumirPendente(usuario) {
     pedidoId: p.pedido_id,
     clienteId: p.cliente_id,
     renovaEm: p.renova_em,
+    ciclo: p.ciclo ?? 'mensal',
+    inicio: p.criado_em,
   })
   await sql`update assinaturas_pendentes set status = 'aplicada', usuario_id = ${usuario.id},
              aplicada_em = now(), atualizado_em = now() where id = ${p.id}`
@@ -178,6 +216,8 @@ export async function vincularPendente(pendenteId, usuarioId) {
     pedidoId: p.pedido_id,
     clienteId: p.cliente_id,
     renovaEm: p.renova_em,
+    ciclo: p.ciclo ?? 'mensal',
+    inicio: p.criado_em,
   })
   await sql`update assinaturas_pendentes set status = 'aplicada', usuario_id = ${usuarioId},
              aplicada_em = now(), atualizado_em = now() where id = ${pendenteId}`

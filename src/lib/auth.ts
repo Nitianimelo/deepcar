@@ -15,6 +15,10 @@ export type Assinatura = {
   renovaEm: string | null
   /** Última cobrança falhou: o acesso continua, mas vale avisar. */
   emAtraso: boolean
+  /** 'anual' = compra de 12 meses, vale até `validoAte`; 'mensal' = recorrente. Nulo em contas antigas. */
+  ciclo?: 'mensal' | 'anual' | null
+  /** Fim do plano anual (ISO). */
+  validoAte?: string | null
 }
 
 export type Session = {
