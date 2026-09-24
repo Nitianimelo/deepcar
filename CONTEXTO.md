@@ -84,8 +84,10 @@ Regras de trabalho estão em `AGENTE.md`.
       `beta.falcon-server.com.br/data-hub` é o definitivo. Plano grátis = 10 consultas/hora para todos os usuários juntos.
 - [ ] Limpar variáveis antigas na Vercel que não são mais lidas ou ficam por baixo do cofre: `FALCON_TOKEN` (o valor do
       cofre tem prioridade), `CONSULTARPLACA_EMAIL` e `CONSULTARPLACA_API_KEY` (provedor removido).
-- [ ] Trocar a "página de vendas" dos 4 produtos na Cakto para `https://deepcar.app.br/` (painel) e, numa próxima
-      versão do APK, o endereço da API do app Android.
+- [ ] Trocar a "página de vendas" dos 4 produtos na Cakto para `https://deepcar.app.br/` (painel). O app Android
+      1.1.0 já usa `deepcar.app.br`.
+- [ ] Publicar o app Android 1.1.0 na Google Play (pacote e guia em `Grupo Inttus/deepcar-android/play-store/PUBLICAR.md`
+      no iCloud). O app não vende nem mostra preço (política de Pagamentos da Play); precisa de uma conta Full para o revisor.
 - [ ] Trocar o token do Falcon por um novo no painel deles e regravar no `/admin` (o atual circulou em conversa).
 - [ ] Cache de placas no Neon (modelo e ano não mudam: cada placa seria consultada uma única vez). Precisa de migração.
 - [ ] Coerência de texto: o hero diz "só precisa digitar a placa do carro", mas na tabela a busca pela placa aparece só no Full.
@@ -110,6 +112,8 @@ Regras de trabalho estão em `AGENTE.md`.
   - `AGENTE.md`: rotas, API e a regra de manter a política igual ao código.
 - **Banco:** sem mudança. **Variáveis/infra:** sem mudança.
 - **Verificação:** build ok; oxlint 10 avisos (igual antes); capturas WebKit 390 e 1280 px.
+- **App Android 1.1.0** (fora deste repositório, `~/Developer/deepcar-android`): atualizado com os planos, compartilhar,
+  visualizador novo e "Excluir conta" usando esta rota; exclusão testada em produção (API e app) com contas descartáveis.
 - **Pendências:** o e-mail de contato da política é `VITE_SUPORTE_EMAIL` (padrão `suporte@deepcar.com.br`): confirmar
   que a caixa existe (a Google Play e a LGPD pedem um contato que funcione). Incluir razão social/CNPJ na política.
 
