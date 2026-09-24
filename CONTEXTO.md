@@ -61,6 +61,8 @@ Regras de trabalho estão em `AGENTE.md`.
       botão não aparece em Produto → Configurações e a API ignora `absorbInstallmentInterest`). Enquanto isso, os anuais
       foram reprecificados para o 12x com juros bater com a tela (ver Histórico de 2026-09-24). Se a Cakto liberar e o
       botão for ligado, voltar as ofertas para R$ 358,80 / R$ 454,80 (e o JSON-LD do `index.html`).
+- [ ] **WhatsApp de suporte não configurado** (`VITE_SUPORTE_WHATSAPP` vazio na Vercel): os botões de suporte abrem e-mail para
+      `suporte@deepcar.com.br`. Confirmar se essa caixa existe ou definir o número.
 - [ ] Confirmar numa venda real se a "Taxa de serviço" de R$ 0,99 (`customerFees` em `GET /public_api/fees/`) é cobrada do
       comprador. Se for, ele paga R$ 0,99 além do anúncio (inclusive nos mensais): pedir à Cakto para desligar.
 - [ ] Oferta do Full Anual está com `intervalType: lifetime` (a do Pro Anual é `year`). O acesso não depende disso
@@ -91,6 +93,20 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-24 · Tela de fim do teste: botões de assinatura um por linha no computador
+- **Quem:** Claude (Claude Code)
+- **Pedido:** conferir a tela que aparece quando o limite do Free acaba e corrigir o que estiver errado.
+- **O que mudou:** `src/components/LimiteFree.tsx` (`BloqueioFree`): os botões "Assinar Full" e "Assinar Pro" ficavam lado a
+  lado a partir de `sm` e, na janela de 520 px, o texto quebrava no meio do preço ("R$" / "37,90/mês"). Agora ficam um por
+  linha em qualquer largura (o Full, em destaque, em cima), igual já era no celular.
+- **Banco:** sem mudança.
+- **Variáveis/infra:** sem mudança.
+- **Verificação:** prints em 1440 px e 390 px (vite preview + WebKit com `/api/sessao` simulando free vencido); build e lint.
+- **Commit:** (este)
+- **Pendências:** `VITE_SUPORTE_WHATSAPP` não está definido na Vercel, então "Falar com o suporte" abre e-mail para
+  `suporte@deepcar.com.br` (padrão do código), domínio diferente do site (`deepcar.app.br`, que não recebe e-mail).
+  Definir o WhatsApp de suporte na Vercel.
 
 ### 2026-09-24 · Anuais reprecificados: o 12x no checkout bate com o valor da tela
 - **Quem:** Claude (Claude Code)

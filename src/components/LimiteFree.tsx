@@ -74,7 +74,8 @@ export function BloqueioFree() {
 
         <SeletorCiclo ciclo={ciclo} onChange={setCiclo} className="mt-6 w-full" />
 
-        <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+        {/* um por linha também no computador: lado a lado o preço quebrava no meio ("R$" / "37,90/mês") */}
+        <div className="mt-3 grid gap-2.5">
           <a
             href={linkCheckout('full', sessao, ciclo)}
             autoFocus
