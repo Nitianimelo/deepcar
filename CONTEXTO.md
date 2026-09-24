@@ -9,7 +9,7 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ---
 
-## Estado atual (atualizado em 2026-09-23)
+## Estado atual (atualizado em 2026-09-24)
 
 - **Produção:** **https://deepcar.app.br** (Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub
   `Nitianimelo/deepcar`). `www.deepcar.app.br` redireciona para o principal; `deepcar.vercel.app` continua respondendo.
@@ -24,8 +24,8 @@ Regras de trabalho estão em `AGENTE.md`.
     barra de progresso no cabeçalho e cards de plano com holofote, borda viva no Full e preço contando.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
   - Plano **free = 10 minutos de acesso**, contados a partir do primeiro acesso; depois bloqueia a tela e a API responde 402.
-  - **Pagamento pela Cakto**: produtos Pro (R$ 47,90) e Full (R$ 59,90) mensais, e **Pro Anual (R$ 358,80) e Full Anual
-    (R$ 454,80)** como compra única de 12 meses em até 12x; webhook em `/api/webhooks/cakto` que troca o plano sozinho,
+  - **Pagamento pela Cakto**: produtos Pro (R$ 47,90) e Full (R$ 59,90) mensais, e **Pro Anual (R$ 289,49) e Full Anual
+    (R$ 366,95)** como compra única de 12 meses em até 12x (12x com os juros da Cakto = exatamente R$ 29,90 / R$ 37,90); webhook em `/api/webhooks/cakto` que troca o plano sozinho,
     pendências para quem paga sem conta e aba "Assinaturas" no `/admin`. O anual vence sozinho (`vencerAnual`).
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link,
     aparelhos conectados e "desconectar"), aba **Planos** (o que cada plano libera) e cofre de chaves.
@@ -57,9 +57,14 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
 - [ ] A foto da dobra `#placa` é gerada por IA: a tela do celular tem nomes de montadora com erro de grafia
       ("Chewolet", "Citrofo", "Alfa Roemo"). No tamanho exibido não se lê, mas vale trocar por foto real quando houver.
-- [ ] **Anual "sem juros" precisa ser ligado no painel da Cakto** (Pro Anual e Full Anual → parcelamento sem juros /
-      produtor absorve os juros): a API pública ignora `absorbInstallmentInterest`. Enquanto estiver desligado, o cliente
-      paga juros no parcelado e a parcela no checkout fica acima dos R$ 29,90 / R$ 37,90 por mês que a tela mostra.
+- [ ] **"Parcelamento sem juros" depende da Cakto liberar na conta** (flag `absorbInstallmentInterestEnabled`; sem ela o
+      botão não aparece em Produto → Configurações e a API ignora `absorbInstallmentInterest`). Enquanto isso, os anuais
+      foram reprecificados para o 12x com juros bater com a tela (ver Histórico de 2026-09-24). Se a Cakto liberar e o
+      botão for ligado, voltar as ofertas para R$ 358,80 / R$ 454,80 (e o JSON-LD do `index.html`).
+- [ ] Confirmar numa venda real se a "Taxa de serviço" de R$ 0,99 (`customerFees` em `GET /public_api/fees/`) é cobrada do
+      comprador. Se for, ele paga R$ 0,99 além do anúncio (inclusive nos mensais): pedir à Cakto para desligar.
+- [ ] Oferta do Full Anual está com `intervalType: lifetime` (a do Pro Anual é `year`). O acesso não depende disso
+      (`vencerAnual` corta aos 12 meses), mas vale igualar para `year` por coerência.
 - [ ] Boleto não está habilitado na conta da Cakto (a API recusa `boleto` nos produtos). Habilitar no painel, se quiser.
 - [ ] Quem passa do mensal para o anual precisa cancelar a mensal pelo suporte (a tela avisa); não há cancelamento automático.
 - [ ] Fazer uma compra real de validação (pode estornar em seguida) para ver o caminho inteiro com produto verdadeiro:
@@ -86,6 +91,27 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-24 · Anuais reprecificados: o 12x no checkout bate com o valor da tela
+- **Quem:** Claude (Claude Code)
+- **Pedido:** o cliente estava pagando as taxas da Cakto; ele precisa pagar exatamente o que está no anúncio.
+- **O que mudou:**
+  - Diagnóstico nos checkouts: nos anuais o 12x saía R$ 37,06 (Pro) e R$ 46,98 (Full), contra R$ 29,90 / R$ 37,90 da tela
+    (+23,94% de juros da Cakto no 12x, `creditCardInstallments` de `GET /public_api/fees/`). Mensais sem diferença.
+  - "Parcelamento sem juros" não está disponível: o botão do painel só aparece com a flag de conta
+    `absorbInstallmentInterestEnabled` (visto no JS do painel), e a API ignora o campo (retestado; checkout seguiu `false`).
+  - Solução aplicada na Cakto (via API, credencial agora com escopo `offers`): preço das **ofertas** (é o que o checkout
+    cobra; mudar só o produto não altera o checkout) e dos produtos anuais:
+    Pro Anual `6ccodaw` R$ 358,80 → **R$ 289,49** (12x = R$ 29,90); Full Anual `uigfpmf` R$ 454,80 → **R$ 366,95**
+    (12x = R$ 37,90). Conferido nos checkouts. Efeito: à vista/Pix custa R$ 289,49 / R$ 366,95 e de 2x a 11x a parcela
+    total fica abaixo do anunciado; a tela só mostra o valor por mês, então nada fica contraditório.
+  - `index.html`: JSON-LD dos anuais com os preços novos (regra do AGENTE.md §9).
+  - Backup dos produtos e ofertas antes da mudança: `~/.config/deepcar/backup/` (máquina do dono).
+- **Banco:** sem mudança. Webhook identifica o plano pelo id do produto, não pelo valor.
+- **Variáveis/infra:** Cakto (ofertas e produtos anuais). Sem variável nova.
+- **Verificação:** checkouts `6ccodaw` (1x 289,50 · 12x 29,90) e `uigfpmf` (1x 366,95 · 12x 37,90); build e lint.
+- **Commit:** (este)
+- **Pendências:** ver "Parcelamento sem juros", "Taxa de serviço" e `intervalType` do Full Anual nas Pendências.
 
 ### 2026-09-23 · SEO: ícones, metatags, páginas próprias, dados estruturados, sitemap e robots
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
