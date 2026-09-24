@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, Check, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
 import { linkCheckout, linkSuporte, MINUTOS_FREE, mmss, restanteFree, rotuloPlano, temWhatsappSuporte } from '../lib/plano'
@@ -105,7 +105,8 @@ export default function Conta() {
       </>
       )}
 
-      <div className="mt-8 flex justify-end">
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+        <Link to="/excluir-conta" className="text-[13px] text-ink-4 hover:text-fault">Excluir conta</Link>
         <button onClick={sair} className="btn-ghost inline-flex items-center gap-2 hover:!border-fault/40 hover:!text-fault">
           <LogOut size={16} /> Sair da conta
         </button>

@@ -324,6 +324,7 @@ function Footer() {
         <div className="flex items-center gap-4">
           <img src="/brand/logo-h-light.png" alt="Deepcar" className="h-6 opacity-80" draggable={false} />
           <span className="code text-[12px] text-ink-4">© {new Date().getFullYear()} Deepcar</span>
+          <Link to="/privacidade" className="text-[12.5px] text-ink-4 hover:text-ink-2">Privacidade</Link>
         </div>
         <div className="flex flex-wrap gap-3">
           <AppStoreBadge />

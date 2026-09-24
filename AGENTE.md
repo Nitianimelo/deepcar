@@ -126,7 +126,8 @@ server/                   lógica Node reaproveitável
 src/
   App.tsx                 rotas (lazy por página)
   pages/                  Landing, Login, Cadastro, Admin, Inicio (/app), Busca, SectionPage, EsquemaPage, VeiculoPage, Conta,
-                          Compartilhado (/c/:token, esquema recebido por link, sem conta, em tela cheia)
+                          Compartilhado (/c/:token, esquema recebido por link, sem conta, em tela cheia),
+                          Privacidade (/privacidade) e ExcluirConta (/excluir-conta), com a casca components/PaginaSimples.tsx
   layouts/AppLayout.tsx   casca do /app (sidebar, barra, LimiteFree)
   components/             ListaEsquemas (lista da seção e da busca), DetalhesEsquema, EsquemaViewer, CompartilharEsquema, Sidebar, LimiteFree, LogoMarca, Tooltips…
   components/SeletorComponente.tsx  lista com busca dos componentes do esquema (tecla /), dentro do EsquemaViewer
@@ -154,8 +155,9 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 
 ### Rotas
 - Front: `/`, `/login`, `/cadastro`, `/admin`, `/c/:token` (link compartilhado, público), `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
-  `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`.
-- API: `POST /api/registrar`, `POST /api/login`, `POST /api/sair`, `GET /api/sessao`,
+  `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`, `/privacidade` e `/excluir-conta` (públicas,
+  exigidas pela Google Play para o app Android).
+- API: `POST /api/registrar`, `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha),
   `GET|POST|PATCH|DELETE /api/admin/usuarios`, `GET|PUT /api/admin/planos`, `GET|PUT|DELETE /api/admin/segredos`,
   `POST /api/admin/inicializar`, `GET /api/placa/:placa`, `POST|GET /api/compartilhar`.
 - **Limite da Vercel (plano Hobby): 12 funções em `api/`** (sem contar `_lib/`), e o projeto já está com 12. Rota nova
@@ -226,6 +228,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Prints do `capturar-telas.mjs` (Edge headless) cortam a largura: não confunda com layout quebrado (ver commit `31b1313`).
 - Pasta local dentro do iCloud Drive pode corromper o `.git` (arquivos duplicados tipo `index 2`). Prefira clonar fora do iCloud.
 - Deploy da Vercel não roda migração nem copia o acervo.
+- **Política de privacidade (`src/pages/Privacidade.tsx`) descreve o que o código coleta.** Mudou coleta, fornecedor ou
+  prazo? Atualize o texto e a data no mesmo commit. Ela é o endereço declarado na Google Play.
 - **SEO:** metatags e dados estruturados (JSON-LD) ficam no `index.html`; página pública nova = entrada em
   `PAGINAS` de `server/vitePaginasSeo.mjs` + `public/sitemap.xml`. Mudou preço? Atualize também os `offers` do JSON-LD.
   Rotas privadas respondem `X-Robots-Tag: noindex` (vercel.json), e `deepcar.vercel.app` inteiro também.

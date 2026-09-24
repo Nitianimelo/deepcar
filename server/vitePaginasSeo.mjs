@@ -19,6 +19,18 @@ export const PAGINAS = [
     descricao: 'Acesse sua conta Deepcar: esquemas elétricos e diagramas automotivos com consulta pela placa.',
     indexar: false,
   },
+  {
+    rota: 'privacidade',
+    titulo: 'Política de privacidade · Deepcar',
+    descricao: 'Como o Deepcar coleta, usa, guarda e protege os dados pessoais das contas no site e no aplicativo Android.',
+    indexar: true,
+  },
+  {
+    rota: 'excluir-conta',
+    titulo: 'Excluir conta · Deepcar',
+    descricao: 'Como excluir a sua conta do Deepcar e os dados ligados a ela, pelo site ou pelo aplicativo Android.',
+    indexar: true,
+  },
 ]
 
 const escapar = (t) => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')

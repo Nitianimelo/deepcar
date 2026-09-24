@@ -110,6 +110,12 @@ export async function logout() {
   guardarPerfil(null)
 }
 
+/** Apaga a conta de vez (com a senha, para ninguém apagar a conta de outro num aparelho esquecido aberto). */
+export async function excluirConta(senha: string) {
+  await json('/api/sessao', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ senha }) })
+  guardarPerfil(null)
+}
+
 /**
  * Confere a sessão no servidor. Devolve o perfil, ou null quando o servidor diz que não há sessão (401).
  * Falha de rede ou do servidor não derruba ninguém: fica o retrato local até a próxima conferência.

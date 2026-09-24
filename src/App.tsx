@@ -21,6 +21,8 @@ const EsquemaPage = lazy(() => import('./pages/EsquemaPage'))
 const Conta = lazy(() => import('./pages/Conta'))
 const VeiculoPage = lazy(() => import('./pages/VeiculoPage'))
 const Compartilhado = lazy(() => import('./pages/Compartilhado'))
+const Privacidade = lazy(() => import('./pages/Privacidade'))
+const ExcluirConta = lazy(() => import('./pages/ExcluirConta'))
 
 export default function App() {
   return (
@@ -31,6 +33,8 @@ export default function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/c/:token" element={<Compartilhado />} />
+        <Route path="/privacidade" element={<Privacidade />} />
+        <Route path="/excluir-conta" element={<ExcluirConta />} />
         <Route path="/app" element={<AppLayout />}>
           <Route index element={<Inicio />} />
           <Route path="busca" element={<Busca />} />

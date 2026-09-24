@@ -94,6 +94,26 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-09-24 · Política de privacidade e exclusão de conta (requisitos da Google Play)
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** deixar o app Android pronto para a Play Store. A Google exige, para app com cadastro: endereço público de
+  política de privacidade e opção de excluir a conta dentro do app e por um endereço na web.
+- **O que mudou:**
+  - `api/sessao.js`: `DELETE /api/sessao { senha }` exclui a própria conta (confere a senha; conta de admin é recusada
+    com 403; senha errada → 403 `campo: senha`). Sessões e links compartilhados vão em cascata; eventos de pagamento
+    ficam sem dono (`on delete set null`). Entrou no arquivo existente por causa do limite de 12 funções.
+  - `src/pages/Privacidade.tsx` (`/privacidade`) e `src/pages/ExcluirConta.tsx` (`/excluir-conta`: com sessão pede a
+    senha e uma confirmação; sem sessão manda entrar e volta), casca `src/components/PaginaSimples.tsx`, estilo
+    `.texto-legal` no `index.css`. `excluirConta()` em `src/lib/auth.ts`.
+  - Link "Privacidade" no rodapé da landing e "Excluir conta" na tela Conta.
+  - `server/vitePaginasSeo.mjs` gera HTML próprio das duas páginas; `/privacidade` no sitemap.
+  - `AGENTE.md`: rotas, API e a regra de manter a política igual ao código.
+- **Banco:** sem mudança. **Variáveis/infra:** sem mudança.
+- **Verificação:** build ok; oxlint 10 avisos (igual antes); capturas WebKit 390 e 1280 px.
+- **Pendências:** o e-mail de contato da política é `VITE_SUPORTE_EMAIL` (padrão `suporte@deepcar.com.br`): confirmar
+  que a caixa existe (a Google Play e a LGPD pedem um contato que funcione). Incluir razão social/CNPJ na política.
+
+
 ### 2026-09-24 · Tela de fim do teste: botões de assinatura um por linha no computador
 - **Quem:** Claude (Claude Code)
 - **Pedido:** conferir a tela que aparece quando o limite do Free acaba e corrigir o que estiver errado.
