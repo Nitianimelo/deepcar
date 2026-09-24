@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { PaginaSimples } from '../components/PaginaSimples'
 import { useTitulo } from '../lib/seo'
 
-const EMAIL = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'suporte@deepcar.com.br'
+const EMAIL = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'nitiani@compilla.dev'
 const ATUALIZADA_EM = '24 de setembro de 2026'
 
 export default function Privacidade() {

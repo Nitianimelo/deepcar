@@ -62,7 +62,7 @@ Regras de trabalho estão em `AGENTE.md`.
       foram reprecificados para o 12x com juros bater com a tela (ver Histórico de 2026-09-24). Se a Cakto liberar e o
       botão for ligado, voltar as ofertas para R$ 358,80 / R$ 454,80 (e o JSON-LD do `index.html`).
 - [ ] **WhatsApp de suporte não configurado** (`VITE_SUPORTE_WHATSAPP` vazio na Vercel): os botões de suporte abrem e-mail para
-      `suporte@deepcar.com.br`. Confirmar se essa caixa existe ou definir o número.
+      `nitiani@compilla.dev`.
 - [ ] Confirmar numa venda real se a "Taxa de serviço" de R$ 0,99 (`customerFees` em `GET /public_api/fees/`) é cobrada do
       comprador. Se for, ele paga R$ 0,99 além do anúncio (inclusive nos mensais): pedir à Cakto para desligar.
 - [ ] Oferta do Full Anual está com `intervalType: lifetime` (a do Pro Anual é `year`). O acesso não depende disso
@@ -95,6 +95,17 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-24 · E-mail de suporte e conta do revisor da Google Play
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **O que mudou:** e-mail de suporte padrão (`VITE_SUPORTE_EMAIL` não está na Vercel) de `suporte@deepcar.com.br`
+  (caixa que não existia) para **`nitiani@compilla.dev`**, escolhido pelo dono: `src/lib/plano.ts`, `Privacidade.tsx`,
+  `ExcluirConta.tsx`, `.env.example`. Vale para os botões de suporte, a política de privacidade e a Play Store.
+- **Banco:** conta `revisao.play@deepcar.app.br` criada pelo cadastro e posta em `full` manual (para o revisor da
+  Google Play passar do teste de 10 min). Senha com o dono / no Play Console (Acesso ao app). Não apagar.
+- **Verificação:** build ok; login do revisor devolve `full`, 7 sistemas e placa.
+- **Pendências:** resolve a pendência do e-mail de suporte.
+
 
 ### 2026-09-24 · Política de privacidade e exclusão de conta (requisitos da Google Play)
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

@@ -44,7 +44,7 @@ export function linkCheckout(plano: PlanoPago, s: Session | null, ciclo: Ciclo =
 }
 
 const numeroSuporte = ((import.meta.env.VITE_SUPORTE_WHATSAPP as string | undefined) ?? '').replace(/\D/g, '')
-const emailSuporte = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'suporte@deepcar.com.br'
+const emailSuporte = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'nitiani@compilla.dev'
 
 /** 55 + DDD + 9 dígitos = 13; menos que isso não é número cheio e não vale abrir o WhatsApp. */
 export const temWhatsappSuporte = numeroSuporte.length >= 12

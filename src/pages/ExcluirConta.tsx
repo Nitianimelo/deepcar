@@ -7,7 +7,7 @@ import { PaginaSimples } from '../components/PaginaSimples'
 import { excluirConta, useSessao } from '../lib/auth'
 import { useTitulo } from '../lib/seo'
 
-const EMAIL = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'suporte@deepcar.com.br'
+const EMAIL = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'nitiani@compilla.dev'
 
 export default function ExcluirConta() {
   useTitulo('Excluir conta · Deepcar')
