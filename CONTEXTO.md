@@ -4,7 +4,7 @@ Memória do projeto: **estado atual, pendências e histórico detalhado de tudo 
 Regras de trabalho estão em `AGENTE.md`.
 
 > **Obrigatório:** a cada modificação no repositório, adicione uma entrada no topo do **Histórico**
-> (modelo na seção 10 do `AGENTE.md`) e atualize "Estado atual" e "Pendências" se mudarem.
+> (modelo na seção 11 do `AGENTE.md`) e atualize "Estado atual" e "Pendências" se mudarem.
 > A atualização vai **no mesmo commit** da modificação.
 
 ---
@@ -86,8 +86,8 @@ Regras de trabalho estão em `AGENTE.md`.
       cofre tem prioridade), `CONSULTARPLACA_EMAIL` e `CONSULTARPLACA_API_KEY` (provedor removido).
 - [ ] Trocar a "página de vendas" dos 4 produtos na Cakto para `https://deepcar.app.br/` (painel). O app Android
       1.1.0 já usa `deepcar.app.br`.
-- [ ] Publicar o app Android 1.1.0 na Google Play (pacote e guia em `Grupo Inttus/deepcar-android/play-store/PUBLICAR.md`
-      no iCloud). O app não vende nem mostra preço (política de Pagamentos da Play); precisa de uma conta Full para o revisor.
+- [ ] App Android 1.1.0 **em revisão na Google Play** (enviado em 24/09/2026). Depois de aprovado, pôr o link real no selo
+      Google Play da landing (`src/components/StoreBadges.tsx`): `https://play.google.com/store/apps/details?id=deepcar.app.android`.
 - [ ] Trocar o token do Falcon por um novo no painel deles e regravar no `/admin` (o atual circulou em conversa).
 - [ ] Cache de placas no Neon (modelo e ano não mudam: cada placa seria consultada uma única vez). Precisa de migração.
 - [ ] Coerência de texto: o hero diz "só precisa digitar a placa do carro", mas na tabela a busca pela placa aparece só no Full.
@@ -95,6 +95,18 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-24 · App Android publicado na Google Play (em revisão) e documentação para agentes
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **O que mudou:** o app Android 1.1.0 (`deepcar.app.android`) foi enviado para revisão na Google Play (Produção,
+  Brasil, conta de organização Inttus). Nova seção 10 no `AGENTE.md` ("App Android e Google Play": onde o app vive, o que
+  no site não pode quebrar o app, conta do revisor, regras da Play); §9 atualizado (cópia local temporária, apagar no fim).
+  Detalhes, contas e credenciais no `AGENTE.md`/`CONTEXTO.md` do app, no iCloud (`Grupo Inttus/deepcar-android`).
+- **Banco:** conta `revisao.play@deepcar.app.br` em plano Full manual (revisor da Google). Não apagar.
+- **Variáveis/infra:** sem mudança.
+- **Verificação:** Play Console mostra "As suas alterações estão agora em revisão".
+- **Pendências:** link real do selo Google Play depois da aprovação.
+
 
 ### 2026-09-24 · E-mail de suporte e conta do revisor da Google Play
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

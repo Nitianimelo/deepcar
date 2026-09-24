@@ -9,7 +9,7 @@ neste repositório. Leia este arquivo inteiro antes de mudar qualquer coisa.
 
 1. **Antes de começar:** leia `AGENTE.md` (este arquivo) e `CONTEXTO.md` (o que já foi feito, estado atual e pendências).
 2. **Sincronize primeiro:** `git pull origin main`. Nunca comece a trabalhar sobre uma cópia desatualizada.
-3. **A cada modificação, atualize `CONTEXTO.md`** com uma nova entrada no topo do **Histórico** (modelo na seção 10).
+3. **A cada modificação, atualize `CONTEXTO.md`** com uma nova entrada no topo do **Histórico** (modelo na seção 11).
    Sem entrada no `CONTEXTO.md`, a modificação não está terminada.
 4. **Se a mudança altera estrutura, comandos, variáveis, banco, rotas ou regras de trabalho, atualize também este `AGENTE.md`**
    (e o `README.md`, se o trecho estiver lá).
@@ -226,7 +226,9 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - `Iniciar-Local.ps1`, `exportar-acervo.mjs` e `empacotar-exe.mjs` usam caminhos `E:\` e ferramentas Windows.
 - `npm run lint` já tem 10 avisos (0 erros), principalmente `set-state-in-effect`, `exhaustive-deps` e `only-export-components`, espalhados por `src/`. Não são erros; não aumente a lista (compare a contagem antes e depois da mudança).
 - Prints do `capturar-telas.mjs` (Edge headless) cortam a largura: não confunda com layout quebrado (ver commit `31b1313`).
-- Pasta local dentro do iCloud Drive pode corromper o `.git` (arquivos duplicados tipo `index 2`). Prefira clonar fora do iCloud.
+- Pasta local dentro do iCloud Drive pode corromper o `.git` (arquivos duplicados tipo `index 2`). Para trabalhar, clone
+  em `~/Developer/deepcar` (fora do iCloud) e **apague a cópia no fim**: o dono quer o SSD livre. A cópia de referência no
+  Mac fica no iCloud em `Grupo Inttus/deepcar-main` (sem `node_modules`/`dist`); a fonte da verdade é o GitHub.
 - Deploy da Vercel não roda migração nem copia o acervo.
 - **Política de privacidade (`src/pages/Privacidade.tsx`) descreve o que o código coleta.** Mudou coleta, fornecedor ou
   prazo? Atualize o texto e a data no mesmo commit. Ela é o endereço declarado na Google Play.
@@ -236,7 +238,32 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 
 ---
 
-## 10. Como registrar no CONTEXTO.md
+## 10. App Android e Google Play
+
+O app Android **não está neste repositório**. Ele vive só no iCloud do dono:
+`Arquivos das empresas/Grupo Inttus/deepcar-android` (código, `.aab`, chave de upload, histórico git em bundle).
+Lá estão `AGENTE.md` (como compilar e publicar, como operar o Play Console) e `CONTEXTO.md` (estado, contas e
+**credenciais** — que não podem vir para cá, porque **este repositório é público**).
+
+- Pacote na Play: `deepcar.app.android`. Conta de organização "Inttus Soluções Tecnológicas Ltda". Versão 1.1.0 enviada
+  para revisão em 24/09/2026 (Produção, Brasil).
+- O app usa a API deste site (`https://deepcar.app.br/api/*`) pelo HTTP nativo, com o cookie `deepcar_sessao`
+  reenviado no cabeçalho `Cookie`. Mudar nome/formato do cookie, rotas ou respostas de `api/login`, `api/sessao`,
+  `api/registrar`, `api/sair`, `api/placa`, `api/compartilhar` **quebra o app instalado** nos celulares: mantenha
+  compatibilidade ou avise que precisa de versão nova do app.
+- `DELETE /api/sessao` (excluir conta) e as páginas `/privacidade` e `/excluir-conta` são **exigência da Google Play**:
+  não remover. A política precisa descrever o que o site **e o app** coletam; mudou coleta ou fornecedor, atualize
+  `src/pages/Privacidade.tsx` e avise que a "Segurança dos dados" no Play Console também muda.
+- Existe a conta `revisao.play@deepcar.app.br` com plano Full manual: é a do revisor da Google. **Não apagar**, não
+  rebaixar e não trocar a senha (a senha está no CONTEXTO.md do app, no iCloud).
+- O app **não** mostra preço nem checkout (política de Pagamentos da Play). Mudança de preço/plano no site não exige
+  mudar o app, exceto a lista do que cada plano inclui (`ITENS_PLANO` no app ↔ `src/data/planos.ts`), os minutos do
+  teste (`MINUTOS_FREE`) e as chaves das seções.
+- E-mail de suporte/contato público: `nitiani@compilla.dev` (padrão de `VITE_SUPORTE_EMAIL`).
+
+---
+
+## 11. Como registrar no CONTEXTO.md
 
 Adicione **no topo** da seção "Histórico" do `CONTEXTO.md`:
 
