@@ -24,7 +24,8 @@ Regras de trabalho estão em `AGENTE.md`.
     barra de progresso no cabeçalho e cards de plano com holofote, borda viva no Full e preço contando.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
   - **Plano de teste (free) = 10 horas**, contadas a partir do primeiro acesso. Sem contador na tela: a barra mostra só o
-    selo "Plano de teste". Quando acaba, a plataforma continua abrindo (menu, montadoras, listas, busca), o selo vira
+    selo "Plano de teste" (computador). Para quem está no plano free há sempre um caminho para os planos: cartão
+    "Assinar um plano" no rodapé do menu lateral e, no celular, faixa fina no topo da tela. Quando acaba, a plataforma continua abrindo (menu, montadoras, listas, busca), o selo vira
     "Assinar plano" e o esquema abre **embaçado** com o convite "Assine um plano para acessar o sistema" (cards Full/Pro,
     chave Mensal/Anual, checkout preenchido). A consulta por placa mostra o mesmo convite; a API responde 402.
   - **Pagamento pela Cakto**: produtos Pro (R$ 47,90) e Full (R$ 59,90) mensais, e **Pro Anual (R$ 289,49) e Full Anual
@@ -81,8 +82,6 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] O webhook da Cakto nunca recebeu uma compra real (só o evento de teste, 21/09, respondido 200). Primeira venda:
       conferir no /admin → Assinaturas.
 - [ ] Portal do assinante (trocar cartão, cancelar) — hoje isso é feito pelo painel da Cakto.
-- [ ] Barra superior do app no celular com plano de teste: o selo ("Teste" no celular, "Plano de teste" a partir de 640 px)
-      ou o botão "Assinar" ainda apertam o campo de placa ("PLACA ·" cortado). No Início não acontece (o campo não aparece lá).
 - [ ] **App Android** ainda fala em "10 minutos" e tem a tela de bloqueio antiga; o prazo de 10 h já vale nele (vem do
       servidor em `freeExpiraEm`). **Decisão do dono (2026-09-29): manter o app como está** por enquanto.
 - [ ] Conferir numa placa real se chassi e procedência aparecem (nomes dos campos não estão na documentação pública
@@ -101,6 +100,23 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-29 · Botão "Assinar um plano" no menu e aviso no topo do celular (plano free)
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** no plano free, um botão para assinar no menu lateral e, no celular, um aviso pequeno no topo; os dois levam aos planos.
+- **O que mudou:**
+  - `src/components/LimiteFree.tsx`: `AssinarNoMenu` (cartão "Plano de teste" / "Teste encerrado" com o botão "Assinar um
+    plano"; menu recolhido = só o ícone com dica) e `AvisoTopo` (faixa de 36 px acima da barra, abaixo de `lg`: "Você está no
+    plano de teste. / Seu teste gratuito terminou. · Assinar um plano →"). Os dois só aparecem para free que não é admin.
+    O `SeloTeste` da barra passou a aparecer só a partir de `lg`: no celular a faixa faz o papel dele e o campo de placa
+    deixou de ficar apertado (pendência resolvida).
+  - `src/components/Sidebar.tsx`: `AssinarNoMenu` no topo do rodapé (vale também no menu aberto do celular).
+  - `src/layouts/AppLayout.tsx`: `AvisoTopo` acima do cabeçalho.
+  - `src/pages/Conta.tsx`: a aba vive na URL (`?aba=plano`), então os links levam à aba Plano mesmo estando na tela da conta.
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** build ok; oxlint 10 avisos. `vite preview` + WebKit 1440 e 390 px: free ativo, free vencido, Full (nada
+  aparece), menu recolhido; clique no botão do menu (computador) e da faixa (celular) → `/app/conta?aba=plano`; sem rolagem horizontal.
+- **Pendências:** nenhuma nova.
 
 ### 2026-09-29 · Teste de 10 horas, selo "Plano de teste" e esquema embaçado depois do teste
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

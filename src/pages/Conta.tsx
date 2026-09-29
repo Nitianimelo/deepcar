@@ -27,9 +27,11 @@ const PREFS = [
 export default function Conta() {
   const nav = useNavigate()
   const s = getSession()
-  const [params] = useSearchParams()
-  // ?aba=plano: link do cadeado dos sistemas fora do plano
-  const [aba, setAba] = useState<'conta' | 'plano'>(params.get('aba') === 'plano' ? 'plano' : 'conta')
+  const [params, setParams] = useSearchParams()
+  // a aba vive na URL (?aba=plano): o cadeado, o menu e o aviso do celular levam direto aos planos,
+  // inclusive quando a pessoa já está na tela da conta
+  const aba: 'conta' | 'plano' = params.get('aba') === 'plano' ? 'plano' : 'conta'
+  const setAba = (k: 'conta' | 'plano') => setParams(k === 'plano' ? { aba: 'plano' } : {}, { replace: true })
   const restante = restanteFree(s)
   if (!s) return null
 

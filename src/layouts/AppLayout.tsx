@@ -4,7 +4,7 @@ import { Menu } from 'lucide-react'
 import { PlateSearch } from '../components/PlateSearch'
 import { PaletaBusca } from '../components/PaletaBusca'
 import { Sidebar } from '../components/Sidebar'
-import { SeloTeste } from '../components/LimiteFree'
+import { AvisoTopo, SeloTeste } from '../components/LimiteFree'
 import { useSessao } from '../lib/auth'
 import { useLimiteFree } from '../lib/plano'
 import { podePlaca, SessaoAtual, TesteAcabou } from '../lib/acesso'
@@ -49,6 +49,8 @@ export default function AppLayout() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
+        {/* plano de teste no celular: o menu lateral fica fechado, então o convite sobe para o topo */}
+        <AvisoTopo />
         {/* barra superior */}
         <header className="flex h-[68px] flex-none items-center gap-3 border-b seam px-4 sm:px-6">
           <button

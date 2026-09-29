@@ -139,7 +139,7 @@ src/
   lib/plano.ts            relógio do teste no navegador (espelha MINUTOS_FREE, DURACAO_FREE nos textos) e reconferência da sessão
   lib/acesso.tsx          podeSecao()/podePlaca() e useAcesso() (com testeAcabou): cadeado no menu e telas fora do plano
   components/BloqueioPlano.tsx  tela "não faz parte do seu plano" (seção, esquema e placa)
-  components/LimiteFree.tsx     SeloTeste: "Plano de teste" na barra; com o teste vencido vira "Assinar plano"
+  components/LimiteFree.tsx     plano free: SeloTeste (barra, computador), AssinarNoMenu (menu lateral), AvisoTopo (faixa no celular)
   components/AssineParaAcessar.tsx  teste vencido: EsquemaEmbacado (esquema borrado) e ConviteAssinatura (cards Full/Pro)
   lib/validacao.ts        validação de cadastro no navegador (espelha api/_lib/validar.js)
   lib/acervo.ts           leitura do acervo (VITE_ACERVO_URL ou /acervo)

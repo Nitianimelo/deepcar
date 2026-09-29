@@ -5,6 +5,7 @@ import { NAV, SECTION_META, type NavGroup, type NavLeaf } from '../data/nav'
 import { TracePad } from './TracePad'
 import { getSession, logout } from '../lib/auth'
 import { useAcesso } from '../lib/acesso'
+import { AssinarNoMenu } from './LimiteFree'
 
 type Props = {
   collapsed: boolean
@@ -102,6 +103,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
 
         {/* rodapé: conta */}
         <div className="border-t seam p-3">
+          <AssinarNoMenu collapsed={collapsed} />
           {session?.papel === 'admin' && !collapsed && (
             <Link
               to="/admin"
