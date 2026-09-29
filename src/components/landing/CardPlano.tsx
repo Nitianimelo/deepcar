@@ -74,25 +74,26 @@ export function CardPlano({ p, ciclo = 'mensal', acao, atual = false, compacto =
       onPointerMove={mover}
       className={`plano relative flex h-full flex-col overflow-hidden rounded-[18px] border ${p.destaque ? 'plano-destaque border-transparent bg-bench-1' : 'seam bg-bench-1'} ${atual ? '!border-ok/45' : ''} ${visto ? 'is-visto' : ''}`}
     >
+      <span aria-hidden="true" className="plano-cor" />
       {p.destaque && <span aria-hidden="true" className="plano-borda-viva" />}
 
       {/* faixa: o motivo de escolher, numa linha — nos dois cartões, para o conteúdo ficar alinhado lado a lado */}
       <div
         className={`flex items-center gap-2 px-5 py-2 text-[12.5px] font-medium sm:px-6 ${
-          p.destaque ? 'plano-faixa text-white' : 'border-b seam bg-bench-2 text-ink-2'
-        }`}
+          p.destaque ? 'plano-faixa' : 'plano-faixa-pro'
+        } text-white`}
       >
-        {p.destaque ? <Zap size={14} className="flex-none" /> : <Car size={14} className="flex-none text-trace-hi" />} {p.chamada}
+        {p.destaque ? <Zap size={14} className="flex-none" /> : <Car size={14} className="flex-none" />} {p.chamada}
       </div>
 
       <div className={`flex flex-1 flex-col ${pad}`}>
         <header className="flex items-center justify-between gap-3">
           <h3 className={`${compacto ? 'text-[20px]' : 'text-[24px]'} font-semibold tracking-tight`}>{p.nome}</h3>
           {atual ? (
-            <span className="code rounded-full border border-ok/35 bg-ok/10 px-2.5 py-1 text-[10.5px] uppercase tracking-[0.16em] text-ok">Seu plano</span>
+            <span className="rounded-full bg-ok px-2.5 py-1 text-[12px] font-semibold text-[#0b1017]">Seu plano</span>
           ) : p.destaque && (
-            <span className="plano-selo code inline-flex items-center gap-1.5 rounded-full border border-ok/30 bg-ok/10 px-2.5 py-1 text-[10.5px] uppercase tracking-[0.18em] text-ok">
-              <span className="h-1.5 w-1.5 rounded-full bg-ok pad-pulse" /> Mais completo
+            <span className="plano-selo selo-completo inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold">
+              <span className="h-1.5 w-1.5 rounded-full bg-white pad-pulse" /> Mais completo
             </span>
           )}
         </header>
@@ -122,7 +123,7 @@ export function CardPlano({ p, ciclo = 'mensal', acao, atual = false, compacto =
           {acao ?? (
             <Link
               to="/cadastro"
-              className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-cta' : 'btn-ghost !h-12 hover:!border-ok/40'}`}
+              className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-cta' : 'btn-primary !h-12'}`}
             >
               Criar conta grátis
               <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>

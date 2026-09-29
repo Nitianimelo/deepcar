@@ -101,6 +101,25 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-09-29 · Cartões de plano coloridos: cada sistema com a cor de um fio do chicote
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** cartões mais coloridos (vermelho, verde, azul à vontade); ainda estavam com cara de IA.
+- **O que mudou:**
+  - `src/index.css`: tokens `--color-fio-vermelho/amarelo/azul/verde` no `@theme`. Faixa do Full = feixe de fios
+    (vermelho → amarelo → verde → azul), faixa do Pro azul; borda viva do Full girando nas quatro cores; brilho colorido
+    no fundo dos cartões (`.plano-cor`); selo "Mais completo" vermelho; "7 de 7" com as quatro cores; classes do chicote
+    (`.linha-fio`, `.fio`, `.fio-chip`, `.modulo-aceso/.modulo-cortado`, `.extra-chip`), tudo via `--fio` + `color-mix`.
+  - `src/components/PlanoDetalhes.tsx`: cada sistema tem a cor do fio (injeção vermelho, ABS amarelo, elétrica azul, câmbio
+    verde). O fio sai do nome e corre por trás dos módulos; liberado = módulo e LED na cor do fio; fora do plano = fio
+    tracejado cinza e cadeado. A lista é uma grade só (linhas com `display: contents`) para a coluna dos nomes alinhar e
+    não cortar "Diesel" nos cartões estreitos. Extras com ícone colorido.
+  - Botões: Full verde (`btn-cta`) e Pro azul (`btn-primary`) na landing, na Conta e no convite do esquema embaçado.
+  - `CardPlano`: selo "Seu plano" verde sólido.
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** build ok; oxlint 10 avisos. `vite preview` + WebKit 1440 e 390 px: landing, Conta (free e Pro), convite
+  do esquema embaçado; sem rolagem horizontal.
+- **Pendências:** nenhuma nova.
+
 ### 2026-09-29 · Cartões de plano redesenhados: painel de sistemas com LED
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** cartões de plano mais bonitos, chamativos e preenchidos, sem cara de IA, que despertem interesse.

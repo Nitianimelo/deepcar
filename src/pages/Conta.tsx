@@ -193,7 +193,7 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
                   href={linkCheckout(p.id, s, ciclo)}
                   target="_blank"
                   rel="noreferrer"
-                  className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium ${p.destaque || !pago ? 'btn-primary !h-12' : 'btn-ghost !h-12'}`}
+                  className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-cta' : 'btn-primary !h-12'}`}
                 >
                   {!pago
                     ? `Assinar ${p.nome}${anual ? ' anual' : ''}`

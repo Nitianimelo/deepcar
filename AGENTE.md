@@ -134,7 +134,7 @@ src/
   components/PaletaBusca.tsx        busca rápida Ctrl+K / ⌘K de qualquer tela do app (placa, esquema, últimas consultas)
   components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll): só a landing; CardPlano: cartão de plano
                           da landing, da aba Plano da conta e do convite depois do teste (botão vem em `acao`)
-  components/PlanoDetalhes.tsx  miolo do CardPlano: painel de sistemas com LED (aceso/apagado) e extras (placa, aparelhos…)
+  components/PlanoDetalhes.tsx  miolo do CardPlano: chicote de sistemas (cor do fio por sistema, tokens --color-fio-*) e extras
   lib/seo.ts              useTitulo(): título da aba ao navegar (páginas públicas já saem certas do build)
   lib/transicao.ts        marcarTitulo(): título que "voa" da lista ao cabeçalho do esquema (View Transitions)
   lib/auth.ts             cliente de sessão (cookie no servidor; localStorage só guarda retrato do perfil)

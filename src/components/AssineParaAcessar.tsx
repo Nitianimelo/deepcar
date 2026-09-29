@@ -91,7 +91,7 @@ export function ConviteAssinatura({ titulo, oQue }: { titulo: string; oQue: stri
                 target="_blank"
                 rel="noreferrer"
                 className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[14.5px] font-medium ${
-                  p.destaque ? 'btn-primary !h-12' : 'btn-ghost !h-12'
+                  p.destaque ? 'btn-cta' : 'btn-primary !h-12'
                 }`}
               >
                 Assinar {p.nome}{ciclo === 'anual' ? ' anual' : ''}
