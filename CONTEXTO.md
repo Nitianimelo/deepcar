@@ -101,6 +101,30 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-09-29 · Cartões de plano redesenhados: painel de sistemas com LED
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** cartões de plano mais bonitos, chamativos e preenchidos, sem cara de IA, que despertem interesse.
+- **Do 21st.dev:** consultado (busca de pricing cards); só serviu a ideia de mostrar incluso/não incluso — o resto era a
+  tabela genérica de SaaS. Nada instalado.
+- **O que mudou:**
+  - `src/components/PlanoDetalhes.tsx` (novo): `PainelSistemas` — os 7 sistemas como módulos de uma central, com LED verde
+    aceso no que o plano libera e apagado com cadeado no que não libera ("3/7" no Pro, "7/7" no Full), na ordem do menu;
+    `ExtrasPlano` — busca pela placa (riscada "Só no plano Full" no Pro), aparelhos com marcadores, app mobile e suporte.
+  - `src/components/landing/CardPlano.tsx`: faixa no topo com a chamada do plano (Full em degradê verde→azul "Libera tudo,
+    do leve ao diesel"; Pro neutra "O essencial para carros leves"), preço maior, painel + extras no lugar da lista de ✓;
+    aceita `acao` (botão), `atual` (selo "Seu plano") e `compacto`. Mantém holofote, borda viva e preço contando; os LEDs
+    acendem em sequência quando o cartão aparece.
+  - O mesmo cartão agora é usado na landing, na aba Plano da Conta e no convite do esquema embaçado (`AssineParaAcessar`,
+    convite alargado para 780 px).
+  - `src/data/planos.ts`: `chamada`, `secoes`, `placa`, `aparelhos` (iguais ao `PADRAO` de `api/_lib/planos.js`);
+    saiu `resumo`. `itens` continua (espelho do `ITENS_PLANO` do app Android).
+  - `src/index.css`: `.plano-faixa` e brilho/entrada dos LEDs (desligam com `prefers-reduced-motion`).
+  - `Conta.tsx`: frase do tempo restante num span só (no celular virava colunas).
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** build ok; oxlint 10 avisos. `vite preview` + WebKit 1440 e 390 px: landing (mensal/anual), Conta free e
+  Pro ("Seu plano"), convite do esquema embaçado; sem rolagem horizontal.
+- **Pendências:** os cartões mostram o padrão dos planos; se a aba Planos do /admin mudar a regra, atualizar `src/data/planos.ts`.
+
 ### 2026-09-29 · Botão "Assinar um plano" no menu e aviso no topo do celular (plano free)
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** no plano free, um botão para assinar no menu lateral e, no celular, um aviso pequeno no topo; os dois levam aos planos.

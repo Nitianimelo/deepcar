@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, BadgeDollarSign, Check, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
+import { ArrowRight, BadgeDollarSign, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
 import { DURACAO_FREE, linkCheckout, linkSuporte, restanteFree, rotuloPlano, tempoRestante, temWhatsappSuporte } from '../lib/plano'
-import { PLANOS_VENDA, precoDoCiclo, type Ciclo } from '../data/planos'
+import { PLANOS_VENDA, type Ciclo } from '../data/planos'
+import { CardPlano } from '../components/landing/CardPlano'
 import { SeletorCiclo } from '../components/SeletorCiclo'
 
 /** Como o estado da assinatura é lido na tela. */
@@ -151,9 +152,12 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
         {!pago && (
           <p className="mt-3 flex items-center gap-2 border-t seam-soft pt-3 text-[13.5px] text-ink-3">
             <Timer size={15} className="flex-none text-trace" />
-            {restante !== null && restante > 0
-              ? <>Você está no plano de teste: restam <b className="font-medium text-ink-1">{tempoRestante(restante)}</b> das {DURACAO_FREE}.</>
-              : <>Seu teste de {DURACAO_FREE} terminou. Escolha um plano abaixo para abrir os esquemas.</>}
+            {/* num span só: solto no flex, o texto e o negrito viravam colunas no celular */}
+            <span>
+              {restante !== null && restante > 0
+                ? <>Você está no plano de teste: restam <b className="font-medium text-ink-1">{tempoRestante(restante)}</b> das {DURACAO_FREE}.</>
+                : <>Seu teste de {DURACAO_FREE} terminou. Escolha um plano abaixo para abrir os esquemas.</>}
+            </span>
           </p>
         )}
         {s.assinatura?.emAtraso && (
@@ -175,26 +179,13 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
           // mesmo plano, outro ciclo: o botão vira "passar para anual/mensal"
           const mesmoPlano = s.plano === p.id
           return (
-            <section key={p.id} className={`flex flex-col rounded-xl border p-5 ${atual ? 'border-ok/40 bg-bench-1' : 'seam bg-bench-2'}`}>
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="text-[18px] font-semibold tracking-tight">{p.nome}</h2>
-                {atual && <span className="code text-[10.5px] uppercase tracking-[0.18em] text-ok">seu plano</span>}
-              </div>
-              <p className="mt-1 text-[13.5px] text-ink-3">{p.para}</p>
-              <p className="mt-4 flex items-baseline gap-1.5">
-                <span className="text-[13px] text-ink-4">R$</span>
-                <span className="text-[30px] font-semibold leading-none tracking-[-0.02em]" style={{ fontVariantNumeric: 'tabular-nums' }}>{precoDoCiclo(p, ciclo)}</span>
-                <span className="text-[13px] text-ink-4">/mês</span>
-              </p>
-              <ul className="mb-6 mt-4 space-y-1.5 text-[13.5px]">
-                {p.itens.map((i) => (
-                  <li key={i} className="flex items-start gap-2 text-ink-2">
-                    <Check size={13} className="mt-[4px] flex-none text-trace/70" strokeWidth={2.5} /> {i}
-                  </li>
-                ))}
-              </ul>
-              {atual ? (
-                <span className="mt-auto inline-flex h-11 items-center justify-center rounded-[10px] border seam text-[14px] text-ink-4">
+            <CardPlano
+              key={p.id}
+              p={p}
+              ciclo={ciclo}
+              atual={atual}
+              acao={atual ? (
+                <span className="inline-flex h-12 w-full items-center justify-center rounded-[10px] border border-ok/30 bg-ok/[0.06] text-[14px] text-ok">
                   Plano ativo
                 </span>
               ) : (
@@ -202,17 +193,17 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
                   href={linkCheckout(p.id, s, ciclo)}
                   target="_blank"
                   rel="noreferrer"
-                  className={`mt-auto inline-flex h-11 items-center justify-center gap-2 rounded-[10px] text-[14px] font-medium ${p.destaque || !pago ? 'btn-primary !h-11' : 'btn-ghost !h-11'}`}
+                  className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium ${p.destaque || !pago ? 'btn-primary !h-12' : 'btn-ghost !h-12'}`}
                 >
                   {!pago
                     ? `Assinar ${p.nome}${anual ? ' anual' : ''}`
                     : mesmoPlano
                       ? `Passar para ${anual ? 'anual' : 'mensal'}`
-                      : `Trocar para ${p.nome}${anual ? ' anual' : ''}`}{' '}
-                  <ArrowRight size={15} />
+                      : `Trocar para ${p.nome}${anual ? ' anual' : ''}`}
+                  <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5" />
                 </a>
               )}
-            </section>
+            />
           )
         })}
       </div>

@@ -132,7 +132,9 @@ src/
   components/             ListaEsquemas (lista da seção e da busca), DetalhesEsquema, EsquemaViewer, CompartilharEsquema, Sidebar, LimiteFree, LogoMarca, Tooltips…
   components/SeletorComponente.tsx  lista com busca dos componentes do esquema (tecla /), dentro do EsquemaViewer
   components/PaletaBusca.tsx        busca rápida Ctrl+K / ⌘K de qualquer tela do app (placa, esquema, últimas consultas)
-  components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll), CardPlano: só a landing
+  components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll): só a landing; CardPlano: cartão de plano
+                          da landing, da aba Plano da conta e do convite depois do teste (botão vem em `acao`)
+  components/PlanoDetalhes.tsx  miolo do CardPlano: painel de sistemas com LED (aceso/apagado) e extras (placa, aparelhos…)
   lib/seo.ts              useTitulo(): título da aba ao navegar (páginas públicas já saem certas do build)
   lib/transicao.ts        marcarTitulo(): título que "voa" da lista ao cabeçalho do esquema (View Transitions)
   lib/auth.ts             cliente de sessão (cookie no servidor; localStorage só guarda retrato do perfil)
@@ -214,6 +216,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   - `MINUTOS_FREE`: `api/_lib/sessao.js` ↔ `src/lib/plano.ts` (e o texto `DURACAO_FREE` ao lado)
   - validação de cadastro: `api/_lib/validar.js` ↔ `src/lib/validacao.ts`
   - chaves das seções: `src/data/nav.ts` ↔ `api/_lib/planos.js` (`SECOES`) ↔ `db/005` (valores iniciais)
+  - o que cada plano libera: `api/_lib/planos.js` (`PADRAO`, vale o que estiver no /admin → Planos) ↔ `secoes`/`placa`/`aparelhos`
+    de `src/data/planos.ts` (o que os cartões mostram). Mudou a regra de um plano no /admin? Atualize os cartões também.
   A regra que vale é a do servidor; a do navegador só dá resposta imediata.
 - Páginas novas entram com `lazy()` em `src/App.tsx` (a landing é a única no pacote inicial).
 - Estilo: tokens de `src/index.css`; não espalhar cores fixas.

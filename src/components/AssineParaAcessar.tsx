@@ -6,11 +6,12 @@
 // tem tela cheia, e em tela cheia o filtro do pai não vale — o esquema apareceria nítido.
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Check, Lock, MessageCircle, Sparkles } from 'lucide-react'
+import { ArrowRight, Lock, MessageCircle } from 'lucide-react'
 import { linkCheckout, linkSuporte, temWhatsappSuporte } from '../lib/plano'
 import { useAcesso } from '../lib/acesso'
 import { urlImagem, type EsquemaDetalhe } from '../lib/acervo'
-import { PLANOS_VENDA, precoDoCiclo, type Ciclo } from '../data/planos'
+import { PLANOS_VENDA, type Ciclo } from '../data/planos'
+import { CardPlano } from './landing/CardPlano'
 import { SeletorCiclo } from './SeletorCiclo'
 
 /** O esquema embaçado, do tamanho do visualizador, com o convite por cima. */
@@ -55,7 +56,7 @@ export function ConviteAssinatura({ titulo, oQue }: { titulo: string; oQue: stri
   return (
     <section
       aria-labelledby="convite-assinatura"
-      className="w-full max-w-[640px] rounded-2xl border seam bg-bench-2/95 p-5 shadow-2xl backdrop-blur-md sm:p-8"
+      className="w-full max-w-[780px] rounded-2xl border seam bg-bench-2/95 p-5 shadow-2xl backdrop-blur-md sm:p-8"
     >
       <div className="flex items-center gap-3">
         <span className="grid h-10 w-10 flex-none place-items-center rounded-full border border-trace/30 bg-trace/10 text-trace-hi">
@@ -79,46 +80,25 @@ export function ConviteAssinatura({ titulo, oQue }: { titulo: string; oQue: stri
       {/* Full primeiro: é o que abre qualquer esquema, leve ou diesel */}
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {[...PLANOS_VENDA].sort((a, b) => Number(b.destaque) - Number(a.destaque)).map((p) => (
-          <a
+          <CardPlano
             key={p.id}
-            href={linkCheckout(p.id, sessao, ciclo)}
-            target="_blank"
-            rel="noreferrer"
-            className={`group relative flex flex-col rounded-xl border p-4 transition-[border-color,background-color,transform] duration-200 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:p-5 ${
-              p.destaque ? 'border-trace/45 bg-trace/[0.07] hover:border-trace/70' : 'seam bg-bench-1 hover:border-[color:var(--seam-3)]'
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[17px] font-semibold tracking-tight">{p.nome}</span>
-              {p.destaque && (
-                <span className="code inline-flex items-center gap-1 rounded-full border border-trace/35 bg-trace/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-trace-hi">
-                  <Sparkles size={11} /> Completo
-                </span>
-              )}
-            </div>
-            <p className="mt-2 flex items-baseline gap-1">
-              <span className="text-[12.5px] text-ink-4">R$</span>
-              <span className="text-[28px] font-semibold leading-none tracking-[-0.02em]" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                {precoDoCiclo(p, ciclo)}
-              </span>
-              <span className="text-[12.5px] text-ink-4">/mês</span>
-            </p>
-            <ul className="mb-4 mt-3 space-y-1.5 text-[13px]">
-              {p.resumo.map((i) => (
-                <li key={i} className="flex items-start gap-2 text-ink-2">
-                  <Check size={13} className="mt-[3px] flex-none text-trace/80" strokeWidth={2.5} /> {i}
-                </li>
-              ))}
-            </ul>
-            <span
-              className={`mt-auto inline-flex h-11 items-center justify-center gap-2 rounded-[10px] text-[14px] font-medium ${
-                p.destaque ? 'btn-primary !h-11' : 'btn-ghost !h-11'
-              }`}
-            >
-              Assinar {p.nome}{ciclo === 'anual' ? ' anual' : ''}
-              <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
-            </span>
-          </a>
+            p={p}
+            ciclo={ciclo}
+            compacto
+            acao={
+              <a
+                href={linkCheckout(p.id, sessao, ciclo)}
+                target="_blank"
+                rel="noreferrer"
+                className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[14.5px] font-medium ${
+                  p.destaque ? 'btn-primary !h-12' : 'btn-ghost !h-12'
+                }`}
+              >
+                Assinar {p.nome}{ciclo === 'anual' ? ' anual' : ''}
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
+              </a>
+            }
+          />
         ))}
       </div>
 

@@ -1,10 +1,12 @@
-// Cartão de plano da landing. Um holofote segue o ponteiro (preenchimento + borda acesa, efeito "Card Spotlight"
-// do 21st.dev feito em CSS) e o plano em destaque tem uma borda viva girando em volta. O preço conta até o valor
-// quando o cartão entra na tela. Estilos em index.css (.plano*).
-import { useEffect, useRef, useState, type PointerEvent } from 'react'
+// Cartão de plano: landing, aba Plano da conta e convite depois do teste (quem chama passa o botão em `acao`).
+// Um holofote segue o ponteiro (preenchimento + borda acesa, efeito "Card Spotlight" do 21st.dev feito em CSS)
+// e o plano em destaque tem uma borda viva girando em volta. O preço conta até o valor quando o cartão entra
+// na tela. O miolo é o painel de módulos (components/PlanoDetalhes.tsx). Estilos em index.css (.plano*).
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Check } from 'lucide-react'
+import { Car, Zap } from 'lucide-react'
 import { precoDoCiclo, type Ciclo, type PlanoVenda } from '../../data/planos'
+import { ExtrasPlano, PainelSistemas } from '../PlanoDetalhes'
 
 /**
  * Conta até o preço ("47,90") em ~900 ms, com desaceleração no fim: de 0 quando o cartão aparece,
@@ -33,7 +35,18 @@ function usePrecoContando(preco: string, ativo: boolean) {
   return (parado ? alvo : valor).toFixed(2).replace('.', ',')
 }
 
-export function CardPlano({ p, ciclo = 'mensal' }: { p: PlanoVenda; ciclo?: Ciclo }) {
+type Props = {
+  p: PlanoVenda
+  ciclo?: Ciclo
+  /** botão do rodapé; sem ele, "Criar conta grátis" (landing) */
+  acao?: ReactNode
+  /** plano que a conta já tem: selo verde no lugar do "Mais completo" */
+  atual?: boolean
+  /** cartão mais baixo, para caber dois lado a lado no convite do esquema embaçado */
+  compacto?: boolean
+}
+
+export function CardPlano({ p, ciclo = 'mensal', acao, atual = false, compacto = false }: Props) {
   const ref = useRef<HTMLElement>(null)
   const [visto, setVisto] = useState(false)
   const alvo = precoDoCiclo(p, ciclo)
@@ -53,53 +66,70 @@ export function CardPlano({ p, ciclo = 'mensal' }: { p: PlanoVenda; ciclo?: Cicl
     e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`)
   }
 
+  const pad = compacto ? 'p-4 sm:p-5' : 'p-6 sm:p-7'
+
   return (
     <article
       ref={ref}
       onPointerMove={mover}
-      className={`plano relative flex h-full flex-col rounded-[18px] border bg-bench-1 p-7 sm:p-8 ${p.destaque ? 'plano-destaque border-transparent' : 'seam'} ${visto ? 'is-visto' : ''}`}
+      className={`plano relative flex h-full flex-col overflow-hidden rounded-[18px] border ${p.destaque ? 'plano-destaque border-transparent bg-bench-1' : 'seam bg-bench-1'} ${atual ? '!border-ok/45' : ''} ${visto ? 'is-visto' : ''}`}
     >
       {p.destaque && <span aria-hidden="true" className="plano-borda-viva" />}
 
-      <header className="flex items-baseline justify-between gap-3">
-        <h3 className="text-[20px] font-semibold tracking-tight">{p.nome}</h3>
-        {p.destaque && (
-          <span className="plano-selo code inline-flex items-center gap-1.5 rounded-full border border-ok/30 bg-ok/10 px-2.5 py-1 text-[10.5px] uppercase tracking-[0.18em] text-ok">
-            <span className="h-1.5 w-1.5 rounded-full bg-ok pad-pulse" /> Mais completo
-          </span>
-        )}
-      </header>
-      <p className="mt-1.5 min-h-[42px] max-w-[34ch] text-[14px] leading-relaxed text-ink-3">{p.para}</p>
-
-      {/* no anual mostra só o valor por mês: o parcelamento em 12x aparece no checkout */}
-      <p className="mt-6 flex items-baseline gap-2 border-t seam-soft pt-6">
-        <span className="text-[14px] text-ink-4">R$</span>
-        <span
-          className="text-[44px] font-semibold leading-none tracking-[-0.03em] text-ink-1"
-          style={{ fontVariantNumeric: 'tabular-nums' }}
-          aria-label={`${alvo} reais por mês`}
-        >
-          {preco}
-        </span>
-        <span className="text-[14px] text-ink-4">/mês</span>
-      </p>
-
-      {/* lista longa (Full) em duas colunas de texto: flui sem abrir buracos entre as linhas */}
-      <ul className={`plano-itens mb-9 mt-7 border-t seam-soft pt-6 text-[14px] ${p.itens.length > 7 ? 'sm:columns-2 sm:gap-x-7' : ''}`}>
-        {p.itens.map((item, i) => (
-          <li key={item} style={{ '--i': i } as React.CSSProperties} className="flex items-start gap-2.5 break-inside-avoid pb-2.5 text-ink-2 last:pb-0">
-            <Check size={14} className={`mt-[4px] flex-none ${p.destaque ? 'text-ok/80' : 'text-trace/70'}`} strokeWidth={2.5} /> {item}
-          </li>
-        ))}
-      </ul>
-
-      <Link
-        to="/cadastro"
-        className={`plano-cta group mt-auto inline-flex h-12 items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-cta' : 'btn-ghost !h-12 hover:!border-ok/40'}`}
+      {/* faixa: o motivo de escolher, numa linha — nos dois cartões, para o conteúdo ficar alinhado lado a lado */}
+      <div
+        className={`flex items-center gap-2 px-5 py-2 text-[12.5px] font-medium sm:px-6 ${
+          p.destaque ? 'plano-faixa text-white' : 'border-b seam bg-bench-2 text-ink-2'
+        }`}
       >
-        Criar conta grátis
-        <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
-      </Link>
+        {p.destaque ? <Zap size={14} className="flex-none" /> : <Car size={14} className="flex-none text-trace-hi" />} {p.chamada}
+      </div>
+
+      <div className={`flex flex-1 flex-col ${pad}`}>
+        <header className="flex items-center justify-between gap-3">
+          <h3 className={`${compacto ? 'text-[20px]' : 'text-[24px]'} font-semibold tracking-tight`}>{p.nome}</h3>
+          {atual ? (
+            <span className="code rounded-full border border-ok/35 bg-ok/10 px-2.5 py-1 text-[10.5px] uppercase tracking-[0.16em] text-ok">Seu plano</span>
+          ) : p.destaque && (
+            <span className="plano-selo code inline-flex items-center gap-1.5 rounded-full border border-ok/30 bg-ok/10 px-2.5 py-1 text-[10.5px] uppercase tracking-[0.18em] text-ok">
+              <span className="h-1.5 w-1.5 rounded-full bg-ok pad-pulse" /> Mais completo
+            </span>
+          )}
+        </header>
+        <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">{p.para}</p>
+
+        {/* no anual mostra só o valor por mês: o parcelamento em 12x aparece no checkout */}
+        <p className={`flex items-baseline gap-2 ${compacto ? 'mt-3' : 'mt-5'}`}>
+          <span className="text-[14px] text-ink-4">R$</span>
+          <span
+            className={`${compacto ? 'text-[38px]' : 'text-[48px]'} font-semibold leading-none tracking-[-0.03em] text-ink-1`}
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+            aria-label={`${alvo} reais por mês`}
+          >
+            {preco}
+          </span>
+          <span className="text-[14px] text-ink-4">/mês</span>
+        </p>
+
+        <div className={compacto ? 'mt-3' : 'mt-5'}>
+          <PainelSistemas p={p} />
+        </div>
+        <div className={`${compacto ? 'mb-4 mt-3.5' : 'mb-7 mt-5'} px-0.5`}>
+          <ExtrasPlano p={p} />
+        </div>
+
+        <div className="plano-cta-caixa mt-auto">
+          {acao ?? (
+            <Link
+              to="/cadastro"
+              className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-cta' : 'btn-ghost !h-12 hover:!border-ok/40'}`}
+            >
+              Criar conta grátis
+              <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
+            </Link>
+          )}
+        </div>
+      </div>
     </article>
   )
 }

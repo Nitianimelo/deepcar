@@ -1,6 +1,7 @@
 // Os planos pagos, como o cliente os vê. Fonte única: a página de vendas e a tela da conta
 // leem daqui, para o preço e a lista nunca divergirem entre as duas.
 // Os produtos correspondentes vivem na Cakto (ids no cofre do /admin).
+import type { SectionKey } from './nav'
 
 export type PlanoPago = 'pro' | 'full'
 
@@ -15,9 +16,13 @@ export type PlanoVenda = {
   /** preço por mês do plano anual (= cada uma das 12 parcelas no checkout) */
   precoAnual: string
   para: string
+  /** faixa no topo do cartão: o motivo de escolher, numa linha */
+  chamada: string
   itens: string[]
-  /** a lista em três linhas, para os cartões pequenos (esquema embaçado depois do teste) */
-  resumo: string[]
+  /** sistemas que o cartão mostra acesos no painel (o padrão de api/_lib/planos.js; o que vale é o /admin → Planos) */
+  secoes: SectionKey[]
+  placa: boolean
+  aparelhos: number
   /** o que aparece em destaque na página de vendas */
   destaque: boolean
 }
@@ -29,8 +34,11 @@ export const PLANOS_VENDA: PlanoVenda[] = [
     preco: '47,90',
     precoAnual: '29,90',
     para: 'Para a oficina de veículos leves.',
+    chamada: 'O essencial para carros leves',
     itens: ['Injeção eletrônica leve', 'ABS', 'Elétrica leve', '2 dispositivos conectados', 'App mobile', 'Suporte'],
-    resumo: ['Injeção leve, ABS e elétrica leve', '2 dispositivos conectados', 'App mobile e suporte'],
+    secoes: ['injecao-leve', 'abs', 'eletrica'],
+    placa: false,
+    aparelhos: 2,
     destaque: false,
   },
   {
@@ -39,6 +47,7 @@ export const PLANOS_VENDA: PlanoVenda[] = [
     preco: '59,90',
     precoAnual: '37,90',
     para: 'Para a oficina que atende do leve ao diesel.',
+    chamada: 'Libera tudo, do leve ao diesel',
     itens: [
       'Injeção eletrônica leve',
       'Injeção eletrônica diesel',
@@ -52,7 +61,9 @@ export const PLANOS_VENDA: PlanoVenda[] = [
       'App mobile',
       'Suporte',
     ],
-    resumo: ['Todos os sistemas, leve e diesel', 'Busca pela placa', '4 dispositivos conectados'],
+    secoes: ['injecao-leve', 'injecao-diesel', 'abs', 'eletrica', 'eletrica-diesel', 'cambio', 'cambio-diesel'],
+    placa: true,
+    aparelhos: 4,
     destaque: true,
   },
 ]
