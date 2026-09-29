@@ -83,8 +83,8 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] Portal do assinante (trocar cartão, cancelar) — hoje isso é feito pelo painel da Cakto.
 - [ ] Barra superior do app no celular com plano de teste: o selo ("Teste" no celular, "Plano de teste" a partir de 640 px)
       ou o botão "Assinar" ainda apertam o campo de placa ("PLACA ·" cortado). No Início não acontece (o campo não aparece lá).
-- [ ] **App Android** ainda fala em "10 minutos" e tem a tela de bloqueio antiga: o prazo de 10 h já vale nele (vem do
-      servidor em `freeExpiraEm`), mas textos e o fluxo embaçado precisam de uma versão nova do app.
+- [ ] **App Android** ainda fala em "10 minutos" e tem a tela de bloqueio antiga; o prazo de 10 h já vale nele (vem do
+      servidor em `freeExpiraEm`). **Decisão do dono (2026-09-29): manter o app como está** por enquanto.
 - [ ] Conferir numa placa real se chassi e procedência aparecem (nomes dos campos não estão na documentação pública
       do Falcon; se não aparecerem, mandar a resposta bruta para ajustar `achar()` em `provedores/falcon.mjs`). Confirmar com o Falcon se o endereço
       `beta.falcon-server.com.br/data-hub` é o definitivo. Plano grátis = 10 consultas/hora para todos os usuários juntos.
@@ -123,8 +123,8 @@ Regras de trabalho estão em `AGENTE.md`.
   - `VeiculoPage`: teste vencido → convite direto, sem chamar a API de placa.
   - `src/data/planos.ts`: campo `resumo` (3 linhas por plano) para os cards pequenos.
   - Textos: Cadastro ("plano de teste: 10 horas com todos os sistemas"), Conta ("restam 9 h 25 min das 10 horas"), /admin.
-- **Banco:** sem mudança. Quem já tem `free_expira_em` gravado mantém a janela antiga (quem usou os 10 min já está no
-  fluxo embaçado); o /admin pode liberar um teste novo, que já sai com 10 h.
+- **Banco:** sem mudança. Quem já tem `free_expira_em` gravado mantém a janela antiga: quem usou os 10 min fica como teste
+  encerrado (fluxo embaçado), **por decisão do dono** — não liberar teste novo em massa. O /admin ainda libera um por um (10 h).
 - **Variáveis/infra:** sem mudança.
 - **Verificação:** build ok; oxlint 10 avisos (igual antes). `vite preview` com o acervo do R2 + `/api/sessao` simulado,
   WebKit 1440 e 390 px: teste ativo (selo, esquema normal, conta), teste vencido (esquema embaçado com cards, seção
