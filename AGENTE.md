@@ -37,7 +37,7 @@ Node na Vercel (`api/`) e Postgres no **Neon**.
 | --- | --- | --- |
 | Código | GitHub `Nitianimelo/deepcar`, branch `main` | fonte da verdade |
 | Front + API | Vercel, projeto `nitiani-melo/deepcar` | **deploy automático a cada push no `main`** (produção) |
-| Domínio | **`deepcar.app.br`** (Registro.br, DNS delegado à Vercel: `ns1/ns2.vercel-dns.com`) | `www` redireciona (308) para o principal; `deepcar.vercel.app` segue no ar |
+| Domínio | **`deepcar.app.br`** (Registro.br, DNS delegado à Vercel: `ns1/ns2.vercel-dns.com`) | `www` e `deepcar.vercel.app` redirecionam (308) para o principal, com caminho e parâmetros (config de domínio na Vercel) |
 | Banco | Neon (Postgres), ligado à Vercel pela integração | schema em `db/*.sql`, **não** é aplicado pelo deploy |
 | Acervo (catálogo, esquemas, imagens) | Cloudflare R2 | **não** está no git nem na Vercel; front lê de `VITE_ACERVO_URL` |
 | Segredos de infraestrutura | Variáveis de ambiente da Vercel | `DATABASE_URL`, `SESSAO_SEGREDO`, `SEGREDOS_CHAVE` |
@@ -242,7 +242,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   prazo? Atualize o texto e a data no mesmo commit. Ela é o endereço declarado na Google Play.
 - **SEO:** metatags e dados estruturados (JSON-LD) ficam no `index.html`; página pública nova = entrada em
   `PAGINAS` de `server/vitePaginasSeo.mjs` + `public/sitemap.xml`. Mudou preço? Atualize também os `offers` do JSON-LD.
-  Rotas privadas respondem `X-Robots-Tag: noindex` (vercel.json), e `deepcar.vercel.app` inteiro também.
+  Rotas privadas respondem `X-Robots-Tag: noindex` (vercel.json). `deepcar.vercel.app` redireciona para o domínio.
 
 ---
 

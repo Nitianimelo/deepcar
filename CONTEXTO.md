@@ -12,7 +12,7 @@ Regras de trabalho estão em `AGENTE.md`.
 ## Estado atual (atualizado em 2026-09-29)
 
 - **Produção:** **https://deepcar.app.br** (Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub
-  `Nitianimelo/deepcar`). `www.deepcar.app.br` redireciona para o principal; `deepcar.vercel.app` continua respondendo.
+  `Nitianimelo/deepcar`). `www.deepcar.app.br` e `deepcar.vercel.app` redirecionam (308) para o principal.
 - **Funcionando em produção:**
   - Landing (`/`) com mockups de celular/tablet, selos das lojas e dois planos com chave **Mensal/Anual** (abre no anual):
     Pro (R$ 47,90/mês ou R$ 29,90/mês no anual) e Full (R$ 59,90/mês ou R$ 37,90/mês no anual). A tela mostra só o valor
@@ -89,8 +89,8 @@ Regras de trabalho estão em `AGENTE.md`.
       `beta.falcon-server.com.br/data-hub` é o definitivo. Plano grátis = 10 consultas/hora para todos os usuários juntos.
 - [ ] Limpar variáveis antigas na Vercel que não são mais lidas ou ficam por baixo do cofre: `FALCON_TOKEN` (o valor do
       cofre tem prioridade), `CONSULTARPLACA_EMAIL` e `CONSULTARPLACA_API_KEY` (provedor removido).
-- [ ] Trocar a "página de vendas" dos 4 produtos na Cakto para `https://deepcar.app.br/` (painel). O app Android
-      1.1.0 já usa `deepcar.app.br`.
+- [ ] Trocar a "página de vendas" dos 4 produtos na Cakto para `https://deepcar.app.br/` (painel). Enquanto isso, o
+      link antigo já cai no domínio pelo redirecionamento do `deepcar.vercel.app`.
 - [ ] App Android 1.1.0 **em revisão na Google Play** (enviado em 24/09/2026). Depois de aprovado, pôr o link real no selo
       Google Play da landing (`src/components/StoreBadges.tsx`): `https://play.google.com/store/apps/details?id=deepcar.app.android`.
 - [ ] Trocar o token do Falcon por um novo no painel deles e regravar no `/admin` (o atual circulou em conversa).
@@ -100,6 +100,22 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-29 · deepcar.vercel.app redireciona para deepcar.app.br
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** o site ainda abria às vezes pelo endereço da Vercel; deixar só `deepcar.app.br`.
+- **O que mudou:**
+  - Vercel (API, projeto `deepcar`): domínio `deepcar.vercel.app` com `redirect: deepcar.app.br` e 308, igual ao `www`.
+    Caminho e parâmetros vão junto (`/app/conta?aba=plano` → `https://deepcar.app.br/app/conta?aba=plano`); `/api/*` também.
+    Para desfazer: Settings → Domains do projeto (ou PATCH do domínio com `redirect: null`).
+  - Conferido antes: o app Android usa `https://deepcar.app.br` (`src/lib/api.ts` do app), e o webhook da Cakto já aponta
+    para o domínio. Nada depende do endereço antigo.
+  - `vercel.json`: saiu a regra `X-Robots-Tag: noindex` para o host `deepcar.vercel.app` (ele não entrega mais página).
+- **Banco:** sem mudança. **Variáveis:** sem mudança.
+- **Verificação:** `curl` → `deepcar.vercel.app/`, `/app/conta?aba=plano` e `/api/sessao` respondem 308 para o domínio;
+  `deepcar.app.br` 200.
+- **Pendências:** os endereços de cada deploy (`deepcar-<hash>-nitiani-melo.vercel.app`) continuam existindo — é a Vercel;
+  não são divulgados. "Página de vendas" dos produtos na Cakto ainda com o endereço antigo (o redirecionamento cobre).
 
 ### 2026-09-29 · Cartões de plano coloridos: cada sistema com a cor de um fio do chicote
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
