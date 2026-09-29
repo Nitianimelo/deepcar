@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, Check, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
-import { linkCheckout, linkSuporte, MINUTOS_FREE, mmss, restanteFree, rotuloPlano, temWhatsappSuporte } from '../lib/plano'
+import { DURACAO_FREE, linkCheckout, linkSuporte, restanteFree, rotuloPlano, tempoRestante, temWhatsappSuporte } from '../lib/plano'
 import { PLANOS_VENDA, precoDoCiclo, type Ciclo } from '../data/planos'
 import { SeletorCiclo } from '../components/SeletorCiclo'
 
@@ -77,7 +77,7 @@ export default function Conta() {
             {s.whatsapp && <Row k="WhatsApp" v={s.whatsapp.replace(/^55(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')} />}
           </dl>
           <button type="button" onClick={() => setAba('plano')} className="mt-3 inline-flex items-center gap-1.5 border-t seam-soft pt-3 text-[13px] text-trace hover:text-trace-hi">
-            {restante !== null && restante > 0 ? `Restam ${mmss(restante)} de acesso gratuito · ver planos` : 'Ver planos e assinar'}
+            {restante !== null && restante > 0 ? `Plano de teste: restam ${tempoRestante(restante)} · ver planos` : 'Ver planos e assinar'}
             <ArrowRight size={14} />
           </button>
         </section>
@@ -150,8 +150,8 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
           <p className="mt-3 flex items-center gap-2 border-t seam-soft pt-3 text-[13.5px] text-ink-3">
             <Timer size={15} className="flex-none text-trace" />
             {restante !== null && restante > 0
-              ? <>Você está no teste gratuito: restam <b className="font-medium text-ink-1">{mmss(restante)}</b> dos {MINUTOS_FREE} minutos.</>
-              : <>Seu teste de {MINUTOS_FREE} minutos terminou. Assine para voltar a consultar.</>}
+              ? <>Você está no plano de teste: restam <b className="font-medium text-ink-1">{tempoRestante(restante)}</b> das {DURACAO_FREE}.</>
+              : <>Seu teste de {DURACAO_FREE} terminou. Escolha um plano abaixo para abrir os esquemas.</>}
           </p>
         )}
         {s.assinatura?.emAtraso && (

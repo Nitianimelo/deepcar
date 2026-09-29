@@ -1,14 +1,17 @@
 // Regras do plano free vistas pelo navegador. O corte que vale é do servidor
-// (api/_lib/sessao.js): aqui é só o relógio na tela e o texto que a pessoa lê.
+// (api/_lib/sessao.js): aqui é só a hora de virar a chave na tela e o texto que a pessoa lê.
 import { useEffect, useState } from 'react'
 import { PLANOS_VENDA, type Ciclo, type PlanoPago } from '../data/planos'
 import { conferirSessao, type Plano, type Session } from './auth'
 
-export const MINUTOS_FREE = 10
+export const MINUTOS_FREE = 600
 
-const ROTULOS: Record<Plano, string> = { free: 'Free', pro: 'Pro', full: 'Full' }
+/** Como o prazo do teste aparece nos textos. Muda junto com MINUTOS_FREE. */
+export const DURACAO_FREE = '10 horas'
 
-export const rotuloPlano = (p: Plano | null | undefined) => ROTULOS[p ?? 'free'] ?? 'Free'
+const ROTULOS: Record<Plano, string> = { free: 'Teste', pro: 'Pro', full: 'Full' }
+
+export const rotuloPlano = (p: Plano | null | undefined) => ROTULOS[p ?? 'free'] ?? 'Teste'
 
 export const ehPago = (s: Session | null) => s?.plano === 'pro' || s?.plano === 'full'
 
@@ -65,18 +68,20 @@ export function restanteFree(s: Session | null, agora = Date.now()): number | nu
   return new Date(s.freeExpiraEm).getTime() - agora
 }
 
-/** 275000 → "4:35" */
-export function mmss(ms: number) {
-  const seg = Math.max(0, Math.ceil(ms / 1000))
-  return `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`
+/** 33_900_000 → "9 h 25 min"; menos de uma hora → "12 min" */
+export function tempoRestante(ms: number) {
+  const min = Math.max(0, Math.ceil(ms / 60_000))
+  const h = Math.floor(min / 60)
+  return h ? `${h} h ${String(min % 60).padStart(2, '0')} min` : `${min} min`
 }
 
 /**
  * Relógio do teste gratuito.
  *
- * Conta de segundo em segundo e reconfere a sessão no servidor de tempos em tempos —
- * assim o bloqueio cai sozinho quando o administrador muda o plano para pro, e não dá
- * para ganhar tempo mexendo no relógio do computador: o fim vem do servidor.
+ * Não há contador na tela: o relógio só existe para virar a chave na hora certa. Um timer
+ * dispara no fim do teste (em vez de acordar a cada segundo) e a sessão é reconferida no
+ * servidor de tempos em tempos — assim o acesso libera sozinho quando o plano vira pro, e não
+ * dá para ganhar tempo mexendo no relógio do computador: o fim vem do servidor.
  */
 export function useLimiteFree(inicial: Session | null) {
   const [sessao, setSessao] = useState<Session | null>(inicial)
@@ -88,14 +93,15 @@ export function useLimiteFree(inicial: Session | null) {
   useEffect(() => { setSessao(inicial) }, [inicial])
 
   const restante = restanteFree(sessao, agora)
-  const temRelogio = restante !== null
-  const bloqueado = restante !== null && restante <= 0
+  // teste acabou: a plataforma segue aberta para navegar, mas os esquemas pedem assinatura
+  const acabou = restante !== null && restante <= 0
 
   useEffect(() => {
-    if (!temRelogio) return
-    const t = setInterval(() => setAgora(Date.now()), 1000)
-    return () => clearInterval(t)
-  }, [temRelogio])
+    if (restante === null || restante <= 0) return
+    // setTimeout estoura acima de ~24 dias; o teste é bem menor, mas o teto evita surpresa
+    const t = setTimeout(() => setAgora(Date.now()), Math.min(restante + 500, 2 ** 31 - 1))
+    return () => clearTimeout(t)
+  }, [restante])
 
   // pergunta ao servidor quem é o dono da conta: de minuto em minuto no free, a cada 5 no pago
   // (troca de plano, sistema liberado no /admin, sessão derrubada pelo limite de aparelhos)
@@ -123,11 +129,11 @@ export function useLimiteFree(inicial: Session | null) {
 
   // ao bater zero, confere uma vez: pode ter virado pro há dez segundos
   useEffect(() => {
-    if (!bloqueado) return
+    if (!acabou) return
     let vivo = true
     void conferirSessao().then((s) => { if (vivo && s) setSessao(s) })
     return () => { vivo = false }
-  }, [bloqueado])
+  }, [acabou])
 
-  return { restante, bloqueado, sessao, perdida }
+  return { restante, acabou, sessao, perdida }
 }

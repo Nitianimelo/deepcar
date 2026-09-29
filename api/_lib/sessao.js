@@ -13,7 +13,7 @@ const COOKIE = 'deepcar_sessao'
 const DIAS = 30
 
 /** Quanto tempo de acesso o plano free da. Trocar aqui muda o produto inteiro. */
-export const MINUTOS_FREE = 10
+export const MINUTOS_FREE = 600 // 10 horas
 
 /** Planos pagos: nao tem relogio de teste. */
 export const PAGOS = new Set(['pro', 'full'])
@@ -139,7 +139,7 @@ export async function exigir(req, res, { admin = false, acesso = false } = {}) {
   }
   if (acesso && u.papel !== 'admin' && freeAcabou(u)) {
     res.status(402).json({
-      erro: `Seus ${MINUTOS_FREE} minutos de acesso gratuito terminaram.`,
+      erro: 'Seu teste gratuito terminou. Assine um plano para acessar os sistemas.',
       expirado: true,
       plano: u.plano,
     })

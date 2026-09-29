@@ -24,7 +24,7 @@ neste repositório. Leia este arquivo inteiro antes de mudar qualquer coisa.
 
 Deepcar é uma plataforma web para mecânicos consultarem **esquemas elétricos automotivos**
 (injeção leve e diesel, ABS, elétrica e câmbio), com consulta por placa, contas de usuário,
-plano free com tempo limitado e painel administrativo.
+plano de teste de 10 horas e painel administrativo.
 
 Stack: **React 19 + Vite 8 + TypeScript 6 + Tailwind CSS 4 + React Router 7**, funções serverless
 Node na Vercel (`api/`) e Postgres no **Neon**.
@@ -128,7 +128,7 @@ src/
   pages/                  Landing, Login, Cadastro, Admin, Inicio (/app), Busca, SectionPage, EsquemaPage, VeiculoPage, Conta,
                           Compartilhado (/c/:token, esquema recebido por link, sem conta, em tela cheia),
                           Privacidade (/privacidade) e ExcluirConta (/excluir-conta), com a casca components/PaginaSimples.tsx
-  layouts/AppLayout.tsx   casca do /app (sidebar, barra, LimiteFree)
+  layouts/AppLayout.tsx   casca do /app (sidebar, barra, selo do teste)
   components/             ListaEsquemas (lista da seção e da busca), DetalhesEsquema, EsquemaViewer, CompartilharEsquema, Sidebar, LimiteFree, LogoMarca, Tooltips…
   components/SeletorComponente.tsx  lista com busca dos componentes do esquema (tecla /), dentro do EsquemaViewer
   components/PaletaBusca.tsx        busca rápida Ctrl+K / ⌘K de qualquer tela do app (placa, esquema, últimas consultas)
@@ -136,9 +136,11 @@ src/
   lib/seo.ts              useTitulo(): título da aba ao navegar (páginas públicas já saem certas do build)
   lib/transicao.ts        marcarTitulo(): título que "voa" da lista ao cabeçalho do esquema (View Transitions)
   lib/auth.ts             cliente de sessão (cookie no servidor; localStorage só guarda retrato do perfil)
-  lib/plano.ts            relógio do plano free no navegador (espelha MINUTOS_FREE) e reconferência da sessão
-  lib/acesso.tsx          podeSecao()/podePlaca() e useAcesso(): cadeado no menu e telas fora do plano
+  lib/plano.ts            relógio do teste no navegador (espelha MINUTOS_FREE, DURACAO_FREE nos textos) e reconferência da sessão
+  lib/acesso.tsx          podeSecao()/podePlaca() e useAcesso() (com testeAcabou): cadeado no menu e telas fora do plano
   components/BloqueioPlano.tsx  tela "não faz parte do seu plano" (seção, esquema e placa)
+  components/LimiteFree.tsx     SeloTeste: "Plano de teste" na barra; com o teste vencido vira "Assinar plano"
+  components/AssineParaAcessar.tsx  teste vencido: EsquemaEmbacado (esquema borrado) e ConviteAssinatura (cards Full/Pro)
   lib/validacao.ts        validação de cadastro no navegador (espelha api/_lib/validar.js)
   lib/acervo.ts           leitura do acervo (VITE_ACERVO_URL ou /acervo)
   lib/busca.ts            busca de texto no catálogo (normalizar, indexar, filtrar)
@@ -197,7 +199,9 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - `ADMIN_EMAIL`/`ADMIN_SENHA`: só para o primeiro `POST /api/admin/inicializar`; apagar da Vercel depois.
 - Toda rota protegida confere a sessão no servidor com `exigir(req, res, { admin?, acesso? })`.
   O localStorage (`deepcar.perfil`) só desenha a tela e **nunca** libera acesso.
-- Rotas que entregam conteúdo usam `acesso: true` (free vencido → 402). Rotas autenticadas respondem `Cache-Control: private, no-store`.
+- Rotas que entregam conteúdo usam `acesso: true` (free vencido → 402). Teste vencido **não trava a navegação**: o
+  esquema abre embaçado e a placa mostra o convite (`AssineParaAcessar.tsx`); o borrado nunca usa o `EsquemaViewer`
+  (em tela cheia o filtro do pai deixa de valer). Rotas autenticadas respondem `Cache-Control: private, no-store`.
 - Senha: scrypt (`scrypt$sal$hash`). Login responde a mesma mensagem para e-mail inexistente e senha errada.
 
 ---
@@ -207,7 +211,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Código, nomes e comentários em **português** (`usuario`, `sessao`, `exigir`, `conferirSessao`).
 - Comentários explicam o **porquê**, não o quê. Em `api/` os comentários estão sem acento; siga o arquivo.
 - Regras duplicadas navegador/servidor **precisam mudar juntas**:
-  - `MINUTOS_FREE`: `api/_lib/sessao.js` ↔ `src/lib/plano.ts`
+  - `MINUTOS_FREE`: `api/_lib/sessao.js` ↔ `src/lib/plano.ts` (e o texto `DURACAO_FREE` ao lado)
   - validação de cadastro: `api/_lib/validar.js` ↔ `src/lib/validacao.ts`
   - chaves das seções: `src/data/nav.ts` ↔ `api/_lib/planos.js` (`SECOES`) ↔ `db/005` (valores iniciais)
   A regra que vale é a do servidor; a do navegador só dá resposta imediata.

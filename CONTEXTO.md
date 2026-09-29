@@ -9,7 +9,7 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ---
 
-## Estado atual (atualizado em 2026-09-24)
+## Estado atual (atualizado em 2026-09-29)
 
 - **Produção:** **https://deepcar.app.br** (Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub
   `Nitianimelo/deepcar`). `www.deepcar.app.br` redireciona para o principal; `deepcar.vercel.app` continua respondendo.
@@ -23,14 +23,17 @@ Regras de trabalho estão em `AGENTE.md`.
     Movimento na landing (`src/components/landing/`): fundo com pulsos de corrente na grade, entrada das dobras no scroll,
     barra de progresso no cabeçalho e cards de plano com holofote, borda viva no Full e preço contando.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
-  - Plano **free = 10 minutos de acesso**, contados a partir do primeiro acesso; depois bloqueia a tela e a API responde 402.
+  - **Plano de teste (free) = 10 horas**, contadas a partir do primeiro acesso. Sem contador na tela: a barra mostra só o
+    selo "Plano de teste". Quando acaba, a plataforma continua abrindo (menu, montadoras, listas, busca), o selo vira
+    "Assinar plano" e o esquema abre **embaçado** com o convite "Assine um plano para acessar o sistema" (cards Full/Pro,
+    chave Mensal/Anual, checkout preenchido). A consulta por placa mostra o mesmo convite; a API responde 402.
   - **Pagamento pela Cakto**: produtos Pro (R$ 47,90) e Full (R$ 59,90) mensais, e **Pro Anual (R$ 289,49) e Full Anual
     (R$ 366,95)** como compra única de 12 meses em até 12x (12x com os juros da Cakto = exatamente R$ 29,90 / R$ 37,90); webhook em `/api/webhooks/cakto` que troca o plano sozinho,
     pendências para quem paga sem conta e aba "Assinaturas" no `/admin`. O anual vence sozinho (`vencerAnual`).
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link,
     aparelhos conectados e "desconectar"), aba **Planos** (o que cada plano libera) e cofre de chaves.
   - **Acesso por plano:** Pro = injeção leve, ABS e elétrica leve, 2 aparelhos, sem placa; Full = tudo, 4 aparelhos;
-    Free (teste de 10 min) = tudo, 2 aparelhos. Sistemas fora do plano aparecem com cadeado e abrem a tela de upgrade.
+    Free (teste de 10 h) = tudo, 2 aparelhos. Sistemas fora do plano aparecem com cadeado e abrem a tela de upgrade.
   - Tela inicial `/app`: cards "Consultar por placa" e "Buscar esquema" e card "Últimas consultas" (localStorage, por conta).
     Botão "Início" no menu lateral (e o logo leva para lá).
   - Busca geral `/app/busca?q=` em todos os sistemas (modelo, motor, código, gerenciamento, fabricação e nome do sistema).
@@ -78,7 +81,10 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] O webhook da Cakto nunca recebeu uma compra real (só o evento de teste, 21/09, respondido 200). Primeira venda:
       conferir no /admin → Assinaturas.
 - [ ] Portal do assinante (trocar cartão, cancelar) — hoje isso é feito pelo painel da Cakto.
-- [ ] Barra superior do app no celular com plano Free: o contador de tempo aperta o campo de placa (o texto "Placa · ABC1D23" aparece cortado). No Início não acontece mais (o campo não aparece lá); nas outras telas continua.
+- [ ] Barra superior do app no celular com plano de teste: o selo ("Teste" no celular, "Plano de teste" a partir de 640 px)
+      ou o botão "Assinar" ainda apertam o campo de placa ("PLACA ·" cortado). No Início não acontece (o campo não aparece lá).
+- [ ] **App Android** ainda fala em "10 minutos" e tem a tela de bloqueio antiga: o prazo de 10 h já vale nele (vem do
+      servidor em `freeExpiraEm`), mas textos e o fluxo embaçado precisam de uma versão nova do app.
 - [ ] Conferir numa placa real se chassi e procedência aparecem (nomes dos campos não estão na documentação pública
       do Falcon; se não aparecerem, mandar a resposta bruta para ajustar `achar()` em `provedores/falcon.mjs`). Confirmar com o Falcon se o endereço
       `beta.falcon-server.com.br/data-hub` é o definitivo. Plano grátis = 10 consultas/hora para todos os usuários juntos.
@@ -95,6 +101,35 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-09-29 · Teste de 10 horas, selo "Plano de teste" e esquema embaçado depois do teste
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** aumentar o teste grátis para 10 h; tirar o contador da barra e mostrar só "PLANO DE TESTE"; depois do
+  teste manter a plataforma abrindo igual, com todos os sistemas, mas o sistema aberto fica embaçado com "assine um plano
+  para acessar o sistema". Fluxo teste → assinatura mais claro e fluido, com botões e cards.
+- **O que mudou:**
+  - `MINUTOS_FREE` 10 → **600** em `api/_lib/sessao.js` e `src/lib/plano.ts` (juntos, §8). Novo `DURACAO_FREE = '10 horas'`
+    para os textos. Mensagem do 402: "Seu teste gratuito terminou. Assine um plano para acessar os sistemas."
+  - `src/lib/plano.ts`: `useLimiteFree` devolve `acabou` (antes `bloqueado`) e troca o `setInterval` de 1 s por um
+    `setTimeout` que dispara no fim do teste. `mmss` virou `tempoRestante` ("9 h 25 min"). Rótulo do plano free: "Teste".
+  - `src/components/LimiteFree.tsx`: saíram `ContadorFree` e `BloqueioFree` (a tela que cobria tudo). Entrou `SeloTeste`:
+    pílula "Plano de teste" (link para a aba Plano); com o teste vencido vira o botão "Assinar plano".
+  - `src/components/AssineParaAcessar.tsx` (novo): `EsquemaEmbacado` (primeira fatia do esquema numa `<img>` borrada —
+    de propósito **não** o `EsquemaViewer`, porque a tela cheia dele escaparia do filtro) e `ConviteAssinatura` (cards
+    Full e Pro com resumo, preço por ciclo, chave Mensal/Anual, checkout preenchido, "Comparar planos", suporte; texto
+    próprio para anual vencido).
+  - `src/lib/acesso.tsx`: contexto `TesteAcabou` (o `AppLayout` fornece) e `useAcesso().testeAcabou`.
+  - `EsquemaPage`: teste vencido → cabeçalho e dados normais, desenho embaçado, sem "Compartilhar" (a API daria 402).
+  - `VeiculoPage`: teste vencido → convite direto, sem chamar a API de placa.
+  - `src/data/planos.ts`: campo `resumo` (3 linhas por plano) para os cards pequenos.
+  - Textos: Cadastro ("plano de teste: 10 horas com todos os sistemas"), Conta ("restam 9 h 25 min das 10 horas"), /admin.
+- **Banco:** sem mudança. Quem já tem `free_expira_em` gravado mantém a janela antiga (quem usou os 10 min já está no
+  fluxo embaçado); o /admin pode liberar um teste novo, que já sai com 10 h.
+- **Variáveis/infra:** sem mudança.
+- **Verificação:** build ok; oxlint 10 avisos (igual antes). `vite preview` com o acervo do R2 + `/api/sessao` simulado,
+  WebKit 1440 e 390 px: teste ativo (selo, esquema normal, conta), teste vencido (esquema embaçado com cards, seção
+  navegável, placa com convite, início); sem rolagem horizontal; sem erros no console.
+- **Pendências:** app Android (textos de 10 min e bloqueio antigo); selo/botão ainda apertam o campo de placa no celular.
 
 ### 2026-09-24 · App Android publicado na Google Play (em revisão) e documentação para agentes
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

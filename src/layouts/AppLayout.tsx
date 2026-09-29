@@ -4,10 +4,10 @@ import { Menu } from 'lucide-react'
 import { PlateSearch } from '../components/PlateSearch'
 import { PaletaBusca } from '../components/PaletaBusca'
 import { Sidebar } from '../components/Sidebar'
-import { BloqueioFree, ContadorFree } from '../components/LimiteFree'
+import { SeloTeste } from '../components/LimiteFree'
 import { useSessao } from '../lib/auth'
 import { useLimiteFree } from '../lib/plano'
-import { podePlaca, SessaoAtual } from '../lib/acesso'
+import { podePlaca, SessaoAtual, TesteAcabou } from '../lib/acesso'
 
 const COLLAPSE_KEY = 'deepcar.sidebar.collapsed'
 
@@ -39,6 +39,7 @@ export default function AppLayout() {
 
   return (
     <SessaoAtual.Provider value={atual}>
+    <TesteAcabou.Provider value={limite.acabou}>
     <div className="flex h-full min-h-0">
       <Sidebar
         collapsed={collapsed}
@@ -65,16 +66,15 @@ export default function AppLayout() {
           {naoEInicio && <div className="hidden flex-1 md:block" />}
           <PaletaBusca />
 
-          <ContadorFree restante={limite.restante} />
+          <SeloTeste restante={limite.restante} />
         </header>
 
         <main className="app-conteudo schematic-grid min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>
-
-      {limite.bloqueado && <BloqueioFree />}
     </div>
+    </TesteAcabou.Provider>
     </SessaoAtual.Provider>
   )
 }

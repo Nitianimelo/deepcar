@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ erro: 'Use GET.' })
   }
   // consulta de placa custa cota do provedor: só para quem está logado e com acesso
-  // em dia — free com os minutos vencidos recebe 402 e a tela pede a assinatura
+  // em dia — free com o teste vencido recebe 402 e a tela pede a assinatura
   const u = await exigir(req, res, { acesso: true })
   if (!u) return
   // busca pela placa e item do plano (Full na pagina de vendas): o Pro recebe 403 e a tela oferece o upgrade

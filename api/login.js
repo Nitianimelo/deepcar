@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     }
     // pagamento que chegou enquanto a pessoa estava fora (ou vinculado no /admin)
     const comPlano = await consumirPendente(await vencerAnual(u))
-    // quem entra pela primeira vez no plano free começa a contar os minutos agora
+    // quem entra pela primeira vez no plano free começa a contar o teste agora
     const comJanela = await abrirJanelaFree(comPlano)
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])
     // passou do limite de aparelhos do plano: cai o que estava parado havia mais tempo

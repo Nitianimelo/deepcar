@@ -8,6 +8,7 @@ import { LogoMarca } from '../components/LogoMarca'
 import { BotaoCompartilhar } from '../components/CompartilharEsquema'
 import { registrarRecente } from '../lib/recentes'
 import { BloqueioPlano } from '../components/BloqueioPlano'
+import { EsquemaEmbacado } from '../components/AssineParaAcessar'
 import { useAcesso } from '../lib/acesso'
 import { useTitulo } from '../lib/seo'
 
@@ -25,6 +26,8 @@ export default function EsquemaPage() {
 function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
   const meta = SECTION_META[secao]
   const carga = useCarga(() => carregarEsquema(id), [id])
+  // teste gratuito vencido: a página abre (título, montadora, dados), mas o desenho fica embaçado
+  const { testeAcabou } = useAcesso()
   useTitulo(carga.estado === 'ok' ? `${carga.dados.marca} ${carga.dados.modelo} · ${meta?.titulo ?? ''} · Deepcar` : null)
 
   // entra nas últimas consultas da tela inicial
@@ -89,7 +92,7 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
                   {d.subtitulo && <p className="mt-1 text-ink-3">{subtituloCurto(d.subtitulo)}</p>}
                 </div>
               </div>
-              <BotaoCompartilhar d={d} />
+              {!testeAcabou && <BotaoCompartilhar d={d} />}
             </div>
 
             <dl className={`mt-5 grid grid-cols-2 gap-3 ${d.specs.length ? '' : 'hidden'} md:grid-cols-4`}>
@@ -102,7 +105,7 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
             </dl>
 
             <div className="sem-impressao mt-6">
-              <EsquemaViewer key={d.id} d={d} />
+              {testeAcabou ? <EsquemaEmbacado d={d} /> : <EsquemaViewer key={d.id} d={d} />}
             </div>
           </>
         )

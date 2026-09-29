@@ -38,7 +38,7 @@ export default async function handler(req, res) {
 
     // pagou antes de ter conta: o plano entra agora, sem passar pelo bloqueio do free
     const comPlano = await consumirPendente(u)
-    // a conta nasce free: o relógio dos minutos começa aqui, porque o cadastro já entra no app
+    // a conta nasce free: o relógio do teste começa aqui, porque o cadastro já entra no app
     const comJanela = await abrirJanelaFree(comPlano)
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])
     porCookie(res, token, expira)

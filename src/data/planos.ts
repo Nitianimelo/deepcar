@@ -16,6 +16,8 @@ export type PlanoVenda = {
   precoAnual: string
   para: string
   itens: string[]
+  /** a lista em três linhas, para os cartões pequenos (esquema embaçado depois do teste) */
+  resumo: string[]
   /** o que aparece em destaque na página de vendas */
   destaque: boolean
 }
@@ -28,6 +30,7 @@ export const PLANOS_VENDA: PlanoVenda[] = [
     precoAnual: '29,90',
     para: 'Para a oficina de veículos leves.',
     itens: ['Injeção eletrônica leve', 'ABS', 'Elétrica leve', '2 dispositivos conectados', 'App mobile', 'Suporte'],
+    resumo: ['Injeção leve, ABS e elétrica leve', '2 dispositivos conectados', 'App mobile e suporte'],
     destaque: false,
   },
   {
@@ -49,6 +52,7 @@ export const PLANOS_VENDA: PlanoVenda[] = [
       'App mobile',
       'Suporte',
     ],
+    resumo: ['Todos os sistemas, leve e diesel', 'Busca pela placa', '4 dispositivos conectados'],
     destaque: true,
   },
 ]

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { BadgeDollarSign, Check, Copy, Eye, EyeOff, KeyRound, Layers, Link2, Loader2, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
 import { useSessao } from '../lib/auth'
-import { mmss, rotuloPlano } from '../lib/plano'
+import { rotuloPlano, tempoRestante } from '../lib/plano'
 import { mascararWhatsapp, SENHA_MINIMA } from '../lib/validacao'
 import { SECTION_META, type SectionKey } from '../data/nav'
 
@@ -80,7 +80,7 @@ const data = (s: string | null) => (s ? new Date(s).toLocaleDateString('pt-BR') 
 function teste(ate: string | null) {
   if (!ate) return 'teste não começou'
   const falta = new Date(ate).getTime() - Date.now()
-  return falta > 0 ? `teste: ${mmss(falta)}` : 'teste encerrado'
+  return falta > 0 ? `teste: ${tempoRestante(falta)}` : 'teste encerrado'
 }
 
 export default function Admin() {

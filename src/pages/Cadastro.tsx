@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, AtSign, Check, CircleAlert, CircleCheck, Eye, EyeOff, LockKeyhole, Smartphone, Timer, UserRound } from 'lucide-react'
 import { registrar, type ErroApi } from '../lib/auth'
-import { MINUTOS_FREE } from '../lib/plano'
+import { DURACAO_FREE } from '../lib/plano'
 import {
   emailValido,
   forcaSenha,
@@ -242,8 +242,8 @@ export default function Cadastro() {
               <div className="flex items-start gap-3 rounded-xl border seam bg-well/60 px-4 py-3">
                 <Timer size={17} className="mt-[2px] flex-none text-trace" />
                 <p className="text-[13px] leading-relaxed text-ink-3">
-                  Você começa no <b className="font-medium text-ink-2">plano Free</b>: {MINUTOS_FREE} minutos de acesso
-                  para conhecer o acervo. Depois disso é só assinar ou falar com a gente para continuar.
+                  Você começa no <b className="font-medium text-ink-2">plano de teste</b>: {DURACAO_FREE} com todos os
+                  sistemas liberados. Depois é só escolher um plano para continuar abrindo os esquemas.
                 </p>
               </div>
 
