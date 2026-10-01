@@ -101,6 +101,31 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-01 · API de Conversões da Meta (cadastro e compra pelo servidor)
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** além do pixel, mandar os eventos pelo servidor (API de Conversões) para não perder conversão em
+  bloqueador/Safari/iOS e medir as vendas, que acontecem no checkout da Cakto (fora do site).
+- **O que mudou:**
+  - `api/_lib/meta.js` (novo): `enviarEvento` faz POST em `graph.facebook.com/v23.0/980567241730551/events` com
+    e-mail, WhatsApp (com DDI 55), nome e id em sha-256, mais IP, navegador e os cookies `_fbp`/`_fbc`. Lê
+    `META_CAPI_TOKEN` (e o opcional `META_TEST_EVENT_CODE`) do cofre. Sem token não envia nada. Espera no máximo 2,5 s e
+    nunca derruba quem chamou.
+  - `api/registrar.js`: `CompleteRegistration` quando o corpo traz `evento_id`. Só o site manda esse campo (o mesmo
+    `eventID` do pixel, para a Meta juntar navegador + servidor). Cadastro pelo app Android não manda e não vai para a Meta.
+  - `api/webhooks/cakto.js`: `Purchase` em `purchase_approved`/`subscription_created` (venda nova; renovação fica de
+    fora), com valor em BRL, `content_name` = plano + ciclo, `event_id` = `compra-<pedido>`. O id fixo faz a Meta
+    contar uma vez se vierem os dois eventos do mesmo pedido ou um reenvio.
+    Histórico do banco em 01/10: só 1 compra real, chegou como `purchase_approved` sozinho.
+  - `src/pages/Cadastro.tsx` + `src/lib/pixel.ts` + `src/lib/auth.ts`: o cadastro gera `cad-<uuid>`, manda no corpo e no
+    `eventID` do pixel.
+  - `src/pages/Privacidade.tsx`: descreve o envio pelo servidor (hash, IP, navegador; app Android fora).
+- **Banco:** sem mudança. **Variáveis/infra:** cofre `META_CAPI_TOKEN` (obrigatório) e `META_TEST_EVENT_CODE` (só
+  para testar; apagar depois). O pixel/conjunto de dados "Deepcar teste 1" é da BM **Sigtrack rastreadores**
+  (260495304611474), compartilhado com a conta de anúncios Chipro (1126910829765165).
+- **Verificação:** build e lint (10 avisos, os mesmos). Payload conferido com `fetch` simulado.
+- **Pendências:** gravar `META_CAPI_TOKEN` no cofre e conferir em "Eventos de teste". Não ativar também o pixel no
+  produto da Cakto com evento de compra, ou a venda conta duas vezes (ids diferentes).
+
 ### 2026-10-01 · Pixel da Meta nas páginas públicas
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** instalar o Pixel da Meta (id `980567241730551`, do Gerenciador de Eventos) para medir anúncios no Facebook/Instagram.

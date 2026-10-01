@@ -7,8 +7,11 @@ import { sql, um } from '../_lib/db.js'
 import { acaoDoEvento, conferirEntrega, idDaEntrega, lerCorpoCru, normalizar, planoDoProduto } from '../_lib/cakto.js'
 import { ativarPlano, derrubarParaFree, marcarAtraso, MOTIVOS } from '../_lib/assinatura.js'
 import { segredo } from '../_lib/segredos.js'
+import { enviarEvento } from '../_lib/meta.js'
 
 export const config = { runtime: 'nodejs' }
+
+const VENDA_NOVA = new Set(['purchase_approved', 'subscription_created'])
 
 // so para o log nao repetir a cada evento na mesma instancia
 let avisou = false
@@ -91,6 +94,15 @@ export default async function handler(req, res) {
       }
       const { plano, ciclo } = produto
       const r = await ativarPlano(plano, { ...d, ciclo, eventoId: id })
+      // venda nova para os anuncios. Renovacao fica de fora (nao veio de anuncio). O id e o do pedido: se a Cakto
+      // mandar purchase_approved e subscription_created do mesmo pedido, ou reenviar, a Meta conta uma vez so
+      if (VENDA_NOVA.has(d.evento) && d.pedidoId && r.estado !== 'ignorado') {
+        await enviarEvento({
+          nome: 'Purchase', id: `compra-${d.pedidoId}`, url: 'https://deepcar.app.br/#planos',
+          pessoa: { email: d.email, whatsapp: d.whatsapp, nome: d.nome, idExterno: r.usuarioId },
+          dados: { value: d.valor ?? undefined, currency: 'BRL', content_name: `${plano} ${ciclo}`, content_type: 'product' },
+        })
+      }
       await concluir(id, r.estado === 'aplicado' ? 'aplicado' : r.estado === 'pendente' ? 'pendente' : 'ignorado', {
         plano, usuarioId: r.usuarioId, detalhe: r.detalhe ?? (ciclo === 'anual' ? 'anual' : null),
       })

@@ -99,6 +99,8 @@ export async function registrar(dados: {
   whatsapp: string
   senha: string
   oficina?: string
+  /** id do CompleteRegistration do pixel: o servidor manda o mesmo pela API de Conversões */
+  evento_id?: string
 }): Promise<Session> {
   const s = (await post('/api/registrar', dados)) as Session
   guardarPerfil(s)

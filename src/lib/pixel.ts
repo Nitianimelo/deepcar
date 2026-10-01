@@ -56,7 +56,12 @@ export function paginaVista(caminho: string) {
   carregar()?.('track', 'PageView')
 }
 
+/** Id que o navegador e o servidor (api/_lib/meta.js) mandam no mesmo evento: a Meta junta os dois e conta um. */
+export function novoEventoId() {
+  return `cad-${crypto.randomUUID()}`
+}
+
 /** Conta criada. Só existe se o pixel já foi carregado (o cadastro é página pública). */
-export function cadastroConcluido() {
-  window.fbq?.('track', 'CompleteRegistration')
+export function cadastroConcluido(eventoId: string) {
+  window.fbq?.('track', 'CompleteRegistration', {}, { eventID: eventoId })
 }

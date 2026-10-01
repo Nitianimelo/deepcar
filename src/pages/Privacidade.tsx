@@ -49,8 +49,11 @@ export default function Privacidade() {
           <b>Anúncios (só no site):</b> nas páginas públicas do site (página inicial, cadastro, login e esta política)
           usamos o Pixel da Meta para medir os nossos anúncios no Facebook e no Instagram. Ele registra a visita à página
           e a criação de conta, junto com o endereço da página, dados técnicos do navegador e cookies da própria Meta.
-          Dentro da plataforma, nos esquemas, nas placas consultadas e nos links compartilhados ele não é carregado. O
-          aplicativo Android não usa o pixel. Para limitar o uso desses dados em anúncios, use as configurações de
+          Quando você cria a conta pelo site ou assina um plano, o nosso servidor também avisa a Meta (API de Conversões)
+          com o e-mail, o WhatsApp e o nome em formato irreversível (hash), o endereço IP e o navegador, para ela saber se
+          a conta ou a compra veio de um anúncio. Dentro da plataforma, nos esquemas, nas placas consultadas e nos links
+          compartilhados nada disso é enviado. O aplicativo Android não usa o pixel e cadastros feitos por ele não são
+          informados à Meta. Para limitar o uso desses dados em anúncios, use as configurações de
           anúncios da sua conta da Meta ou bloqueie cookies de terceiros no navegador.
         </li>
         <li>
@@ -72,7 +75,7 @@ export default function Privacidade() {
         <li>Cloudflare: armazenamento dos esquemas (não recebe dados pessoais).</li>
         <li>Cakto: processamento dos pagamentos.</li>
         <li>Falcon Data Hub: consulta dos dados do veículo a partir da placa.</li>
-        <li>Meta (Facebook/Instagram): medição dos anúncios pelo pixel, só nas páginas públicas do site.</li>
+        <li>Meta (Facebook/Instagram): medição dos anúncios (pixel nas páginas públicas do site e aviso de cadastro e compra).</li>
       </ul>
       <p>Também podemos informar dados quando uma lei ou ordem judicial exigir. Os dados trafegam sempre criptografados (HTTPS).</p>
 

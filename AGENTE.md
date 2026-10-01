@@ -41,7 +41,7 @@ Node na Vercel (`api/`) e Postgres no **Neon**.
 | Banco | Neon (Postgres), ligado à Vercel pela integração | schema em `db/*.sql`, **não** é aplicado pelo deploy |
 | Acervo (catálogo, esquemas, imagens) | Cloudflare R2 | **não** está no git nem na Vercel; front lê de `VITE_ACERVO_URL` |
 | Segredos de infraestrutura | Variáveis de ambiente da Vercel | `DATABASE_URL`, `SESSAO_SEGREDO`, `SEGREDOS_CHAVE` |
-| Chaves de API de terceiros | Cofre no banco (tabela `segredos`), editável em `/admin` | `FALCON_TOKEN`, `CAKTO_WEBHOOK_SECRET`, `CAKTO_PRODUTO_PRO/FULL`, `CAKTO_PRODUTO_PRO_ANUAL/FULL_ANUAL` |
+| Chaves de API de terceiros | Cofre no banco (tabela `segredos`), editável em `/admin` | `FALCON_TOKEN`, `CAKTO_WEBHOOK_SECRET`, `CAKTO_PRODUTO_PRO/FULL`, `CAKTO_PRODUTO_PRO_ANUAL/FULL_ANUAL`, `META_CAPI_TOKEN` (`META_TEST_EVENT_CODE` só para testar) |
 | Pagamento | Cakto: Pro e Full **mensais** (assinatura) e **anuais** (compra única de 12 meses, até 12x); webhook em `/api/webhooks/cakto` | troca o plano sozinha; MCP `cakto` no escopo de usuário |
 
 Branch `main` não tem proteção: qualquer push publica. Por isso as regras da seção 0.
@@ -240,6 +240,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Deploy da Vercel não roda migração nem copia o acervo.
 - **Pixel da Meta (`src/lib/pixel.ts`) só roda nas páginas públicas.** Nunca carregue em `/app`, `/admin` ou `/c/`
   (a URL leva placa e token). Página privada nova fora desses prefixos? Inclua em `PRIVADAS`.
+  O servidor manda `CompleteRegistration` e `Purchase` pela API de Conversões (`api/_lib/meta.js`); o cadastro só
+  vai para a Meta quando vem do site (`evento_id` no corpo). Não use isso nas rotas do app Android.
 - **Política de privacidade (`src/pages/Privacidade.tsx`) descreve o que o código coleta.** Mudou coleta, fornecedor ou
   prazo? Atualize o texto e a data no mesmo commit. Ela é o endereço declarado na Google Play.
 - **SEO:** metatags e dados estruturados (JSON-LD) ficam no `index.html`; página pública nova = entrada em
