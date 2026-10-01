@@ -5,7 +5,7 @@ import { PaginaSimples } from '../components/PaginaSimples'
 import { useTitulo } from '../lib/seo'
 
 const EMAIL = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'nitiani@compilla.dev'
-const ATUALIZADA_EM = '24 de setembro de 2026'
+const ATUALIZADA_EM = '1º de outubro de 2026'
 
 export default function Privacidade() {
   useTitulo('Política de privacidade · Deepcar')
@@ -46,13 +46,22 @@ export default function Privacidade() {
           ele foi aberto e um código aleatório do aparelho que abriu (para o limite de aberturas funcionar).
         </li>
         <li>
+          <b>Anúncios (só no site):</b> nas páginas públicas do site (página inicial, cadastro, login e esta política)
+          usamos o Pixel da Meta para medir os nossos anúncios no Facebook e no Instagram. Ele registra a visita à página
+          e a criação de conta, junto com o endereço da página, dados técnicos do navegador e cookies da própria Meta.
+          Dentro da plataforma, nos esquemas, nas placas consultadas e nos links compartilhados ele não é carregado. O
+          aplicativo Android não usa o pixel. Para limitar o uso desses dados em anúncios, use as configurações de
+          anúncios da sua conta da Meta ou bloqueie cookies de terceiros no navegador.
+        </li>
+        <li>
           <b>Preferências do aparelho:</b> tema do desenho, menu recolhido e as últimas consultas ficam no armazenamento
           local do navegador ou do app, e não são enviados para nós.
         </li>
       </ul>
       <p>
-        Não vendemos dados, não exibimos anúncios e não usamos ferramentas de rastreamento de terceiros. O aplicativo não
-        acessa contatos, localização, câmera, microfone nem arquivos do aparelho.
+        Não vendemos dados e não exibimos anúncios. Fora o Pixel da Meta nas páginas públicas do site, descrito acima,
+        não usamos ferramentas de rastreamento de terceiros. O aplicativo não acessa contatos, localização, câmera,
+        microfone nem arquivos do aparelho.
       </p>
 
       <h2>Com quem os dados são compartilhados</h2>
@@ -63,6 +72,7 @@ export default function Privacidade() {
         <li>Cloudflare: armazenamento dos esquemas (não recebe dados pessoais).</li>
         <li>Cakto: processamento dos pagamentos.</li>
         <li>Falcon Data Hub: consulta dos dados do veículo a partir da placa.</li>
+        <li>Meta (Facebook/Instagram): medição dos anúncios pelo pixel, só nas páginas públicas do site.</li>
       </ul>
       <p>Também podemos informar dados quando uma lei ou ordem judicial exigir. Os dados trafegam sempre criptografados (HTTPS).</p>
 

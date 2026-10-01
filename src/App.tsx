@@ -1,6 +1,7 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Landing from './pages/Landing'
+import { paginaVista } from './lib/pixel'
 
 /** Redireciona mantendo a query (`?marca=Volvo` de link salvo não pode se perder). */
 function Redireciona({ para }: { para: string }) {
@@ -24,9 +25,17 @@ const Compartilhado = lazy(() => import('./pages/Compartilhado'))
 const Privacidade = lazy(() => import('./pages/Privacidade'))
 const ExcluirConta = lazy(() => import('./pages/ExcluirConta'))
 
+/** PageView do pixel da Meta a cada troca de página (o filtro das rotas privadas fica em lib/pixel). */
+function PixelMeta() {
+  const { pathname } = useLocation()
+  useEffect(() => { paginaVista(pathname) }, [pathname])
+  return null
+}
+
 export default function App() {
   return (
     <Suspense fallback={<div aria-busy="true" className="min-h-screen bg-bench-1" />}>
+      <PixelMeta />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

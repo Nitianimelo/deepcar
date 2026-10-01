@@ -238,6 +238,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   em `~/Developer/deepcar` (fora do iCloud) e **apague a cópia no fim**: o dono quer o SSD livre. A cópia de referência no
   Mac fica no iCloud em `Grupo Inttus/deepcar-main` (sem `node_modules`/`dist`); a fonte da verdade é o GitHub.
 - Deploy da Vercel não roda migração nem copia o acervo.
+- **Pixel da Meta (`src/lib/pixel.ts`) só roda nas páginas públicas.** Nunca carregue em `/app`, `/admin` ou `/c/`
+  (a URL leva placa e token). Página privada nova fora desses prefixos? Inclua em `PRIVADAS`.
 - **Política de privacidade (`src/pages/Privacidade.tsx`) descreve o que o código coleta.** Mudou coleta, fornecedor ou
   prazo? Atualize o texto e a data no mesmo commit. Ela é o endereço declarado na Google Play.
 - **SEO:** metatags e dados estruturados (JSON-LD) ficam no `index.html`; página pública nova = entrada em

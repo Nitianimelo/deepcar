@@ -101,6 +101,24 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-01 · Pixel da Meta nas páginas públicas
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** instalar o Pixel da Meta (id `980567241730551`, do Gerenciador de Eventos) para medir anúncios no Facebook/Instagram.
+- **O que mudou:**
+  - `src/lib/pixel.ts` (novo): carrega o `fbevents.js` só na primeira página **pública** e manda `PageView`.
+    `/app`, `/admin` e `/c/` nunca carregam nem enviam nada, porque a URL leva a placa (`/app/veiculo/ABC1234`) e o
+    token do link compartilhado. A captura automática fica desligada (`autoConfig false`, `disablePushState`), e
+    `allowDuplicatePageViews` deixa a troca de rota do React contar (sem ela o fbevents descarta todo PageView depois do 1º).
+  - `src/App.tsx`: componente `PixelMeta` chama `paginaVista(pathname)` a cada troca de rota.
+  - `src/pages/Cadastro.tsx`: evento `CompleteRegistration` quando a conta é criada.
+  - `src/pages/Privacidade.tsx`: nova seção "Anúncios (só no site)", Meta na lista de fornecedores, frase "não usamos
+    rastreamento de terceiros" ajustada, data 1º/10/2026. O app Android **não** usa o pixel (Segurança dos dados da Play não muda).
+- **Banco:** sem mudança. **Variáveis/infra:** sem mudança (o id do pixel é público e fica no código).
+- **Verificação:** build e lint (10 avisos, os mesmos). Chromium com `vite preview`: `/`, `/cadastro`, `/privacidade`
+  (carga e navegação interna) enviam `PageView`; `/app/veiculo/...`, `/c/...` e `/admin` não fazem nenhuma requisição à Meta.
+  `CompleteRegistration` não foi testado de ponta a ponta (cadastro precisa do `vercel dev`/produção).
+- **Pendências:** compra (`Purchase`) acontece no checkout da Cakto. Configurar o pixel no produto da Cakto para medir vendas.
+
 ### 2026-09-29 · deepcar.vercel.app redireciona para deepcar.app.br
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** o site ainda abria às vezes pelo endereço da Vercel; deixar só `deepcar.app.br`.

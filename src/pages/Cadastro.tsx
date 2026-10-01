@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, AtSign, Check, CircleAlert, CircleCheck, Eye, EyeOff, LockKeyhole, Smartphone, Timer, UserRound } from 'lucide-react'
 import { registrar, type ErroApi } from '../lib/auth'
+import { cadastroConcluido } from '../lib/pixel'
 import { DURACAO_FREE } from '../lib/plano'
 import {
   emailValido,
@@ -80,6 +81,7 @@ export default function Cadastro() {
         whatsapp: whatsappParaApi(d.whatsapp),
         senha: d.senha,
       })
+      cadastroConcluido()
       // veio da busca por placa na landing? cai direto no veículo consultado
       const destino = (loc.state as { from?: string } | null)?.from ?? '/app'
       nav(destino, { replace: true })
