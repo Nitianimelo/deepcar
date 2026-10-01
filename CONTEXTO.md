@@ -123,8 +123,11 @@ Regras de trabalho estão em `AGENTE.md`.
   para testar; apagar depois). O pixel/conjunto de dados "Deepcar teste 1" é da BM **Sigtrack rastreadores**
   (260495304611474), compartilhado com a conta de anúncios Chipro (1126910829765165).
 - **Verificação:** build e lint (10 avisos, os mesmos). Payload conferido com `fetch` simulado.
-- **Pendências:** gravar `META_CAPI_TOKEN` no cofre e conferir em "Eventos de teste". Não ativar também o pixel no
-  produto da Cakto com evento de compra, ou a venda conta duas vezes (ids diferentes).
+- **Token:** `META_CAPI_TOKEN` gravado no cofre em 01/10 (gerado no Gerenciador de Eventos, integração direta com a
+  Quality API). Teste com `test_event_code` TEST49823: `CompleteRegistration` e `Purchase` chegaram como "Processado",
+  origem Servidor. `META_TEST_EVENT_CODE` **não** foi gravado no cofre: produção conta de verdade.
+- **Pendências:** não ativar também o pixel no produto da Cakto com evento de compra, ou a venda conta duas vezes
+  (ids diferentes). Primeiro cadastro e primeira venda reais: conferir no Gerenciador de Eventos.
 
 ### 2026-10-01 · Pixel da Meta nas páginas públicas
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
