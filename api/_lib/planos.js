@@ -11,7 +11,7 @@ export const PLANOS = ['free', 'pro', 'full']
 
 export const PADRAO = {
   free: { secoes: SECOES, placa: true, dispositivos: 2 },
-  pro: { secoes: ['injecao-leve', 'abs', 'eletrica'], placa: false, dispositivos: 2 },
+  pro: { secoes: ['injecao-leve', 'abs', 'eletrica'], placa: true, dispositivos: 2 },
   full: { secoes: SECOES, placa: true, dispositivos: 4 },
 }
 

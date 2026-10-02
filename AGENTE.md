@@ -178,7 +178,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   `segredos` (valores cifrados), `cakto_eventos`, `assinaturas_pendentes` (com `ciclo`), `compartilhamentos`
   (sha-256 do link, esquema, `limite` 2, `aberturas`, `visitantes` = aparelho → 1ª abertura). Função `limpar_sessoes()`.
 - **Acesso por plano:** tabela `planos_acesso` (plano → `secoes[]`, `placa`, `dispositivos`), editável no /admin → Planos.
-  Padrão: Pro = injeção leve, ABS, elétrica leve, 2 aparelhos, sem placa; Full = tudo, 4 aparelhos; Free (teste) = tudo, 2.
+  Padrão: Pro = injeção leve, ABS, elétrica leve, 2 aparelhos, com placa; Full = tudo, 4 aparelhos; Free (teste) = tudo, 2.
   Admin sempre vê tudo. `sessoes.visto_em` guarda o último uso; o limite derruba o aparelho parado há mais tempo no login.
   **O servidor barra a placa (403); os sistemas são barrados só na tela**, porque o acervo é lido direto do R2 público
   (ver Pendências no CONTEXTO.md). Mudar as chaves de seção exige mudar `src/data/nav.ts` e `api/_lib/planos.js` juntos.

@@ -33,7 +33,7 @@ Regras de trabalho estão em `AGENTE.md`.
     pendências para quem paga sem conta e aba "Assinaturas" no `/admin`. O anual vence sozinho (`vencerAnual`).
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link,
     aparelhos conectados e "desconectar"), aba **Planos** (o que cada plano libera) e cofre de chaves.
-  - **Acesso por plano:** Pro = injeção leve, ABS e elétrica leve, 2 aparelhos, sem placa; Full = tudo, 4 aparelhos;
+  - **Acesso por plano:** Pro = injeção leve, ABS e elétrica leve, 2 aparelhos, com busca pela placa; Full = tudo, 4 aparelhos;
     Free (teste de 10 h) = tudo, 2 aparelhos. Sistemas fora do plano aparecem com cadeado e abrem a tela de upgrade.
   - Tela inicial `/app`: cards "Consultar por placa" e "Buscar esquema" e card "Últimas consultas" (localStorage, por conta).
     Botão "Início" no menu lateral (e o logo leva para lá).
@@ -100,6 +100,18 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-10-02 · Busca pela placa liberada no plano Pro
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** a busca por placa vale também para o Pro e o Free (o Free/teste já tinha).
+- **O que mudou:** `api/_lib/planos.js` (`PADRAO.pro.placa = true`) e `src/data/planos.ts` (Pro com `placa: true` e o item
+  "Busca pela placa" no cartão). Com todos os planos com placa, o convite "faz parte do plano Full" da tela inicial deixa de aparecer.
+- **Banco:** `update planos_acesso set placa = true where plano = 'pro'` aplicado no Neon antes do push (é a regra que vale;
+  o mesmo que marcar no /admin → Planos). Sem migração nova.
+- **Variáveis/infra:** sem mudança.
+- **Verificação:** build ok, lint com os mesmos 10 avisos; leitura da tabela depois do update.
+- **Pendências:** o app Android (`ITENS_PLANO` em `src/lib/plano.ts` do app, no iCloud) ainda lista o Pro sem a placa;
+  o acesso já funciona no app (vem do servidor), só a descrição do plano fica desatualizada até a próxima versão.
 
 ### 2026-10-02 · Botão flutuante do WhatsApp na landing e "Suporte" no menu lateral
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
