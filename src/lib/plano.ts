@@ -46,17 +46,8 @@ export function linkCheckout(plano: PlanoPago, s: Session | null, ciclo: Ciclo =
   return busca ? `${base}?${busca}` : base
 }
 
-const numeroSuporte = ((import.meta.env.VITE_SUPORTE_WHATSAPP as string | undefined) ?? '').replace(/\D/g, '')
-const emailSuporte = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'nitiani@compilla.dev'
-
-/** 55 + DDD + 9 dígitos = 13; menos que isso não é número cheio e não vale abrir o WhatsApp. */
-export const temWhatsappSuporte = numeroSuporte.length >= 12
-
-/** Link de contato: WhatsApp quando há número configurado, e-mail como reserva. */
-export function linkSuporte(mensagem: string, assunto = 'Deepcar · assinatura') {
-  if (temWhatsappSuporte) return `https://wa.me/${numeroSuporte}?text=${encodeURIComponent(mensagem)}`
-  return `mailto:${emailSuporte}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(mensagem)}`
-}
+// contato de suporte mora em ./suporte (leve, sem sessão) para a landing poder usar sem carregar o resto
+export { linkSuporte, temWhatsappSuporte } from './suporte'
 
 /**
  * Quanto sobra do teste, em milissegundos.

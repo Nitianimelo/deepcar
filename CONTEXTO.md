@@ -9,7 +9,7 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ---
 
-## Estado atual (atualizado em 2026-09-29)
+## Estado atual (atualizado em 2026-10-02)
 
 - **Produção:** **https://deepcar.app.br** (Vercel, projeto `nitiani-melo/deepcar`, deploy automático do `main` do GitHub
   `Nitianimelo/deepcar`). `www.deepcar.app.br` e `deepcar.vercel.app` redirecionam (308) para o principal.
@@ -43,6 +43,8 @@ Regras de trabalho estão em `AGENTE.md`.
   - **Compartilhar esquema** (no lugar do antigo Imprimir): link `/c/:token` que abre 2 vezes (por aparelho) e expira;
     WhatsApp em destaque, e-mail, copiar e o compartilhar do celular. Quem recebe vê o esquema em tela cheia, sem conta.
   - Busca rápida Ctrl+K / ⌘K em qualquer tela do app (placa, esquemas, últimas consultas).
+  - **WhatsApp de suporte** `+55 48 3197-4297` (`VITE_SUPORTE_WHATSAPP` na Vercel): botão flutuante na landing, item
+    "Suporte" no menu lateral do app e os botões de suporte (esqueci a senha, assinatura) abrem o WhatsApp.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → modo simulado, com cache de 24 h em memória.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
@@ -65,8 +67,6 @@ Regras de trabalho estão em `AGENTE.md`.
       botão não aparece em Produto → Configurações e a API ignora `absorbInstallmentInterest`). Enquanto isso, os anuais
       foram reprecificados para o 12x com juros bater com a tela (ver Histórico de 2026-09-24). Se a Cakto liberar e o
       botão for ligado, voltar as ofertas para R$ 358,80 / R$ 454,80 (e o JSON-LD do `index.html`).
-- [ ] **WhatsApp de suporte não configurado** (`VITE_SUPORTE_WHATSAPP` vazio na Vercel): os botões de suporte abrem e-mail para
-      `nitiani@compilla.dev`.
 - [ ] Confirmar numa venda real se a "Taxa de serviço" de R$ 0,99 (`customerFees` em `GET /public_api/fees/`) é cobrada do
       comprador. Se for, ele paga R$ 0,99 além do anúncio (inclusive nos mensais): pedir à Cakto para desligar.
 - [ ] Oferta do Full Anual está com `intervalType: lifetime` (a do Pro Anual é `year`). O acesso não depende disso
@@ -100,6 +100,25 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-10-02 · Botão flutuante do WhatsApp na landing e "Suporte" no menu lateral
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** botão flutuante do WhatsApp na landing; depois, item "Suporte" com o símbolo do WhatsApp no menu lateral.
+- **O que mudou:**
+  - `src/components/landing/BotaoWhatsapp.tsx`: botão fixo no canto inferior direito da landing (ícone no celular,
+    ícone + "Fale com a gente" a partir de `sm`), mensagem pronta "Vim pelo site do Deepcar…". Some se não houver número.
+  - `src/components/Sidebar.tsx`: item "Suporte" no rodapé do menu (acima da conta), ícone do WhatsApp em verde; no menu
+    recolhido fica só o ícone. Mensagem leva o e-mail da conta. Sem número cai no e-mail (`linkSuporte`).
+  - `src/lib/suporte.ts` (novo): número/e-mail de suporte, `linkSuporte()` e `linkWhatsapp()`, sem dependências, para
+    a landing não carregar `lib/auth`. `lib/plano.ts` reexporta `linkSuporte`/`temWhatsappSuporte` (imports antigos seguem).
+  - `src/components/IconeWhatsapp.tsx` (novo): ícone que estava dentro de `CompartilharEsquema.tsx`.
+  - `src/index.css`: tokens `--color-whatsapp` / `--color-whatsapp-hi`.
+- **Banco:** sem mudança.
+- **Variáveis/infra:** `VITE_SUPORTE_WHATSAPP=554831974297` criada na Vercel (Production e Preview). Como é `VITE_`,
+  só vale a partir do build seguinte. Resolve a pendência "WhatsApp de suporte não configurado".
+- **Verificação:** `npm run build` ok; lint com os mesmos 10 avisos; prints da landing (computador e celular) e do menu
+  lateral com sessão simulada no `vite preview`.
+- **Pendências:** nenhuma.
 
 ### 2026-10-01 · API de Conversões da Meta (cadastro e compra pelo servidor)
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

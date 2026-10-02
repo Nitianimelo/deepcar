@@ -134,6 +134,7 @@ src/
   components/PaletaBusca.tsx        busca rápida Ctrl+K / ⌘K de qualquer tela do app (placa, esquema, últimas consultas)
   components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll): só a landing; CardPlano: cartão de plano
                           da landing, da aba Plano da conta e do convite depois do teste (botão vem em `acao`)
+  components/landing/BotaoWhatsapp.tsx  botão flutuante do WhatsApp (só na landing); components/IconeWhatsapp.tsx: ícone da marca
   components/PlanoDetalhes.tsx  miolo do CardPlano: chicote de sistemas (cor do fio por sistema, tokens --color-fio-*) e extras
   lib/seo.ts              useTitulo(): título da aba ao navegar (páginas públicas já saem certas do build)
   lib/transicao.ts        marcarTitulo(): título que "voa" da lista ao cabeçalho do esquema (View Transitions)
@@ -143,6 +144,7 @@ src/
   components/BloqueioPlano.tsx  tela "não faz parte do seu plano" (seção, esquema e placa)
   components/LimiteFree.tsx     plano free: SeloTeste (barra, computador), AssinarNoMenu (menu lateral), AvisoTopo (faixa no celular)
   components/AssineParaAcessar.tsx  teste vencido: EsquemaEmbacado (esquema borrado) e ConviteAssinatura (cards Full/Pro)
+  lib/suporte.ts          WhatsApp/e-mail de suporte (VITE_SUPORTE_WHATSAPP), sem dependências: a landing usa
   lib/validacao.ts        validação de cadastro no navegador (espelha api/_lib/validar.js)
   lib/acervo.ts           leitura do acervo (VITE_ACERVO_URL ou /acervo)
   lib/busca.ts            busca de texto no catálogo (normalizar, indexar, filtrar)
@@ -271,7 +273,8 @@ Lá estão `AGENTE.md` (como compilar e publicar, como operar o Play Console) e 
 - O app **não** mostra preço nem checkout (política de Pagamentos da Play). Mudança de preço/plano no site não exige
   mudar o app, exceto a lista do que cada plano inclui (`ITENS_PLANO` no app ↔ `src/data/planos.ts`), os minutos do
   teste (`MINUTOS_FREE`) e as chaves das seções.
-- E-mail de suporte/contato público: `nitiani@compilla.dev` (padrão de `VITE_SUPORTE_EMAIL`).
+- E-mail de suporte/contato público: `nitiani@compilla.dev` (padrão de `VITE_SUPORTE_EMAIL`). WhatsApp de suporte:
+  `VITE_SUPORTE_WHATSAPP` na Vercel (55 + DDD + número); vazio = botão da landing some e o suporte cai no e-mail.
 
 ---
 

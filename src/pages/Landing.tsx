@@ -11,6 +11,7 @@ import { SeletorCiclo } from '../components/SeletorCiclo'
 import { GridBeam } from '../components/landing/GridBeam'
 import { Reveal } from '../components/landing/Reveal'
 import { CardPlano } from '../components/landing/CardPlano'
+import { BotaoWhatsapp } from '../components/landing/BotaoWhatsapp'
 
 export default function Landing() {
   return (
@@ -21,6 +22,7 @@ export default function Landing() {
       <BuscaPlaca />
       <Planos />
       <Footer />
+      <BotaoWhatsapp />
     </div>
   )
 }

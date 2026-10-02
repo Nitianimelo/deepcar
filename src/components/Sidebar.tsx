@@ -6,6 +6,8 @@ import { TracePad } from './TracePad'
 import { getSession, logout } from '../lib/auth'
 import { useAcesso } from '../lib/acesso'
 import { AssinarNoMenu } from './LimiteFree'
+import { IconeWhatsapp } from './IconeWhatsapp'
+import { linkSuporte } from '../lib/suporte'
 
 type Props = {
   collapsed: boolean
@@ -104,6 +106,18 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
         {/* rodapé: conta */}
         <div className="border-t seam p-3">
           <AssinarNoMenu collapsed={collapsed} />
+          <a
+            href={linkSuporte(`Olá! Preciso de ajuda com o Deepcar.${session?.email ? ` Minha conta é ${session.email}.` : ''}`, 'Deepcar · suporte')}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Suporte pelo WhatsApp"
+            data-tip="Falar com o suporte pelo WhatsApp"
+            data-tip-side={collapsed ? 'right' : 'top'}
+            className={`nav-item mb-1 ${collapsed ? 'justify-center px-0' : ''}`}
+          >
+            <span className="flex-none text-whatsapp"><IconeWhatsapp size={19} /></span>
+            {!collapsed && <span>Suporte</span>}
+          </a>
           {session?.papel === 'admin' && !collapsed && (
             <Link
               to="/admin"

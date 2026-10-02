@@ -46,6 +46,8 @@
   /* semânticos (dessaturados p/ dark) */
   --color-ok: #3fd18f;
   --color-warn: #f0b64a;
+  --color-whatsapp: #25d366;   /* verde da marca WhatsApp: botão flutuante da landing e ícone do Suporte no menu */
+  --color-whatsapp-hi: #1ebe5b;
   --color-fault: #ff6262;
 
   /* fios do chicote: cor de cada sistema nos cartões de plano (components/PlanoDetalhes.tsx) */
