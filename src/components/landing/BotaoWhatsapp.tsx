@@ -20,3 +20,19 @@ export function BotaoWhatsapp() {
     </a>
   )
 }
+
+/** "Fale com nossa equipe" abaixo dos planos: quem ficou em dúvida entre Pro e Full. Texto escuro no verde (contraste ≥ 4,5:1). */
+export function BotaoEquipe() {
+  const href = linkWhatsapp('Olá! Quero falar com a equipe do Deepcar sobre os planos.')
+  if (!href) return null
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex h-12 items-center justify-center gap-2.5 rounded-xl bg-whatsapp px-6 text-[15px] font-semibold text-pit shadow-lg shadow-black/30 transition hover:bg-whatsapp-hi focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+    >
+      <IconeWhatsapp size={22} /> Fale com nossa equipe
+    </a>
+  )
+}

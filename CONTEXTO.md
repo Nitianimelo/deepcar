@@ -43,7 +43,8 @@ Regras de trabalho estão em `AGENTE.md`.
   - **Compartilhar esquema** (no lugar do antigo Imprimir): link `/c/:token` que abre 2 vezes (por aparelho) e expira;
     WhatsApp em destaque, e-mail, copiar e o compartilhar do celular. Quem recebe vê o esquema em tela cheia, sem conta.
   - Busca rápida Ctrl+K / ⌘K em qualquer tela do app (placa, esquemas, últimas consultas).
-  - **WhatsApp de suporte** `+55 48 3197-4297` (`VITE_SUPORTE_WHATSAPP` na Vercel): botão flutuante na landing, item
+  - **WhatsApp de suporte** `+55 48 3197-4297` (`VITE_SUPORTE_WHATSAPP` na Vercel): botão flutuante na landing, botão
+    verde "Fale com nossa equipe" abaixo dos planos, item
     "Suporte" no menu lateral do app e os botões de suporte (esqueci a senha, assinatura) abrem o WhatsApp.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → modo simulado, com cache de 24 h em memória.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
@@ -100,6 +101,17 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-10-02 · Botão "Fale com nossa equipe" abaixo dos planos
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** botão verde "Fale com nossa equipe" com o símbolo do WhatsApp no site.
+- **O que mudou:** `BotaoEquipe` em `src/components/landing/BotaoWhatsapp.tsx`, logo abaixo dos cartões de plano da landing,
+  com a frase "Ficou em dúvida sobre qual plano escolher?". Verde do WhatsApp com texto escuro (contraste ≥ 4,5:1);
+  mensagem pronta sobre os planos. Some se `VITE_SUPORTE_WHATSAPP` estiver vazio. A landing ganhou `pb-24` no fim para o
+  botão flutuante não cobrir os selos das lojas no rodapé.
+- **Banco:** sem mudança. **Variáveis/infra:** sem mudança.
+- **Verificação:** build ok, lint com os mesmos 10 avisos; prints no computador e no celular (`vite preview`).
+- **Pendências:** nenhuma.
 
 ### 2026-10-02 · Busca pela placa liberada no plano Pro
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

@@ -11,11 +11,11 @@ import { SeletorCiclo } from '../components/SeletorCiclo'
 import { GridBeam } from '../components/landing/GridBeam'
 import { Reveal } from '../components/landing/Reveal'
 import { CardPlano } from '../components/landing/CardPlano'
-import { BotaoWhatsapp } from '../components/landing/BotaoWhatsapp'
+import { BotaoEquipe, BotaoWhatsapp } from '../components/landing/BotaoWhatsapp'
 
 export default function Landing() {
   return (
-    <div className="landing min-h-full bg-pit text-ink-1">
+    <div className="landing min-h-full bg-pit pb-24 text-ink-1">{/* pb: o botão flutuante do WhatsApp não cobre os selos do rodapé */}
       <Header />
       <Hero />
       <Cobertura />
@@ -313,6 +313,11 @@ function Planos() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal index={3} className="mt-12 flex flex-col items-center gap-4 text-center">
+          <p className="text-[15px] text-ink-3">Ficou em dúvida sobre qual plano escolher?</p>
+          <BotaoEquipe />
+        </Reveal>
       </div>
     </section>
   )
