@@ -1,9 +1,13 @@
 // Selos das lojas desenhados em SVG inline (sem depender de imagem externa).
-// Trocar o href quando os apps forem publicados.
+// App Store ainda sem app: o selo fica com href '#' e a dica "em breve".
+
+/** App Android publicado na Google Play (pacote deepcar.app.android). */
+export const LINK_GOOGLE_PLAY = 'https://play.google.com/store/apps/details?id=deepcar.app.android&pcampaignid=web_share'
 function Badge({ href, topo, nome, icone }: { href: string; topo: string; nome: string; icone: React.ReactNode }) {
   return (
     <a
       href={href}
+      {...(href === '#' ? {} : { target: '_blank', rel: 'noreferrer' })}
       data-tip={href === '#' ? `App ${nome === 'App Store' ? 'para iPhone e iPad' : 'para Android'} em breve` : undefined}
       className="inline-flex h-[52px] items-center gap-2.5 rounded-[10px] border border-white/15 bg-[#0b0e13] pl-3 pr-4 text-left transition-colors hover:border-white/30 hover:bg-[#12161d]"
     >
@@ -31,20 +35,18 @@ export function AppStoreBadge({ href = '#' }: { href?: string }) {
   )
 }
 
-export function PlayStoreBadge({ href = '#' }: { href?: string }) {
+/** Triângulo colorido da Google Play. */
+export function IconeGooglePlay({ className = 'h-6 w-6' }: { className?: string }) {
   return (
-    <Badge
-      href={href}
-      topo="Disponível no"
-      nome="Google Play"
-      icone={
-        <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
-          <path d="M3.6 2.3c-.3.3-.5.8-.5 1.4v16.6c0 .6.2 1.1.5 1.4l.1.1 9.3-9.3v-.2L3.7 2.2l-.1.1z" fill="#3b8bff" />
-          <path d="M16.1 15.6 13 12.5v-.2l3.1-3.1.1.1 3.7 2.1c1.1.6 1.1 1.6 0 2.2l-3.7 2.1-.1-.1z" fill="#ffd400" />
-          <path d="M16.2 15.5 13 12.3 3.6 21.7c.4.4.9.4 1.6 0l11-6.2" fill="#ff4b4b" />
-          <path d="M16.2 9.1 5.2 2.9c-.7-.4-1.2-.3-1.6 0l9.4 9.4 3.2-3.2z" fill="#3ddc84" />
-        </svg>
-      }
-    />
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path d="M3.6 2.3c-.3.3-.5.8-.5 1.4v16.6c0 .6.2 1.1.5 1.4l.1.1 9.3-9.3v-.2L3.7 2.2l-.1.1z" fill="#3b8bff" />
+      <path d="M16.1 15.6 13 12.5v-.2l3.1-3.1.1.1 3.7 2.1c1.1.6 1.1 1.6 0 2.2l-3.7 2.1-.1-.1z" fill="#ffd400" />
+      <path d="M16.2 15.5 13 12.3 3.6 21.7c.4.4.9.4 1.6 0l11-6.2" fill="#ff4b4b" />
+      <path d="M16.2 9.1 5.2 2.9c-.7-.4-1.2-.3-1.6 0l9.4 9.4 3.2-3.2z" fill="#3ddc84" />
+    </svg>
   )
+}
+
+export function PlayStoreBadge({ href = LINK_GOOGLE_PLAY }: { href?: string }) {
+  return <Badge href={href} topo="Disponível no" nome="Google Play" icone={<IconeGooglePlay />} />
 }

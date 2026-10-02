@@ -43,6 +43,8 @@ Regras de trabalho estão em `AGENTE.md`.
   - **Compartilhar esquema** (no lugar do antigo Imprimir): link `/c/:token` que abre 2 vezes (por aparelho) e expira;
     WhatsApp em destaque, e-mail, copiar e o compartilhar do celular. Quem recebe vê o esquema em tela cheia, sem conta.
   - Busca rápida Ctrl+K / ⌘K em qualquer tela do app (placa, esquemas, últimas consultas).
+  - **App Android publicado na Google Play** (`deepcar.app.android`, versão 1.1.0): selo Google Play da landing e botão
+    "Baixe nosso app" no menu lateral (escondido em iPhone/iPad) levam para a loja (`LINK_GOOGLE_PLAY` em `StoreBadges.tsx`).
   - **WhatsApp de suporte** `+55 48 3197-4297` (`VITE_SUPORTE_WHATSAPP` na Vercel): botão flutuante na landing, botão
     verde "Fale com nossa equipe" abaixo dos planos, item
     "Suporte" no menu lateral do app e os botões de suporte (esqueci a senha, assinatura) abrem o WhatsApp.
@@ -61,7 +63,7 @@ Regras de trabalho estão em `AGENTE.md`.
       Testar contas via `vercel dev` ou Preview Deployment.
 - [ ] Scripts de acervo e do executável dependem de caminhos Windows (`E:\`).
 - [ ] 10 avisos do oxlint (0 erros) em `src/`: `set-state-in-effect`, `exhaustive-deps`, `only-export-components`.
-- [ ] Selos App Store / Google Play na landing ainda sem `href` real (`src/components/StoreBadges.tsx`).
+- [ ] Selo App Store da landing ainda sem `href` (não há app para iPhone; `src/components/StoreBadges.tsx`).
 - [ ] A foto da dobra `#placa` é gerada por IA: a tela do celular tem nomes de montadora com erro de grafia
       ("Chewolet", "Citrofo", "Alfa Roemo"). No tamanho exibido não se lê, mas vale trocar por foto real quando houver.
 - [ ] **"Parcelamento sem juros" depende da Cakto liberar na conta** (flag `absorbInstallmentInterestEnabled`; sem ela o
@@ -92,8 +94,6 @@ Regras de trabalho estão em `AGENTE.md`.
       cofre tem prioridade), `CONSULTARPLACA_EMAIL` e `CONSULTARPLACA_API_KEY` (provedor removido).
 - [ ] Trocar a "página de vendas" dos 4 produtos na Cakto para `https://deepcar.app.br/` (painel). Enquanto isso, o
       link antigo já cai no domínio pelo redirecionamento do `deepcar.vercel.app`.
-- [ ] App Android 1.1.0 **em revisão na Google Play** (enviado em 24/09/2026). Depois de aprovado, pôr o link real no selo
-      Google Play da landing (`src/components/StoreBadges.tsx`): `https://play.google.com/store/apps/details?id=deepcar.app.android`.
 - [ ] Trocar o token do Falcon por um novo no painel deles e regravar no `/admin` (o atual circulou em conversa).
 - [ ] Cache de placas no Neon (modelo e ano não mudam: cada placa seria consultada uma única vez). Precisa de migração.
 - [ ] Coerência de texto: o hero diz "só precisa digitar a placa do carro", mas na tabela a busca pela placa aparece só no Full.
@@ -101,6 +101,19 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-10-02 · Link da Google Play no selo da landing e "Baixe nosso app" no menu lateral
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** o app Android foi aprovado; ligar o selo do Android da landing ao app e pôr um botão "Baixe nosso app" com o
+  símbolo da Google Play no menu lateral de quem está logado.
+- **O que mudou:** `src/components/StoreBadges.tsx`: `LINK_GOOGLE_PLAY` (link de compartilhamento da loja, com
+  `pcampaignid=web_share`), `PlayStoreBadge` usa o link por padrão e abre em nova aba; ícone separado em `IconeGooglePlay`.
+  `src/components/Sidebar.tsx`: cartão "Baixe nosso app / Disponível no Google Play" no rodapé do menu, acima de Suporte
+  (só o ícone com o menu recolhido); não aparece em iPhone/iPad.
+- **Banco:** sem mudança. **Variáveis/infra:** sem mudança.
+- **Verificação:** build ok, lint com os mesmos 10 avisos; print do menu; os dois selos da landing com o link e `target=_blank`;
+  com User-Agent de iPhone o botão do menu não aparece.
+- **Pendências:** selo da App Store continua sem link (não há app iOS).
 
 ### 2026-10-02 · Botão "Fale com nossa equipe" abaixo dos planos
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

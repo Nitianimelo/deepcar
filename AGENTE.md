@@ -259,8 +259,8 @@ O app Android **não está neste repositório**. Ele vive só no iCloud do dono:
 Lá estão `AGENTE.md` (como compilar e publicar, como operar o Play Console) e `CONTEXTO.md` (estado, contas e
 **credenciais** — que não podem vir para cá, porque **este repositório é público**).
 
-- Pacote na Play: `deepcar.app.android`. Conta de organização "Inttus Soluções Tecnológicas Ltda". Versão 1.1.0 enviada
-  para revisão em 24/09/2026 (Produção, Brasil).
+- Pacote na Play: `deepcar.app.android`. Conta de organização "Inttus Soluções Tecnológicas Ltda". Versão 1.1.0 publicada
+  (Produção, Brasil). Link da loja: `LINK_GOOGLE_PLAY` em `src/components/StoreBadges.tsx` (selo da landing e menu lateral).
 - O app usa a API deste site (`https://deepcar.app.br/api/*`) pelo HTTP nativo, com o cookie `deepcar_sessao`
   reenviado no cabeçalho `Cookie`. Mudar nome/formato do cookie, rotas ou respostas de `api/login`, `api/sessao`,
   `api/registrar`, `api/sair`, `api/placa`, `api/compartilhar` **quebra o app instalado** nos celulares: mantenha

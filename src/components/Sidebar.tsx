@@ -8,6 +8,10 @@ import { useAcesso } from '../lib/acesso'
 import { AssinarNoMenu } from './LimiteFree'
 import { IconeWhatsapp } from './IconeWhatsapp'
 import { linkSuporte } from '../lib/suporte'
+import { IconeGooglePlay, LINK_GOOGLE_PLAY } from './StoreBadges'
+
+// o app só existe para Android: no iPhone/iPad o convite da Play não leva a lugar nenhum
+const ehIOS = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))
 
 type Props = {
   collapsed: boolean
@@ -106,6 +110,25 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
         {/* rodapé: conta */}
         <div className="border-t seam p-3">
           <AssinarNoMenu collapsed={collapsed} />
+          {!ehIOS && (
+            <a
+              href={LINK_GOOGLE_PLAY}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Baixe nosso app na Google Play"
+              data-tip="App do Deepcar para Android, na Google Play"
+              data-tip-side={collapsed ? 'right' : 'top'}
+              className={`mb-2 flex items-center gap-3 rounded-xl border border-white/10 bg-pit transition-colors hover:border-white/25 hover:bg-bench-3 ${collapsed ? 'h-10 justify-center' : 'px-3 py-2.5'}`}
+            >
+              <IconeGooglePlay className={collapsed ? 'h-5 w-5' : 'h-7 w-7 flex-none'} />
+              {!collapsed && (
+                <span className="min-w-0 leading-tight">
+                  <span className="block text-[14px] font-semibold text-ink-1">Baixe nosso app</span>
+                  <span className="block text-[11.5px] text-ink-3">Disponível no Google Play</span>
+                </span>
+              )}
+            </a>
+          )}
           <a
             href={linkSuporte(`Olá! Preciso de ajuda com o Deepcar.${session?.email ? ` Minha conta é ${session.email}.` : ''}`, 'Deepcar · suporte')}
             target="_blank"
