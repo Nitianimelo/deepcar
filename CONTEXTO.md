@@ -122,8 +122,12 @@ Regras de trabalho estão em `AGENTE.md`.
 - **Variáveis/infra:** sem mudança. Continua 12 funções (o checkout entrou no `api/sessao.js`).
 - **Verificação:** build ok, lint com os mesmos 10 avisos; teste no navegador (chegada com UTM+fbclid, visita direta
   depois mantém a campanha, rota privada não mexe, cadastro envia a origem); funções de `meta.js` testadas isoladas.
-- **Pendências:** conferir no Gerenciador de Eventos (aba Testar eventos, `META_TEST_EVENT_CODE` no cofre) que
-  InitiateCheckout e Purchase chegam; marcar Contact/InitiateCheckout como conversões se quiser otimizar campanha por eles.
+- **Conferido na Meta (03/10, aba Testar eventos, código temporário no cofre e apagado depois):** CompleteRegistration
+  (cadastro real em produção), InitiateCheckout (clique em assinar em produção) e Purchase (mesmo código do webhook, com o
+  rastreio do cadastro) chegaram como "Processado". Conta de teste apagada. O primeiro InitiateCheckout logo após o
+  deploy não chegou (provável lentidão na primeira execução da função); os seguintes chegaram.
+- **Pendências:** marcar Contact/InitiateCheckout como conversões se quiser otimizar campanha por eles (o conjunto
+  publicado não troca de evento: só duplicando). Contact (pixel) não foi testado ao vivo.
   App Android: a "Segurança dos dados" da Play não muda (o app não usa nada disso).
 
 ### 2026-10-03 · Seção de planos da landing clara e mais explicativa
