@@ -15,6 +15,8 @@ export type PlanoVenda = {
   preco: string
   /** preço por mês do plano anual (= cada uma das 12 parcelas no checkout) */
   precoAnual: string
+  /** anual à vista (Pix): o preço da oferta na Cakto */
+  precoAnualVista: string
   para: string
   /** faixa no topo do cartão: o motivo de escolher, numa linha */
   chamada: string
@@ -33,6 +35,7 @@ export const PLANOS_VENDA: PlanoVenda[] = [
     nome: 'Pro',
     preco: '47,90',
     precoAnual: '29,90',
+    precoAnualVista: '289,49',
     para: 'Para a oficina de veículos leves.',
     chamada: 'O essencial para carros leves',
     itens: ['Injeção eletrônica leve', 'ABS', 'Elétrica leve', '2 dispositivos conectados', 'Busca pela placa', 'App mobile', 'Suporte'],
@@ -46,6 +49,7 @@ export const PLANOS_VENDA: PlanoVenda[] = [
     nome: 'Full',
     preco: '59,90',
     precoAnual: '37,90',
+    precoAnualVista: '366,95',
     para: 'Para a oficina que atende do leve ao diesel.',
     chamada: 'Libera tudo, do leve ao diesel',
     itens: [

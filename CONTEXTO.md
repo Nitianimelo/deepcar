@@ -102,6 +102,23 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-03 · Seção de planos da landing clara e mais explicativa
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** melhorar as informações dos planos na landing: sem o colorido, fundo cinza-claro, mais explicativo.
+- **O que mudou:**
+  - `src/components/landing/PlanosLanding.tsx` (novo) substitui a função `Planos` da `Landing.tsx`: seção em cinza-claro
+    com cartões brancos, chave Mensal/Anual ("economize até 38%"), preço explicado por ciclo (mensal: cobrado todo mês no
+    cartão ou Pix; anual: 12x no cartão, Pix à vista com o menor preço, pagamento único de 12 meses que não renova,
+    economia em reais contra o mensal), lista "O que está incluso" com todos os sistemas (o que falta no Pro aparece
+    apagado com "só no Full"), bloco "Como funciona" em 3 passos e o "Fale com nossa equipe".
+  - `src/data/planos.ts`: campo `precoAnualVista` (R$ 289,49 / R$ 366,95, o preço das ofertas anuais na Cakto).
+  - `src/index.css`: tokens claros `--color-papel*`, `--color-tinta-*`, `--color-azul-escuro`.
+  - O `CardPlano` escuro (chicote colorido) continua na aba Plano da conta e no convite depois do teste.
+- **Conferido na Cakto (03/10):** mensais aceitam cartão e Pix (inclusive Pix Automático); anuais aceitam Pix e cartão.
+- **Banco:** sem mudança. **Variáveis/infra:** sem mudança.
+- **Verificação:** build ok, lint com os mesmos 10 avisos; prints no computador (anual e mensal) e no celular, sem rolagem lateral.
+- **Pendências:** a "Taxa de serviço" de R$ 0,99 da Cakto (pendência já listada) não aparece nos preços da seção.
+
 ### 2026-10-02 · Link da Google Play no selo da landing e "Baixe nosso app" no menu lateral
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** o app Android foi aprovado; ligar o selo do Android da landing ao app e pôr um botão "Baixe nosso app" com o

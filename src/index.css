@@ -46,6 +46,14 @@
   /* semânticos (dessaturados p/ dark) */
   --color-ok: #3fd18f;
   --color-warn: #f0b64a;
+  /* seção clara dos planos na landing (fundo cinza-claro, cartões brancos) */
+  --color-papel: #eef1f5;
+  --color-papel-card: #ffffff;
+  --color-papel-linha: #dfe4eb;
+  --color-tinta-1: #0f1720;
+  --color-tinta-2: #3b4655;
+  --color-tinta-3: #5d6876;    /* ≥ 4,5:1 sobre o papel */
+  --color-azul-escuro: #1f5fd6; /* azul da marca com contraste em fundo claro */
   --color-whatsapp: #25d366;   /* verde da marca WhatsApp: botão flutuante da landing e ícone do Suporte no menu */
   --color-whatsapp-hi: #1ebe5b;
   --color-fault: #ff6262;

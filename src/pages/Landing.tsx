@@ -6,12 +6,10 @@ import { AppStoreBadge, PlayStoreBadge } from '../components/StoreBadges'
 import { CarBlueprint } from '../components/CarBlueprint'
 import { MarcasStrip } from '../components/MarcasStrip'
 import { formatarPlaca, placaValida } from '../lib/placa'
-import { PLANOS_VENDA, type Ciclo } from '../data/planos'
-import { SeletorCiclo } from '../components/SeletorCiclo'
 import { GridBeam } from '../components/landing/GridBeam'
 import { Reveal } from '../components/landing/Reveal'
-import { CardPlano } from '../components/landing/CardPlano'
-import { BotaoEquipe, BotaoWhatsapp } from '../components/landing/BotaoWhatsapp'
+import { BotaoWhatsapp } from '../components/landing/BotaoWhatsapp'
+import { PlanosLanding } from '../components/landing/PlanosLanding'
 
 export default function Landing() {
   return (
@@ -20,7 +18,7 @@ export default function Landing() {
       <Hero />
       <Cobertura />
       <BuscaPlaca />
-      <Planos />
+      <PlanosLanding />
       <Footer />
       <BotaoWhatsapp />
     </div>
@@ -277,51 +275,6 @@ function Numero({ valor, rotulo }: { valor: string; rotulo: string }) {
 }
 
 /* ── Planos ────────────────────────────────────────────────────────── */
-function Planos() {
-  const planos = PLANOS_VENDA
-  const [ciclo, setCiclo] = useState<Ciclo>('anual')
-  return (
-    <section id="planos" className="relative overflow-hidden border-t seam">
-      {/* fundo: a mesma grade de corrente do topo, mais fraca e concentrada atrás dos cartões */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0"
-        style={{ background: 'radial-gradient(900px 520px at 50% 62%, rgba(14,58,118,0.42) 0%, transparent 65%)' }}
-      />
-      <GridBeam celula={72} duracao={8} forca={0.8} className="grade-mascara-centro" />
-
-      <div className="relative mx-auto max-w-[1200px] px-5 py-20 sm:px-8 lg:py-28">
-        <Reveal className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <p className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Mensal ou anual</p>
-            <h2 className="mt-4 text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">Planos</h2>
-          </div>
-          <p className="max-w-[46ch] text-[15px] text-ink-3">
-            A conta gratuita abre na hora, sem cartão, para você conhecer o acervo por dentro.
-          </p>
-        </Reveal>
-
-        <Reveal index={1} className="mt-10 flex justify-center">
-          <SeletorCiclo ciclo={ciclo} onChange={setCiclo} />
-        </Reveal>
-
-        <div className="mx-auto mt-8 grid max-w-[920px] items-stretch gap-5 md:grid-cols-2">
-          {planos.map((p, i) => (
-            <Reveal key={p.nome} index={i + 1} className="relative">
-              {p.destaque && <span aria-hidden="true" className="plano-halo" />}
-              <CardPlano p={p} ciclo={ciclo} />
-            </Reveal>
-          ))}
-        </div>
-
-        <Reveal index={3} className="mt-12 flex flex-col items-center gap-4 text-center">
-          <p className="text-[15px] text-ink-3">Ficou em dúvida sobre qual plano escolher?</p>
-          <BotaoEquipe />
-        </Reveal>
-      </div>
-    </section>
-  )
-}
 
 /* ── Rodapé ────────────────────────────────────────────────────────── */
 function Footer() {

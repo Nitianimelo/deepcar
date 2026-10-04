@@ -132,8 +132,9 @@ src/
   components/             ListaEsquemas (lista da seção e da busca), DetalhesEsquema, EsquemaViewer, CompartilharEsquema, Sidebar, LimiteFree, LogoMarca, Tooltips…
   components/SeletorComponente.tsx  lista com busca dos componentes do esquema (tecla /), dentro do EsquemaViewer
   components/PaletaBusca.tsx        busca rápida Ctrl+K / ⌘K de qualquer tela do app (placa, esquema, últimas consultas)
-  components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll): só a landing; CardPlano: cartão de plano
-                          da landing, da aba Plano da conta e do convite depois do teste (botão vem em `acao`)
+  components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll): só a landing. PlanosLanding: seção de planos
+                          da landing (fundo cinza-claro, cartões brancos, tokens --color-papel*/tinta-*/azul-escuro).
+                          CardPlano: cartão escuro da aba Plano da conta e do convite depois do teste (botão vem em `acao`)
   components/landing/BotaoWhatsapp.tsx  botão flutuante do WhatsApp (só na landing); components/IconeWhatsapp.tsx: ícone da marca
   components/PlanoDetalhes.tsx  miolo do CardPlano: chicote de sistemas (cor do fio por sistema, tokens --color-fio-*) e extras
   lib/seo.ts              useTitulo(): título da aba ao navegar (páginas públicas já saem certas do build)
