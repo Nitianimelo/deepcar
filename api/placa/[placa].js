@@ -2,6 +2,7 @@
 // Credenciais do provedor saem do cofre (/admin → Chaves de API) ou das variaveis da Vercel.
 import { consultarPlaca, VARIAVEIS_PLACA } from '../../server/placa/index.mjs'
 import { ambienteCom } from '../_lib/segredos.js'
+import { sql } from '../_lib/db.js'
 import { exigir } from '../_lib/sessao.js'
 import { acessoDe } from '../_lib/planos.js'
 
@@ -27,6 +28,8 @@ export default async function handler(req, res) {
     // rota autenticada: nada de cache compartilhado na borda, que serviria a resposta
     // a quem nao fez login. Repetir a mesma placa ja e barato pelo cache em server/placa/index.mjs.
     res.setHeader('Cache-Control', 'private, no-store')
+    // ativacao: primeira placa que deu certo (aparece no /admin); so escreve uma vez
+    await sql`update usuarios set primeira_placa_em = now() where id = ${u.id} and primeira_placa_em is null`
     return res.status(200).json(veiculo)
   } catch (err) {
     res.setHeader('Cache-Control', 'no-store')

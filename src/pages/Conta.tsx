@@ -4,8 +4,8 @@ import { ArrowRight, BadgeDollarSign, LogOut, MessageCircle, ShieldCheck, Timer,
 import { getSession, logout, type Session } from '../lib/auth'
 import { avisarCheckout, DURACAO_FREE, linkCheckout, linkSuporte, restanteFree, rotuloPlano, tempoRestante, temWhatsappSuporte } from '../lib/plano'
 import { PLANOS_VENDA, type Ciclo } from '../data/planos'
-import { CardPlano } from '../components/landing/CardPlano'
-import { SeletorCiclo } from '../components/SeletorCiclo'
+import { CartaoPlanoClaro, ChaveCiclo } from '../components/landing/PlanosLanding'
+import { classeBotaoClaro } from '../components/landing/estiloPlanos'
 
 /** Como o estado da assinatura é lido na tela. */
 const ESTADOS: Record<string, string> = {
@@ -167,63 +167,75 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
         )}
       </section>
 
-      {/* planos */}
-      <div className="mt-6 flex justify-center">
-        <SeletorCiclo ciclo={ciclo} onChange={setCiclo} />
-      </div>
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
-        {PLANOS_VENDA.map((p) => {
-          // quem tem o anual já pagou o ano: o plano dele fica "ativo" nas duas abas, sem convite a pagar a mensal
-          const atual = s.plano === p.id && (cicloAtual === ciclo || cicloAtual === 'anual')
-          const anual = ciclo === 'anual'
-          // mesmo plano, outro ciclo: o botão vira "passar para anual/mensal"
-          const mesmoPlano = s.plano === p.id
-          return (
-            <CardPlano
-              key={p.id}
-              p={p}
-              ciclo={ciclo}
-              atual={atual}
-              acao={atual ? (
-                <span className="inline-flex h-12 w-full items-center justify-center rounded-[10px] border border-ok/30 bg-ok/[0.06] text-[14px] text-ok">
-                  Plano ativo
-                </span>
-              ) : (
-                <a
-                  href={linkCheckout(p.id, s, ciclo)}
-                  onClick={() => avisarCheckout(p.id, ciclo)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-cta' : 'btn-primary !h-12'}`}
-                >
-                  {!pago
-                    ? `Assinar ${p.nome}${anual ? ' anual' : ''}`
-                    : mesmoPlano
-                      ? `Passar para ${anual ? 'anual' : 'mensal'}`
-                      : `Trocar para ${p.nome}${anual ? ' anual' : ''}`}
-                  <ArrowRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5" />
-                </a>
-              )}
-            />
-          )
-        })}
-      </div>
+      {/* planos: o mesmo padrão claro da página de vendas (components/landing/PlanosLanding.tsx) */}
+      <section className="mt-6 rounded-2xl bg-papel p-4 text-tinta-1 sm:p-7">
+        <div className="text-center">
+          <h2 className="text-[22px] font-semibold tracking-tight sm:text-[26px]">{pago ? 'Seu plano e as opções' : 'Escolha seu plano'}</h2>
+          <p className="mx-auto mt-1.5 max-w-[560px] text-[14.5px] leading-relaxed text-tinta-2">
+            Mensal no cartão ou Pix. Anual em até 12x no cartão ou à vista no Pix, pagamento único que vale 12 meses.
+          </p>
+          <div className="mt-5 flex justify-center">
+            <ChaveCiclo ciclo={ciclo} onChange={setCiclo} />
+          </div>
+        </div>
 
-      {pago && cicloAtual === 'mensal' && ciclo === 'anual' && (
-        <p className="mt-4 rounded-lg border border-warn/25 bg-warn/5 px-3.5 py-2.5 text-[12.5px] text-ink-2">
-          Já paga o mensal? Depois que o anual for aprovado, fale com o suporte para cancelar a cobrança mensal: ela
-          não para sozinha.
+        <div className="mx-auto mt-8 grid max-w-[920px] items-stretch gap-6 md:grid-cols-2">
+          {PLANOS_VENDA.map((p) => {
+            // quem tem o anual já pagou o ano: o plano dele fica "ativo" nas duas abas, sem convite a pagar a mensal
+            const atual = s.plano === p.id && (cicloAtual === ciclo || cicloAtual === 'anual')
+            const anual = ciclo === 'anual'
+            // mesmo plano, outro ciclo: o botão vira "passar para anual/mensal"
+            const mesmoPlano = s.plano === p.id
+            return (
+              <CartaoPlanoClaro
+                key={p.id}
+                p={p}
+                ciclo={ciclo}
+                atual={atual}
+                acao={atual ? (
+                  <span className="inline-flex h-12 w-full items-center justify-center rounded-xl border border-azul-escuro/30 bg-azul-escuro/[0.06] text-[14.5px] font-semibold text-azul-escuro">
+                    Plano ativo
+                  </span>
+                ) : (
+                  <>
+                    <a
+                      href={linkCheckout(p.id, s, ciclo)}
+                      onClick={() => avisarCheckout(p.id, ciclo)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={classeBotaoClaro(p.destaque)}
+                    >
+                      {!pago
+                        ? `Assinar ${p.nome}${anual ? ' anual' : ''}`
+                        : mesmoPlano
+                          ? `Passar para ${anual ? 'anual' : 'mensal'}`
+                          : `Trocar para ${p.nome}${anual ? ' anual' : ''}`}
+                      <ArrowRight size={16} />
+                    </a>
+                    <p className="mt-2.5 text-center text-[12.5px] text-tinta-3">Abre o pagamento seguro da Cakto em outra aba.</p>
+                  </>
+                )}
+              />
+            )
+          })}
+        </div>
+
+        {pago && cicloAtual === 'mensal' && ciclo === 'anual' && (
+          <p className="mx-auto mt-6 max-w-[920px] rounded-xl border border-aviso-claro-borda bg-aviso-claro px-4 py-3 text-[13.5px] text-tinta-1">
+            Já paga o mensal? Depois que o anual for aprovado, fale com o suporte para cancelar a cobrança mensal: ela
+            não para sozinha.
+          </p>
+        )}
+
+        <p className="mx-auto mt-6 max-w-[920px] text-center text-[13px] leading-relaxed text-tinta-3">
+          O pagamento é processado pela Cakto. O acesso libera assim que o pagamento é aprovado, sem precisar
+          recarregar.{' '}
+          <a href={linkSuporte(mensagem, 'Deepcar · assinatura')} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-medium text-azul-escuro hover:underline">
+            <MessageCircle size={13} /> {temWhatsappSuporte ? 'Falar no WhatsApp' : 'Falar com o suporte'}
+          </a>{' '}
+          para trocar o cartão, cancelar ou tirar dúvidas.
         </p>
-      )}
-
-      <p className="mt-4 text-[12.5px] text-ink-4">
-        O pagamento é processado pela Cakto. O acesso libera assim que o pagamento é aprovado, sem precisar
-        recarregar.{' '}
-        <a href={linkSuporte(mensagem, 'Deepcar · assinatura')} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-trace hover:text-trace-hi">
-          <MessageCircle size={13} /> {temWhatsappSuporte ? 'Falar no WhatsApp' : 'Falar com o suporte'}
-        </a>{' '}
-        para trocar o cartão, cancelar ou tirar dúvidas.
-      </p>
+      </section>
     </div>
   )
 }

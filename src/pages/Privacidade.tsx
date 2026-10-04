@@ -59,6 +59,11 @@ export default function Privacidade() {
           anúncios da sua conta da Meta ou bloqueie cookies de terceiros no navegador.
         </li>
         <li>
+          <b>Primeiros passos na plataforma:</b> guardamos a data em que você concluiu as boas-vindas, fez a primeira
+          consulta por placa e abriu o primeiro esquema (só a data, não qual placa nem qual esquema), para melhorarmos o
+          começo de uso da plataforma.
+        </li>
+        <li>
           <b>De onde você chegou (só no site):</b> se você chegou por um link de campanha ou anúncio, guardamos no navegador
           e, ao criar a conta, junto dela, os parâmetros desse link (utm_source, utm_campaign e semelhantes, fbclid, gclid),
           a primeira página visitada, o site que trouxe você e a data. Serve para sabermos quais divulgações trazem clientes.

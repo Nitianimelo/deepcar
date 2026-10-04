@@ -14,6 +14,8 @@ import MARCAS from '../data/marcas.json'
 import { BloqueioPlano } from '../components/BloqueioPlano'
 import { ConviteAssinatura } from '../components/AssineParaAcessar'
 import { useAcesso } from '../lib/acesso'
+import { getSession } from '../lib/auth'
+import { momentoDeValor } from '../lib/funil'
 
 type Estado = { fase: 'carregando' } | { fase: 'ok'; veiculo: Veiculo } | { fase: 'erro'; msg: string }
 
@@ -52,6 +54,8 @@ function ConsultaVeiculo() {
       .then((v) => {
         if (!vivo) return
         setEstado({ fase: 'ok', veiculo: v })
+        const email = getSession()?.email
+        if (email) momentoDeValor(email, 'placa')
         registrarRecente({ tipo: 'placa', placa: v.placa, titulo: tituloVeiculo(v), detalhe: detalheVeiculo(v), veiculo: v })
       })
       .catch((e: Error) => vivo && setEstado({ fase: 'erro', msg: e.message }))

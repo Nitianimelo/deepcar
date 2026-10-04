@@ -71,7 +71,7 @@ export default function Compartilhado() {
   const sistema = SECTION_META[d.secao]?.titulo ?? ''
   return (
     <div className="flex h-dvh flex-col bg-pit">
-      <header className="no-print flex h-14 flex-none items-center gap-3 border-b seam bg-bench-1/95 px-3 backdrop-blur-md sm:gap-4 sm:px-5">
+      <header className="no-print flex h-14 flex-none items-center gap-3 border-b seam bg-bench-1 px-3 sm:gap-4 sm:px-5 md:bg-bench-1/95 md:backdrop-blur-md">
         <Link to="/" aria-label="Deepcar" className="flex-none">
           <img src="/brand/mark-light.png" alt="Deepcar" className="h-7 w-7 object-contain sm:hidden" draggable={false} />
           <img src="/brand/logo-h-light.png" alt="Deepcar" className="hidden h-6 sm:block" draggable={false} />
@@ -125,7 +125,7 @@ function Aviso({ tipo, quem, msg }: { tipo: 'expirado' | 'inexistente' | 'erro';
           <img src="/brand/logo-h-light.png" alt="Deepcar" className="mx-auto h-7" draggable={false} />
         </Link>
 
-        <div className="mt-10 rounded-[24px] border seam bg-bench-2/90 p-7 shadow-2xl backdrop-blur-md sm:p-9">
+        <div className="mt-10 rounded-[24px] border seam bg-bench-2 p-7 shadow-2xl sm:p-9 md:bg-bench-2/90 md:backdrop-blur-md">
           <span className="relative mx-auto grid h-16 w-16 place-items-center">
             <span aria-hidden="true" className={`absolute inset-0 rounded-full ${expirado ? 'bg-warn/15' : 'bg-trace/15'} animate-ping [animation-duration:2.4s] motion-reduce:animate-none`} />
             <span className={`relative grid h-16 w-16 place-items-center rounded-full border ${expirado ? 'border-warn/35 bg-warn/10 text-warn' : 'border-trace/35 bg-trace/10 text-trace-hi'}`}>

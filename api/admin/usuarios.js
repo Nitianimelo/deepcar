@@ -31,6 +31,7 @@ export default async function handler(req, res) {
                u.whatsapp, u.free_expira_em, u.assinatura_status, u.assinatura_plano,
                u.assinatura_renova_em, u.assinatura_em_atraso, u.assinatura_origem,
                u.assinatura_ciclo, u.plano_expira_em, u.origem,
+               u.boas_vindas_em, u.primeira_placa_em, u.primeiro_esquema_em,
                (select count(*)::int from sessoes s where s.usuario_id = u.id and s.expira_em > now()) as sessoes
           from usuarios u
          where ${q} = '%%' or u.email ilike ${q} or u.nome ilike ${q} or u.oficina ilike ${q}

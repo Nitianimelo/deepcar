@@ -54,6 +54,9 @@
   --color-tinta-2: #3b4655;
   --color-tinta-3: #5d6876;    /* ≥ 4,5:1 sobre o papel */
   --color-azul-escuro: #1f5fd6; /* azul da marca com contraste em fundo claro */
+  --color-azul-escuro-hi: #1a52bb;
+  --color-aviso-claro: #fff8e6;  /* aviso em fundo claro (aba Plano) */
+  --color-aviso-claro-borda: #e7c66b;
   --color-whatsapp: #25d366;   /* verde da marca WhatsApp: botão flutuante da landing e ícone do Suporte no menu */
   --color-whatsapp-hi: #1ebe5b;
   --color-fault: #ff6262;
@@ -366,6 +369,8 @@ html:has(.landing) { scroll-behavior: smooth; }
   transition-delay: var(--reveal-delay, 0ms);
 }
 .reveal.is-in { opacity: 1; transform: none; filter: none; }
+/* celular: sem o desfoque na entrada (filter: blur anima caro em aparelho de entrada); fica só o deslize */
+@media (max-width: 767px) { .reveal { filter: none; } }
 
 /* luzes do fundo derivando devagar, como reflexo de painel */
 @keyframes deriva-a { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); } 50% { transform: translate3d(4%, 3%, 0) scale(1.08); } }
@@ -509,4 +514,17 @@ html:has(.landing) { scroll-behavior: smooth; }
   aside, #root header, .no-print { display: none !important; }
   main { overflow: visible !important; background: none !important; }
   .sem-impressao { display: none !important; }
+}
+
+/* ── Folha (components/Folha.tsx): sobe de baixo, só opacity/transform (barato em celular fraco) ── */
+@layer components {
+  .folha { animation: folha-sobe 220ms cubic-bezier(.2, .7, .2, 1) backwards; }
+  .folha-veu { animation: folha-veu 180ms ease-out backwards; }
+  .destaque { transition: top 180ms ease, left 180ms ease, width 180ms ease, height 180ms ease, opacity 120ms ease; }
+  @keyframes folha-sobe { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes folha-veu { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .folha, .folha-veu { animation: none; }
+    .destaque { transition: none; }
+  }
 }

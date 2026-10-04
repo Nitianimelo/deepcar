@@ -46,7 +46,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
       {/* véu no mobile */}
       <div
         onClick={onCloseMobile}
-        className={`fixed inset-0 z-30 bg-black/55 backdrop-blur-[2px] transition-opacity lg:hidden ${mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+        className={`fixed inset-0 z-30 bg-black/65 transition-opacity lg:hidden ${mobileOpen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
       />
 
       <aside

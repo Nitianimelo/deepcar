@@ -11,6 +11,9 @@ import { BloqueioPlano } from '../components/BloqueioPlano'
 import { EsquemaEmbacado } from '../components/AssineParaAcessar'
 import { useAcesso } from '../lib/acesso'
 import { useTitulo } from '../lib/seo'
+import { getSession } from '../lib/auth'
+import { momentoDeValor } from '../lib/funil'
+import { DicaEsquema } from '../components/Funil'
 
 export default function EsquemaPage() {
   const id = useParams()['*'] ?? ''
@@ -34,6 +37,8 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
   const aberto = carga.estado === 'ok' ? carga.dados : null
   useEffect(() => {
     if (!aberto || !SECTION_META[aberto.secao]) return
+    const email = getSession()?.email
+    if (email) momentoDeValor(email, 'esquema')
     registrarRecente({
       tipo: 'esquema',
       id: aberto.id,
@@ -105,7 +110,7 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
             </dl>
 
             <div className="sem-impressao mt-6">
-              {testeAcabou ? <EsquemaEmbacado d={d} /> : <EsquemaViewer key={d.id} d={d} />}
+              {testeAcabou ? <EsquemaEmbacado d={d} /> : <><DicaEsquema /><EsquemaViewer key={d.id} d={d} /></>}
             </div>
           </>
         )

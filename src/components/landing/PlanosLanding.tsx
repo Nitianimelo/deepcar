@@ -1,13 +1,15 @@
 // Seção de planos da landing: fundo cinza-claro, cartões brancos e texto que explica o pagamento
 // (mensal no cartão ou Pix; anual em até 12x no cartão ou à vista no Pix). Sem as cores do chicote:
-// aqui a pessoa decide o que comprar, então tudo é lista simples. A conta e o fim do teste seguem com o CardPlano.
-import { useState } from 'react'
+// aqui a pessoa decide o que comprar, então tudo é lista simples. `CartaoPlanoClaro` e `ChaveCiclo` também servem
+// a aba Plano da conta (src/pages/Conta.tsx), dentro de um painel claro; o convite do fim do teste segue com o CardPlano.
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, CreditCard, Minus, QrCode } from 'lucide-react'
 import { NAV } from '../../data/nav'
 import { PLANOS_VENDA, type Ciclo, type PlanoVenda } from '../../data/planos'
 import { Reveal } from './Reveal'
 import { BotaoEquipe } from './BotaoWhatsapp'
+import { classeBotaoClaro } from './estiloPlanos'
 
 const reais = (v: string) => Number(v.replace('.', '').replace(',', '.'))
 const brl = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -26,7 +28,7 @@ function economia(p: PlanoVenda) {
 }
 const MAIOR_ECONOMIA = Math.max(...PLANOS_VENDA.map((p) => economia(p).pct))
 
-function Chave({ ciclo, onChange }: { ciclo: Ciclo; onChange: (c: Ciclo) => void }) {
+export function ChaveCiclo({ ciclo, onChange }: { ciclo: Ciclo; onChange: (c: Ciclo) => void }) {
   const opcoes: { id: Ciclo; rotulo: string; extra?: string }[] = [
     { id: 'mensal', rotulo: 'Mensal' },
     { id: 'anual', rotulo: 'Anual', extra: `economize até ${MAIOR_ECONOMIA}%` },
@@ -48,7 +50,11 @@ function Chave({ ciclo, onChange }: { ciclo: Ciclo; onChange: (c: Ciclo) => void
           >
             {o.rotulo}
             {o.extra && (
-              <span className={`rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${ativo ? 'bg-white/15 text-white' : 'bg-azul-escuro/10 text-azul-escuro'}`}>{o.extra}</span>
+              // celular estreito: só "-38%", para a chave não quebrar em duas linhas
+              <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${ativo ? 'bg-white/15 text-white' : 'bg-azul-escuro/10 text-azul-escuro'}`}>
+                <span className="sm:hidden">-{MAIOR_ECONOMIA}%</span>
+                <span className="hidden sm:inline">{o.extra}</span>
+              </span>
             )}
           </button>
         )
@@ -98,7 +104,16 @@ function Preco({ p, ciclo }: { p: PlanoVenda; ciclo: Ciclo }) {
   )
 }
 
-function Cartao({ p, ciclo }: { p: PlanoVenda; ciclo: Ciclo }) {
+type PropsCartao = {
+  p: PlanoVenda
+  ciclo: Ciclo
+  /** botão do rodapé; sem ele, "Começar com o teste grátis" (landing) */
+  acao?: ReactNode
+  /** plano que a conta já tem: selo "Seu plano" no lugar do "Mais completo" */
+  atual?: boolean
+}
+
+export function CartaoPlanoClaro({ p, ciclo, acao, atual = false }: PropsCartao) {
   const tem = new Set(p.secoes)
   const itens = [
     ...SISTEMAS.map((s) => ({ nome: s.nome, ok: tem.has(s.key) })),
@@ -108,9 +123,9 @@ function Cartao({ p, ciclo }: { p: PlanoVenda; ciclo: Ciclo }) {
     { nome: 'Suporte pelo WhatsApp', ok: true },
   ]
   return (
-    <article className={`relative flex h-full flex-col rounded-2xl border bg-papel-card p-6 text-tinta-1 shadow-[0_1px_2px_rgba(15,23,32,0.06),0_8px_24px_rgba(15,23,32,0.06)] sm:p-8 ${p.destaque ? 'border-azul-escuro ring-1 ring-azul-escuro' : 'border-papel-linha'}`}>
-      {p.destaque && (
-        <span className="absolute -top-3 left-6 rounded-full bg-azul-escuro px-3 py-1 text-[12px] font-semibold text-white sm:left-8">Mais completo</span>
+    <article className={`relative flex h-full flex-col rounded-2xl border bg-papel-card p-6 text-tinta-1 shadow-[0_1px_2px_rgba(15,23,32,0.06),0_8px_24px_rgba(15,23,32,0.06)] sm:p-8 ${atual || p.destaque ? 'border-azul-escuro ring-1 ring-azul-escuro' : 'border-papel-linha'}`}>
+      {(atual || p.destaque) && (
+        <span className="absolute -top-3 left-6 rounded-full bg-azul-escuro px-3 py-1 text-[12px] font-semibold text-white sm:left-8">{atual ? 'Seu plano' : 'Mais completo'}</span>
       )}
       <h3 className="text-[26px] font-semibold tracking-tight">{p.nome}</h3>
       <p className="mt-1 text-[14.5px] text-tinta-2">{p.para}</p>
@@ -133,15 +148,16 @@ function Cartao({ p, ciclo }: { p: PlanoVenda; ciclo: Ciclo }) {
         ))}
       </ul>
 
-      <Link
-        to="/cadastro"
-        className={`mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azul-escuro/50 focus-visible:ring-offset-2 ${
-          p.destaque ? 'bg-azul-escuro text-white hover:bg-[#1a52bb]' : 'border border-tinta-1/15 bg-papel-card text-tinta-1 hover:bg-papel'
-        }`}
-      >
-        Começar com o teste grátis <span aria-hidden="true">→</span>
-      </Link>
-      <p className="mt-2.5 text-center text-[12.5px] text-tinta-3">Crie a conta, teste à vontade e assine depois.</p>
+      <div className="mt-auto pt-8">
+        {acao ?? (
+          <>
+            <Link to="/cadastro" className={classeBotaoClaro(p.destaque)}>
+              Começar com o teste grátis <span aria-hidden="true">→</span>
+            </Link>
+            <p className="mt-2.5 text-center text-[12.5px] text-tinta-3">Crie a conta, teste à vontade e assine depois.</p>
+          </>
+        )}
+      </div>
     </article>
   )
 }
@@ -167,13 +183,13 @@ export function PlanosLanding() {
         </Reveal>
 
         <Reveal index={1} className="mt-9 flex justify-center">
-          <Chave ciclo={ciclo} onChange={setCiclo} />
+          <ChaveCiclo ciclo={ciclo} onChange={setCiclo} />
         </Reveal>
 
         <div className="mx-auto mt-10 grid max-w-[920px] items-stretch gap-6 md:grid-cols-2">
           {PLANOS_VENDA.map((p, i) => (
             <Reveal key={p.id} index={i + 1}>
-              <Cartao p={p} ciclo={ciclo} />
+              <CartaoPlanoClaro p={p} ciclo={ciclo} />
             </Reveal>
           ))}
         </div>

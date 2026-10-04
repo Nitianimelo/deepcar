@@ -330,7 +330,7 @@ export function EsquemaViewer({ d }: { d: EsquemaDetalhe }) {
         {/* barra de ferramentas */}
         <div
           ref={toolbar}
-          className="no-print sticky top-0 z-10 flex min-h-[52px] items-center justify-between gap-2 rounded-t-xl border-b seam bg-bench-1/95 px-2 py-1.5 backdrop-blur-md sm:px-3"
+          className="no-print sticky top-0 z-10 flex min-h-[52px] items-center justify-between gap-2 rounded-t-xl border-b seam bg-bench-1 px-2 py-1.5 sm:px-3 md:bg-bench-1/95 md:backdrop-blur-md"
         >
           <div className="flex min-w-0 flex-1 items-center gap-1.5 text-ink-2 sm:gap-2">
             {itens.length > 1 ? (

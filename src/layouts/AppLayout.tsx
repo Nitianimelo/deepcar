@@ -5,6 +5,7 @@ import { PlateSearch } from '../components/PlateSearch'
 import { PaletaBusca } from '../components/PaletaBusca'
 import { Sidebar } from '../components/Sidebar'
 import { AvisoTopo, SeloTeste } from '../components/LimiteFree'
+import { BoasVindas, ConviteMomento } from '../components/Funil'
 import { useSessao } from '../lib/auth'
 import { useLimiteFree } from '../lib/plano'
 import { podePlaca, SessaoAtual, TesteAcabou } from '../lib/acesso'
@@ -74,6 +75,9 @@ export default function AppLayout() {
         <main className="app-conteudo schematic-grid min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </main>
+        {/* teste gratuito: boas-vindas na primeira entrada e convite depois de achar valor (components/Funil.tsx) */}
+        <BoasVindas />
+        <ConviteMomento />
       </div>
     </div>
     </TesteAcabou.Provider>

@@ -35,6 +35,9 @@ Regras de trabalho estão em `AGENTE.md`.
     aparelhos conectados e "desconectar"), aba **Planos** (o que cada plano libera) e cofre de chaves.
   - **Acesso por plano:** Pro = injeção leve, ABS e elétrica leve, 2 aparelhos, com busca pela placa; Full = tudo, 4 aparelhos;
     Free (teste de 10 h) = tudo, 2 aparelhos. Sistemas fora do plano aparecem com cadeado e abrem a tela de upgrade.
+  - **Funil do teste (desde 03/10):** tempo restante sempre visível (faixa no celular, selo no computador, cartão do
+    menu; tom de aviso nas últimas 2 h); boas-vindas em 3 passos na primeira entrada; convite para assinar depois da
+    1ª placa ou do 3º esquema; dica do visualizador no 1º esquema. Aba Plano da conta no padrão claro da landing.
   - Tela inicial `/app`: cards "Consultar por placa" e "Buscar esquema" e card "Últimas consultas" (localStorage, por conta).
     Botão "Início" no menu lateral (e o logo leva para lá).
   - Busca geral `/app/busca?q=` em todos os sistemas (modelo, motor, código, gerenciamento, fabricação e nome do sistema).
@@ -52,7 +55,7 @@ Regras de trabalho estão em `AGENTE.md`.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
-- **Banco (Neon):** migrações `001_inicial` a `007_origem_e_rastreio` aplicadas.
+- **Banco (Neon):** migrações `001_inicial` a `008_ativacao` aplicadas.
 - **Último deploy verificado:** commit `b100d52`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
@@ -101,6 +104,36 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-10-03 · Funil dentro da plataforma: boas-vindas, tempo do teste à vista, convite no momento de valor
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** deixar a plataforma mais incisiva para assinar, mostrar como usar depois do cadastro, cuidar dos celulares
+  fracos, e trazer a aba Plano para o padrão da página de vendas. Mensagens de WhatsApp ficam para a automação dele.
+- **Dados que embasaram (banco, 03/10):** 26 contas, 1 venda pela Cakto e 1 cartão recusado; 20 de 23 contas usam celular
+  (Galaxy A03/A12, Moto g04s, Redmi, iPhone iOS 18); dos 12 testes vencidos, 4 saíram na primeira hora.
+- **O que mudou:**
+  - `components/Folha.tsx` (novo): folha inferior sem desfoque, voltar do Android fecha, foco no botão principal;
+    `Destaque` recorta o elemento apontado com uma sombra (um elemento só).
+  - `components/Funil.tsx` + `lib/funil.ts` (novos): `BoasVindas` (só no teste em andamento, na primeira entrada no
+    início: boas-vindas → placa → busca, alvos `data-tour` em `Inicio.tsx`); `ConviteMomento` (após a 1ª placa ou o 3º
+    esquema, no máximo 1 por dia, só no início ou na placa, nunca sobre o visualizador; "Ver planos" vai à aba Plano);
+    `DicaEsquema` (1º esquema, cartão na página).
+  - `components/LimiteFree.tsx`: tempo restante na faixa do celular, no selo do computador e no cartão do menu; nas
+    últimas 2 h, tom de aviso ("Seu teste acaba em 1 h 30 min"). Revoga a decisão anterior de não mostrar contador.
+  - Aba Plano (`pages/Conta.tsx`) com `CartaoPlanoClaro`/`ChaveCiclo` da landing (`PlanosLanding.tsx`, classes em
+    `landing/estiloPlanos.ts`) num painel cinza-claro; tokens `--color-azul-escuro-hi`, `--color-aviso-claro*`.
+  - Celular: sem desfoque na barra do visualizador, no link compartilhado, no convite do teste vencido, no véu do menu
+    e na entrada das seções da landing (tudo segue no computador). Na chave Mensal/Anual, o selo vira "-38%" no celular.
+  - Ativação: `db/008_ativacao.sql` (`boas_vindas_em`, `primeira_placa_em`, `primeiro_esquema_em`); `POST /api/sessao`
+    `{ evento: 'ativacao', marco }`; `api/placa` marca a 1ª placa; /admin mostra "Ativação: ✓ boas-vindas · ✓ placa · — esquema".
+  - `Privacidade.tsx`: item "Primeiros passos na plataforma".
+- **Banco:** `008_ativacao` **aplicada no Neon antes do push**.
+- **Variáveis/infra:** sem mudança (continua 12 funções).
+- **Verificação:** build ok, lint 10 avisos; celular simulado (360 px, toque): boas-vindas nos 3 passos com destaque,
+  não volta depois de concluída, marco enviado; voltar do Android fecha a folha e fica no /app; convite aparece após a
+  placa e "Ver planos" abre a aba Plano; tempo restante normal e na reta final; dica no 1º esquema com marco enviado.
+- **Pendências:** WhatsApp de recuperação (teste acabando, cartão recusado) fica com a automação do dono. O app Android
+  não tem nada disto (código próprio). Decidir se o teste continua 10 h corridas ou passa a contar uso.
 
 ### 2026-10-03 · Rastreamento: origem do cliente, compra com o navegador do cadastro, Contact e InitiateCheckout
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

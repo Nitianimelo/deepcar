@@ -136,6 +136,9 @@ src/
                           da landing (fundo cinza-claro, cartões brancos, tokens --color-papel*/tinta-*/azul-escuro).
                           CardPlano: cartão escuro da aba Plano da conta e do convite depois do teste (botão vem em `acao`)
   components/landing/BotaoWhatsapp.tsx  botão flutuante do WhatsApp (só na landing); components/IconeWhatsapp.tsx: ícone da marca
+  components/Folha.tsx    folha que sobe de baixo (+ Destaque): sem desfoque, voltar do Android fecha (estado no histórico)
+  components/Funil.tsx    BoasVindas (3 passos no início), ConviteMomento (após 1ª placa / 3º esquema), DicaEsquema
+  lib/funil.ts            regras do funil no navegador (por conta e aparelho) e marcos de ativação → POST /api/sessao
   components/PlanoDetalhes.tsx  miolo do CardPlano: chicote de sistemas (cor do fio por sistema, tokens --color-fio-*) e extras
   lib/seo.ts              useTitulo(): título da aba ao navegar (páginas públicas já saem certas do build)
   lib/transicao.ts        marcarTitulo(): título que "voa" da lista ao cabeçalho do esquema (View Transitions)
@@ -164,7 +167,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Front: `/`, `/login`, `/cadastro`, `/admin`, `/c/:token` (link compartilhado, público), `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
   `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`, `/privacidade` e `/excluir-conta` (públicas,
   exigidas pela Google Play para o app Android).
-- API: `POST /api/registrar`, `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha), `POST /api/sessao` (clique em assinar → InitiateCheckout na Meta),
+- API: `POST /api/registrar`, `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha), `POST /api/sessao` (`evento: 'checkout'` → InitiateCheckout na Meta; `evento: 'ativacao'` → marco de primeiros passos),
   `GET|POST|PATCH|DELETE /api/admin/usuarios`, `GET|PUT /api/admin/planos`, `GET|PUT|DELETE /api/admin/segredos`,
   `POST /api/admin/inicializar`, `GET /api/placa/:placa`, `POST|GET /api/compartilhar`.
 - **Limite da Vercel (plano Hobby): 12 funções em `api/`** (sem contar `_lib/`), e o projeto já está com 12. Rota nova
@@ -175,7 +178,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 ## 6. Banco de dados (Neon)
 
 - Tabelas: `usuarios` (plano `free|pro|full`, papel `usuario|admin`, `ativo`, `whatsapp`, `free_expira_em`, `origem` (UTM/fbclid do
-  cadastro pelo site), `rastreio_meta` (fbp/fbc/IP/navegador do cadastro, usado no Purchase), colunas
+  cadastro pelo site), `rastreio_meta` (fbp/fbc/IP/navegador do cadastro, usado no Purchase), `boas_vindas_em`/`primeira_placa_em`/
+  `primeiro_esquema_em` (ativação, no /admin), colunas
   `assinatura_*`, `assinatura_ciclo` `mensal|anual` e `plano_expira_em` = fim do anual), `sessoes` (sha-256 do token),
   `segredos` (valores cifrados), `cakto_eventos`, `assinaturas_pendentes` (com `ciclo`), `compartilhamentos`
   (sha-256 do link, esquema, `limite` 2, `aberturas`, `visitantes` = aparelho → 1ª abertura). Função `limpar_sessoes()`.
@@ -242,6 +246,11 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   em `~/Developer/deepcar` (fora do iCloud) e **apague a cópia no fim**: o dono quer o SSD livre. A cópia de referência no
   Mac fica no iCloud em `Grupo Inttus/deepcar-main` (sem `node_modules`/`dist`); a fonte da verdade é o GitHub.
 - Deploy da Vercel não roda migração nem copia o acervo.
+- **Celular de entrada é o público** (87% das contas usam celular; Galaxy A03/A12, Moto g04s, Redmi). Nada de
+  `backdrop-filter`/`filter: blur` no celular em telas do app (fica atrás de `md:`); animação só com opacity/transform.
+  Dica por `data-tip` não aparece no toque: o que o celular precisa saber vai em texto visível.
+- **Folha (components/Folha.tsx) empilha um estado no histórico.** Trocar de folha no meio de um fluxo (desmontar e
+  montar outra) faz o "voltar" fechar a seguinte: mantenha uma folha só e troque o conteúdo (ver BoasVindas).
 - **Pixel da Meta (`src/lib/pixel.ts`) só roda nas páginas públicas.** Nunca carregue em `/app`, `/admin` ou `/c/`
   (a URL leva placa e token). Página privada nova fora desses prefixos? Inclua em `PRIVADAS`.
   Eventos da Meta: `PageView` e `Contact` (botões de WhatsApp da landing) só pelo pixel; `CompleteRegistration` pelo

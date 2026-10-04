@@ -32,6 +32,28 @@ type Usuario = {
   plano_expira_em?: string | null
   /** de onde veio (UTM/fbclid), só em cadastros feitos pelo site depois de 03/10/2026 */
   origem?: Record<string, string> | null
+  /** ativação (db/008): primeiros passos na plataforma */
+  boas_vindas_em?: string | null
+  primeira_placa_em?: string | null
+  primeiro_esquema_em?: string | null
+}
+
+/** Os três primeiros passos, na ordem do funil: ✓ com a data na dica, ou — quando ainda não fez. */
+function Ativacao({ u }: { u: Usuario }) {
+  if (u.papel === 'admin') return null
+  const passos: [string, string | null | undefined][] = [
+    ['boas-vindas', u.boas_vindas_em], ['placa', u.primeira_placa_em], ['esquema', u.primeiro_esquema_em],
+  ]
+  return (
+    <span className="block text-[12px] text-ink-4">
+      Ativação:{' '}
+      {passos.map(([nome, quando], i) => (
+        <span key={nome} data-tip={quando ? `${nome}: ${new Date(quando).toLocaleString('pt-BR')}` : `${nome}: ainda não`} className={quando ? 'text-ok' : 'text-ink-4'}>
+          {i > 0 && <span className="text-ink-4"> · </span>}{quando ? '✓' : '—'} {nome}
+        </span>
+      ))}
+    </span>
+  )
 }
 
 /** "facebook / cpc · campanha-x" ou "anúncio da Meta" (só fbclid) ou "google.com" (referrer). */
@@ -251,6 +273,7 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
                       {mascararWhatsapp(u.whatsapp)}
                     </a>
                   )}
+                  <Ativacao u={u} />
                   {textoOrigem(u.origem) && (
                     <span className="block text-[12px] text-ink-4" data-tip="De onde a pessoa chegou antes de criar a conta">
                       Origem: <span className="text-ink-3">{textoOrigem(u.origem)}</span>

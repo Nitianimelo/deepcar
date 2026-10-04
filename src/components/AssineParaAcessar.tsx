@@ -56,7 +56,7 @@ export function ConviteAssinatura({ titulo, oQue }: { titulo: string; oQue: stri
   return (
     <section
       aria-labelledby="convite-assinatura"
-      className="w-full max-w-[780px] rounded-2xl border seam bg-bench-2/95 p-5 shadow-2xl backdrop-blur-md sm:p-8"
+      className="w-full max-w-[780px] rounded-2xl border seam bg-bench-2 p-5 shadow-2xl sm:p-8 md:bg-bench-2/95 md:backdrop-blur-md"
     >
       <div className="flex items-center gap-3">
         <span className="grid h-10 w-10 flex-none place-items-center rounded-full border border-trace/30 bg-trace/10 text-trace-hi">

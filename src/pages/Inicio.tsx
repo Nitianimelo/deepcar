@@ -74,7 +74,7 @@ function CampoPlaca() {
   }
 
   return (
-    <form onSubmit={enviar} className="min-w-0 p-5 sm:p-6">
+    <form onSubmit={enviar} data-tour="placa" className="min-w-0 p-5 sm:p-6">
       <Rotulo dica="Mercosul ou padrão antigo">Consulta por placa</Rotulo>
       {/* a placa em si: faixa azul à esquerda como na Mercosul, letras grandes em mono */}
       <div className="relative mt-3 flex h-16 items-stretch overflow-hidden rounded-xl border seam-strong bg-well transition-[border-color,box-shadow] focus-within:border-trace/60 focus-within:shadow-[var(--glow)]">
@@ -113,7 +113,7 @@ function BuscaTexto() {
   }
 
   return (
-    <form onSubmit={enviar} className="min-w-0 border-t seam-soft p-5 sm:p-6 md:border-l md:border-t-0">
+    <form onSubmit={enviar} data-tour="busca" className="min-w-0 border-t seam-soft p-5 sm:p-6 md:border-l md:border-t-0">
       <Rotulo dica="Modelo, motor, código ou sistema">Buscar esquema</Rotulo>
       <label className="relative mt-3 block">
         <Search size={17} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" />

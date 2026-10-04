@@ -7,6 +7,8 @@
 //
 // POST /api/sessao { evento: 'checkout', plano, ciclo, valor, id } → clique num botão de assinar do site: manda
 // InitiateCheckout pela API de Conversões da Meta (o pixel não roda dentro do /app). O app Android não usa.
+// POST /api/sessao { evento: 'ativacao', marco: 'boas_vindas' | 'esquema' } → primeira vez que a conta fez isso
+// (src/lib/funil.ts). Guarda só a primeira data; aparece no /admin.
 import { randomUUID } from 'node:crypto'
 import { sql, um } from './_lib/db.js'
 import { dadosDoNavegador, enviarEvento } from './_lib/meta.js'
@@ -20,7 +22,7 @@ export default async function handler(req, res) {
     const u = await usuarioDaSessao(req)
     if (!u) return res.status(401).json({ erro: 'Sem sessão.' })
     if (req.method === 'DELETE') return await excluirConta(req, res, u)
-    if (req.method === 'POST') return await eventoCheckout(req, res, u)
+    if (req.method === 'POST') return corpo(req).evento === 'ativacao' ? await marcarAtivacao(req, res, u) : await eventoCheckout(req, res, u)
     if (req.method !== 'GET') {
       res.setHeader('Allow', 'GET, POST, DELETE')
       return res.status(405).json({ erro: 'Use GET, POST ou DELETE.' })
@@ -76,4 +78,13 @@ async function eventoCheckout(req, res, u) {
     })
   }
   return res.status(202).json({ ok: true })
+}
+
+// so a primeira data vale (coalesce): o site manda uma vez por aparelho, e quem troca de aparelho nao reescreve
+async function marcarAtivacao(req, res, u) {
+  const { marco } = corpo(req)
+  if (marco === 'boas_vindas') await sql`update usuarios set boas_vindas_em = coalesce(boas_vindas_em, now()) where id = ${u.id}`
+  else if (marco === 'esquema') await sql`update usuarios set primeiro_esquema_em = coalesce(primeiro_esquema_em, now()) where id = ${u.id}`
+  else return res.status(400).json({ erro: 'Marco inválido.' })
+  return res.status(204).end()
 }
