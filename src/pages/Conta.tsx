@@ -123,8 +123,8 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
   const pago = s.plano === 'pro' || s.plano === 'full'
   const mensagem = `Olá! Sou ${s.nome} (${s.email}) e quero falar sobre a assinatura do Deepcar.`
   const cicloAtual: Ciclo = s.assinatura?.ciclo === 'anual' ? 'anual' : 'mensal'
-  // quem já paga abre no ciclo que tem; quem ainda não paga abre no anual, que é o mais barato
-  const [ciclo, setCiclo] = useState<Ciclo>(pago ? cicloAtual : 'anual')
+  // sempre abre no anual (o mais barato por mês): quem paga o mensal já vê ali o convite para passar ao anual
+  const [ciclo, setCiclo] = useState<Ciclo>('anual')
   const validoAte = s.assinatura?.validoAte ? new Date(s.assinatura.validoAte).toLocaleDateString('pt-BR') : null
 
   return (

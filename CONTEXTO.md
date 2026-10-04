@@ -105,6 +105,15 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-03 · Aba Plano sempre abre no anual
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** deixar o anual marcado por padrão na aba Plano da plataforma.
+- **O que mudou:** `src/pages/Conta.tsx` (`AbaPlano`): a chave Mensal/Anual abre sempre no anual. Antes, quem pagava o
+  mensal abria no mensal; agora vê o anual com o botão "Passar para anual" (o mensal continua marcado como ativo ao trocar).
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** build ok, lint com os mesmos 10 avisos.
+- **Pendências:** nenhuma.
+
 ### 2026-10-03 · Funil dentro da plataforma: boas-vindas, tempo do teste à vista, convite no momento de valor
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** deixar a plataforma mais incisiva para assinar, mostrar como usar depois do cadastro, cuidar dos celulares
