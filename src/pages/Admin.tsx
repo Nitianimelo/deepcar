@@ -30,6 +30,19 @@ type Usuario = {
   assinatura_origem?: string | null
   assinatura_ciclo?: 'mensal' | 'anual' | null
   plano_expira_em?: string | null
+  /** de onde veio (UTM/fbclid), só em cadastros feitos pelo site depois de 03/10/2026 */
+  origem?: Record<string, string> | null
+}
+
+/** "facebook / cpc · campanha-x" ou "anúncio da Meta" (só fbclid) ou "google.com" (referrer). */
+function textoOrigem(o?: Record<string, string> | null) {
+  if (!o) return null
+  const fonte = [o.utm_source, o.utm_medium].filter(Boolean).join(' / ')
+  if (fonte) return [fonte, o.utm_campaign, o.utm_content].filter(Boolean).join(' · ')
+  if (o.fbclid) return 'anúncio da Meta (sem UTM)'
+  if (o.gclid) return 'anúncio do Google (sem UTM)'
+  if (o.referrer) return o.referrer
+  return 'acesso direto'
 }
 
 type Pendente = {
@@ -237,6 +250,11 @@ function AbaUsuarios({ meuEmail }: { meuEmail: string }) {
                     >
                       {mascararWhatsapp(u.whatsapp)}
                     </a>
+                  )}
+                  {textoOrigem(u.origem) && (
+                    <span className="block text-[12px] text-ink-4" data-tip="De onde a pessoa chegou antes de criar a conta">
+                      Origem: <span className="text-ink-3">{textoOrigem(u.origem)}</span>
+                    </span>
                   )}
                 </td>
                 <td className="px-3 py-3">

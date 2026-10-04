@@ -4,7 +4,12 @@
 // DELETE /api/sessao { senha } → exclui a própria conta (exigência da Google Play: quem cria
 // conta pelo app precisa poder apagá-la pelo app e pela web). Fica aqui porque a Vercel Hobby
 // aceita só 12 funções em api/ e o projeto já está no limite.
+//
+// POST /api/sessao { evento: 'checkout', plano, ciclo, valor, id } → clique num botão de assinar do site: manda
+// InitiateCheckout pela API de Conversões da Meta (o pixel não roda dentro do /app). O app Android não usa.
+import { randomUUID } from 'node:crypto'
 import { sql, um } from './_lib/db.js'
+import { dadosDoNavegador, enviarEvento } from './_lib/meta.js'
 import { abrirJanelaFree, conferirSenha, corpo, limparCookie, publicoCompleto, usuarioDaSessao } from './_lib/sessao.js'
 
 export const config = { runtime: 'nodejs' }
@@ -15,9 +20,10 @@ export default async function handler(req, res) {
     const u = await usuarioDaSessao(req)
     if (!u) return res.status(401).json({ erro: 'Sem sessão.' })
     if (req.method === 'DELETE') return await excluirConta(req, res, u)
+    if (req.method === 'POST') return await eventoCheckout(req, res, u)
     if (req.method !== 'GET') {
-      res.setHeader('Allow', 'GET, DELETE')
-      return res.status(405).json({ erro: 'Use GET ou DELETE.' })
+      res.setHeader('Allow', 'GET, POST, DELETE')
+      return res.status(405).json({ erro: 'Use GET, POST ou DELETE.' })
     }
     // conta criada pelo /admin, ou rebaixada para free: o relógio parte no primeiro acesso
     return res.status(200).json(await publicoCompleto(await abrirJanelaFree(u)))
@@ -40,4 +46,34 @@ async function excluirConta(req, res, u) {
   await sql`delete from usuarios where id = ${u.id}`
   limparCookie(res)
   return res.status(200).json({ ok: true })
+}
+
+const PLANOS = new Set(['pro', 'full'])
+const CICLOS = new Set(['mensal', 'anual'])
+
+// Clique em "assinar": InitiateCheckout com os dados da conta. A URL vai fixa (/app/conta), nunca a pagina de onde
+// veio o clique (pode ter placa). Administrador nao conta.
+async function eventoCheckout(req, res, u) {
+  const d = corpo(req)
+  if (d.evento !== 'checkout' || !PLANOS.has(d.plano) || !CICLOS.has(d.ciclo)) {
+    return res.status(400).json({ erro: 'Evento inválido.' })
+  }
+  if (u.papel !== 'admin') {
+    const id = /^[\w-]{8,64}$/.test(String(d.id ?? '')) ? String(d.id) : randomUUID()
+    const valor = Number(d.valor)
+    const navegador = dadosDoNavegador(req)
+    if (!navegador.fbc) {
+      const conta = await um(sql`select rastreio_meta from usuarios where id = ${u.id}`)
+      navegador.fbc = conta?.rastreio_meta?.fbc
+    }
+    await enviarEvento({
+      nome: 'InitiateCheckout', id: `checkout-${id}`, url: 'https://deepcar.app.br/app/conta',
+      pessoa: { email: u.email, whatsapp: u.whatsapp, nome: u.nome, idExterno: u.id }, navegador,
+      dados: {
+        value: valor > 0 && valor < 5000 ? valor : undefined, currency: 'BRL',
+        content_name: `${d.plano} ${d.ciclo}`, content_ids: [`${d.plano}-${d.ciclo}`], content_type: 'product',
+      },
+    })
+  }
+  return res.status(202).json({ ok: true })
 }

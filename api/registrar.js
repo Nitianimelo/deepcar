@@ -3,9 +3,22 @@ import { sql, um } from './_lib/db.js'
 import { abrirJanelaFree, cifrarSenha, corpo, criarSessao, porCookie, publicoCompleto } from './_lib/sessao.js'
 import { emailValido, nomeValido, normalizarWhatsapp, senhaValida, SENHA_MINIMA } from './_lib/validar.js'
 import { consumirPendente } from './_lib/assinatura.js'
-import { dadosDoNavegador, enviarEvento } from './_lib/meta.js'
+import { dadosDoNavegador, enviarEvento, rastreioParaGuardar } from './_lib/meta.js'
 
 export const config = { runtime: 'nodejs' }
+
+const CAMPOS_ORIGEM = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'entrada', 'referrer', 'em']
+
+/** Origem que o site mandou (src/lib/origem.ts): so os campos conhecidos, texto curto. */
+function limparOrigem(o) {
+  if (!o || typeof o !== 'object') return null
+  const r = {}
+  for (const c of CAMPOS_ORIGEM) {
+    const v = typeof o[c] === 'string' ? o[c].trim() : ''
+    if (v) r[c] = v.slice(0, 200)
+  }
+  return Object.keys(r).length ? r : null
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -22,6 +35,10 @@ export default async function handler(req, res) {
     // so o site manda: e o mesmo eventID do pixel. O app Android nao manda, e cadastro pelo app nao vai para a Meta
     const eventoId = /^[\w-]{8,64}$/.test(String(dados.evento_id ?? '')) ? String(dados.evento_id) : null
     const oficina = String(dados.oficina ?? '').trim() || 'Minha oficina'
+    // origem e rastreio so do site (mesma regra do eventID): cadastro pelo app Android nao vai para a Meta
+    const origem = eventoId ? limparOrigem(dados.origem) : null
+    const navegador = eventoId ? dadosDoNavegador(req) : null
+    const rastreio = navegador ? rastreioParaGuardar(navegador, dados.origem?.fbc) : null
 
     // uma mensagem por campo, na ordem da tela: quem errar dois sabe qual corrigir primeiro
     if (!nomeValido(nome)) return res.status(400).json({ erro: 'Informe seu nome.', campo: 'nome' })
@@ -35,14 +52,15 @@ export default async function handler(req, res) {
     if (existe) return res.status(409).json({ erro: 'Já existe uma conta com este e-mail.', campo: 'email' })
 
     const u = await um(sql`
-      insert into usuarios (email, senha, nome, oficina, whatsapp)
-      values (${email}, ${await cifrarSenha(senha)}, ${nome}, ${oficina}, ${whatsapp})
+      insert into usuarios (email, senha, nome, oficina, whatsapp, origem, rastreio_meta)
+      values (${email}, ${await cifrarSenha(senha)}, ${nome}, ${oficina}, ${whatsapp},
+              ${origem ? JSON.stringify(origem) : null}::jsonb, ${rastreio ? JSON.stringify(rastreio) : null}::jsonb)
       returning *`)
 
     const meta = eventoId
       ? enviarEvento({
           nome: 'CompleteRegistration', id: eventoId, url: 'https://deepcar.app.br/cadastro',
-          pessoa: { email, whatsapp, nome, idExterno: u.id }, navegador: dadosDoNavegador(req),
+          pessoa: { email, whatsapp, nome, idExterno: u.id }, navegador: { ...navegador, fbc: rastreio?.fbc },
         })
       : null
 

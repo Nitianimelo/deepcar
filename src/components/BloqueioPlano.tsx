@@ -2,7 +2,7 @@
 // Não é erro: é o convite para o Full, com o checkout já preenchido e o caminho para a aba Plano.
 import { Link } from 'react-router-dom'
 import { ArrowRight, Lock } from 'lucide-react'
-import { linkCheckout, rotuloPlano } from '../lib/plano'
+import { avisarCheckout, linkCheckout, rotuloPlano } from '../lib/plano'
 import { useAcesso } from '../lib/acesso'
 
 export function BloqueioPlano({ titulo, oQue }: { titulo: string; oQue: string }) {
@@ -25,6 +25,7 @@ export function BloqueioPlano({ titulo, oQue }: { titulo: string; oQue: string }
         <div className="mt-7 grid gap-2.5 sm:grid-cols-2">
           <a
             href={linkCheckout('full', sessao, 'anual')}
+            onClick={() => avisarCheckout('full', 'anual')}
             target="_blank"
             rel="noreferrer"
             className="btn-primary inline-flex items-center justify-center gap-2 px-5"

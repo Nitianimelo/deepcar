@@ -7,7 +7,7 @@ import { sql, um } from '../_lib/db.js'
 import { acaoDoEvento, conferirEntrega, idDaEntrega, lerCorpoCru, normalizar, planoDoProduto } from '../_lib/cakto.js'
 import { ativarPlano, derrubarParaFree, marcarAtraso, MOTIVOS } from '../_lib/assinatura.js'
 import { segredo } from '../_lib/segredos.js'
-import { enviarEvento } from '../_lib/meta.js'
+import { enviarEvento, navegadorGuardado } from '../_lib/meta.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -97,9 +97,12 @@ export default async function handler(req, res) {
       // venda nova para os anuncios. Renovacao fica de fora (nao veio de anuncio). O id e o do pedido: se a Cakto
       // mandar purchase_approved e subscription_created do mesmo pedido, ou reenviar, a Meta conta uma vez so
       if (VENDA_NOVA.has(d.evento) && d.pedidoId && r.estado !== 'ignorado') {
+        // o webhook nao tem navegador: vai o do cadastro (fbp/fbc/ip), que liga a venda ao clique no anuncio
+        const conta = r.usuarioId ? await um(sql`select rastreio_meta from usuarios where id = ${r.usuarioId}`) : null
         await enviarEvento({
           nome: 'Purchase', id: `compra-${d.pedidoId}`, url: 'https://deepcar.app.br/#planos',
           pessoa: { email: d.email, whatsapp: d.whatsapp, nome: d.nome, idExterno: r.usuarioId },
+          navegador: navegadorGuardado(conta?.rastreio_meta),
           dados: { value: d.valor ?? undefined, currency: 'BRL', content_name: `${plano} ${ciclo}`, content_type: 'product' },
         })
       }

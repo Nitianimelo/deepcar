@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Landing from './pages/Landing'
 import { paginaVista } from './lib/pixel'
+import { registrarChegada } from './lib/origem'
 
 /** Redireciona mantendo a query (`?marca=Volvo` de link salvo não pode se perder). */
 function Redireciona({ para }: { para: string }) {
@@ -28,7 +29,7 @@ const ExcluirConta = lazy(() => import('./pages/ExcluirConta'))
 /** PageView do pixel da Meta a cada troca de página (o filtro das rotas privadas fica em lib/pixel). */
 function PixelMeta() {
   const { pathname } = useLocation()
-  useEffect(() => { paginaVista(pathname) }, [pathname])
+  useEffect(() => { registrarChegada(pathname); paginaVista(pathname) }, [pathname])
   return null
 }
 

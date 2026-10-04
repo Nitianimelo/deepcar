@@ -32,6 +32,25 @@ const CHECKOUT: Record<Ciclo, Record<PlanoPago, string | undefined>> = {
 }
 
 /**
+ * Clique num botão de assinar: o servidor manda InitiateCheckout pela API de Conversões (POST /api/sessao).
+ * Não usa o pixel porque os botões ficam dentro do /app, onde o pixel não roda (a URL leva placa).
+ * keepalive: o checkout abre em outra aba e a página pode sair antes da resposta. Falha não atrapalha ninguém.
+ */
+export function avisarCheckout(plano: PlanoPago, ciclo: Ciclo) {
+  const p = PLANOS_VENDA.find((x) => x.id === plano)
+  const valor = p ? Number((ciclo === 'anual' ? p.precoAnualVista : p.preco).replace(',', '.')) : undefined
+  try {
+    void fetch('/api/sessao', {
+      method: 'POST',
+      keepalive: true,
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ evento: 'checkout', plano, ciclo, valor, id: crypto.randomUUID() }),
+    }).catch(() => {})
+  } catch { /* navegador antigo sem keepalive/randomUUID: segue sem o evento */ }
+}
+
+/**
  * Checkout da Cakto com os dados da conta preenchidos — é o que faz o e-mail do pagamento
  * bater com o da conta e o plano entrar sozinho. Sem link configurado, cai nos planos da landing.
  */

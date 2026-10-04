@@ -34,6 +34,29 @@ function cookie(req, nome) {
   return m ? decodeURIComponent(m[1]) : undefined
 }
 
+const FBC = /^fb\.1\.\d{10,16}\.[\w-]{8,500}$/
+/** fbc no formato do cookie _fbc (fb.1.<ms>.<fbclid>), ou undefined. */
+export const fbcValido = (v) => (FBC.test(String(v ?? '')) ? String(v) : undefined)
+
+/**
+ * O que guardar do navegador no cadastro (usuarios.rastreio_meta), para eventos que chegam depois sem navegador:
+ * a compra vem do webhook da Cakto, servidor a servidor. `fbcReserva` = fbc montado do fbclid (src/lib/origem.ts),
+ * usado quando o cookie _fbc nao existe (Safari apaga em 7 dias, ou o pixel nao chegou a carregar).
+ */
+export function rastreioParaGuardar(navegador, fbcReserva) {
+  const r = {
+    fbp: navegador.fbp,
+    fbc: navegador.fbc ?? fbcValido(fbcReserva),
+    ip: navegador.client_ip_address,
+    navegador: navegador.client_user_agent?.slice(0, 400),
+  }
+  return Object.values(r).some(Boolean) ? r : null
+}
+
+/** O inverso: rastreio guardado -> campos de user_data da Meta. */
+export const navegadorGuardado = (r) =>
+  r ? { client_ip_address: r.ip, client_user_agent: r.navegador, fbp: r.fbp, fbc: r.fbc } : {}
+
 /** Dados do navegador de quem fez a acao. So faz sentido quando a chamada veio do proprio navegador. */
 export function dadosDoNavegador(req) {
   const ip = String(req.headers['x-forwarded-for'] ?? '').split(',')[0].trim() || req.socket?.remoteAddress
@@ -59,8 +82,10 @@ export async function enviarEvento({ nome, id, url, pessoa = {}, navegador = {},
       event_name: nome,
       event_time: Math.floor(Date.now() / 1000),
       event_id: id,
-      action_source: 'website',
-      event_source_url: url,
+      // a Meta exige o navegador (client_user_agent) em evento 'website'; sem ele (compra de quem pagou antes de
+      // ter conta) o evento vai como gerado pelo sistema, para nao ser recusado
+      action_source: navegador.client_user_agent ? 'website' : 'system_generated',
+      event_source_url: navegador.client_user_agent ? url : undefined,
       user_data: {
         em: lista(hash(pessoa.email)),
         ph: lista(telefone(pessoa.whatsapp)),

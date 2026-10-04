@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
-import { DURACAO_FREE, linkCheckout, linkSuporte, restanteFree, rotuloPlano, tempoRestante, temWhatsappSuporte } from '../lib/plano'
+import { avisarCheckout, DURACAO_FREE, linkCheckout, linkSuporte, restanteFree, rotuloPlano, tempoRestante, temWhatsappSuporte } from '../lib/plano'
 import { PLANOS_VENDA, type Ciclo } from '../data/planos'
 import { CardPlano } from '../components/landing/CardPlano'
 import { SeletorCiclo } from '../components/SeletorCiclo'
@@ -191,6 +191,7 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
               ) : (
                 <a
                   href={linkCheckout(p.id, s, ciclo)}
+                  onClick={() => avisarCheckout(p.id, ciclo)}
                   target="_blank"
                   rel="noreferrer"
                   className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[15px] font-medium ${p.destaque ? 'btn-cta' : 'btn-primary !h-12'}`}

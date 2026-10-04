@@ -5,7 +5,7 @@ import { PaginaSimples } from '../components/PaginaSimples'
 import { useTitulo } from '../lib/seo'
 
 const EMAIL = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'nitiani@compilla.dev'
-const ATUALIZADA_EM = '1º de outubro de 2026'
+const ATUALIZADA_EM = '3 de outubro de 2026'
 
 export default function Privacidade() {
   useTitulo('Política de privacidade · Deepcar')
@@ -48,13 +48,20 @@ export default function Privacidade() {
         <li>
           <b>Anúncios (só no site):</b> nas páginas públicas do site (página inicial, cadastro, login e esta política)
           usamos o Pixel da Meta para medir os nossos anúncios no Facebook e no Instagram. Ele registra a visita à página
-          e a criação de conta, junto com o endereço da página, dados técnicos do navegador e cookies da própria Meta.
-          Quando você cria a conta pelo site ou assina um plano, o nosso servidor também avisa a Meta (API de Conversões)
-          com o e-mail, o WhatsApp e o nome em formato irreversível (hash), o endereço IP e o navegador, para ela saber se
-          a conta ou a compra veio de um anúncio. Dentro da plataforma, nos esquemas, nas placas consultadas e nos links
-          compartilhados nada disso é enviado. O aplicativo Android não usa o pixel e cadastros feitos por ele não são
+          a criação de conta e o clique nos botões de WhatsApp, junto com o endereço da página, dados técnicos do navegador
+          e cookies da própria Meta. Quando você cria a conta pelo site, clica para assinar um plano ou assina, o nosso
+          servidor também avisa a Meta (API de Conversões) com o e-mail, o WhatsApp e o nome em formato irreversível (hash),
+          o endereço IP, o navegador e os identificadores de anúncio da Meta (cookies _fbp/_fbc), para ela saber se a conta
+          ou a compra veio de um anúncio. Para isso guardamos, junto da conta, o IP, o navegador e esses identificadores do
+          momento do cadastro. Dentro da plataforma, nos esquemas, nas placas consultadas e nos links compartilhados nada
+          disso é enviado: no aviso de assinatura vai só o plano escolhido. O aplicativo Android não usa o pixel e cadastros feitos por ele não são
           informados à Meta. Para limitar o uso desses dados em anúncios, use as configurações de
           anúncios da sua conta da Meta ou bloqueie cookies de terceiros no navegador.
+        </li>
+        <li>
+          <b>De onde você chegou (só no site):</b> se você chegou por um link de campanha ou anúncio, guardamos no navegador
+          e, ao criar a conta, junto dela, os parâmetros desse link (utm_source, utm_campaign e semelhantes, fbclid, gclid),
+          a primeira página visitada, o site que trouxe você e a data. Serve para sabermos quais divulgações trazem clientes.
         </li>
         <li>
           <b>Preferências do aparelho:</b> tema do desenho, menu recolhido e as últimas consultas ficam no armazenamento

@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Lock, MessageCircle } from 'lucide-react'
-import { linkCheckout, linkSuporte, temWhatsappSuporte } from '../lib/plano'
+import { avisarCheckout, linkCheckout, linkSuporte, temWhatsappSuporte } from '../lib/plano'
 import { useAcesso } from '../lib/acesso'
 import { urlImagem, type EsquemaDetalhe } from '../lib/acervo'
 import { PLANOS_VENDA, type Ciclo } from '../data/planos'
@@ -88,6 +88,7 @@ export function ConviteAssinatura({ titulo, oQue }: { titulo: string; oQue: stri
             acao={
               <a
                 href={linkCheckout(p.id, sessao, ciclo)}
+                onClick={() => avisarCheckout(p.id, ciclo)}
                 target="_blank"
                 rel="noreferrer"
                 className={`plano-cta group inline-flex h-12 w-full items-center justify-center gap-2 rounded-[10px] text-[14.5px] font-medium ${

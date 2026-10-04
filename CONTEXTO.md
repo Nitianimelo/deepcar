@@ -52,7 +52,7 @@ Regras de trabalho estão em `AGENTE.md`.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
-- **Banco (Neon):** migrações `001_inicial` a `005_acesso_por_plano` aplicadas.
+- **Banco (Neon):** migrações `001_inicial` a `007_origem_e_rastreio` aplicadas.
 - **Último deploy verificado:** commit `b100d52`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
@@ -101,6 +101,30 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-10-03 · Rastreamento: origem do cliente, compra com o navegador do cadastro, Contact e InitiateCheckout
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** otimizar o rastreamento (eventos da Meta e de onde vem cada cliente).
+- **O que mudou:**
+  - **Origem:** `src/lib/origem.ts` (novo) guarda no navegador o primeiro toque com campanha (utm_*, fbclid, gclid,
+    página de entrada, referrer, data) e o fbclid mais recente como `fbc`. Roda a cada troca de página pública (`App.tsx`,
+    mesmo filtro do pixel). O cadastro manda `origem`; `api/registrar.js` grava em `usuarios.origem`. O /admin mostra
+    "Origem: facebook / cpc · campanha" em cada usuário.
+  - **Purchase com "rosto":** o cadastro grava `usuarios.rastreio_meta` (fbp, fbc, IP, navegador); o webhook da Cakto manda
+    isso no Purchase. Antes ia sem navegador, e a Meta exige `client_user_agent` em evento `website` (provavelmente
+    recusava ou não atribuía). Sem conta/navegador, `enviarEvento` agora usa `action_source: system_generated`.
+  - **fbc de reserva:** quando o cookie `_fbc` não existe (Safari apaga em 7 dias), o servidor usa o fbc montado do fbclid.
+  - **Contact:** pixel nos botões de WhatsApp da landing (`contato()` em `lib/pixel.ts`).
+  - **InitiateCheckout:** `avisarCheckout()` (`lib/plano.ts`) nos botões de assinar (Conta, BloqueioPlano,
+    AssineParaAcessar) → `POST /api/sessao` → API de Conversões com plano, ciclo e valor. URL fixa `/app/conta`.
+  - `src/pages/Privacidade.tsx`: descreve origem, rastreio guardado, Contact e InitiateCheckout (data 3/10/2026).
+- **Banco:** `db/007_origem_e_rastreio.sql` (colunas `origem` e `rastreio_meta` em `usuarios`), **aplicada no Neon antes do push**.
+- **Variáveis/infra:** sem mudança. Continua 12 funções (o checkout entrou no `api/sessao.js`).
+- **Verificação:** build ok, lint com os mesmos 10 avisos; teste no navegador (chegada com UTM+fbclid, visita direta
+  depois mantém a campanha, rota privada não mexe, cadastro envia a origem); funções de `meta.js` testadas isoladas.
+- **Pendências:** conferir no Gerenciador de Eventos (aba Testar eventos, `META_TEST_EVENT_CODE` no cofre) que
+  InitiateCheckout e Purchase chegam; marcar Contact/InitiateCheckout como conversões se quiser otimizar campanha por eles.
+  App Android: a "Segurança dos dados" da Play não muda (o app não usa nada disso).
 
 ### 2026-10-03 · Seção de planos da landing clara e mais explicativa
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

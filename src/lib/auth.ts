@@ -2,6 +2,7 @@
 // O navegador não guarda credencial nenhuma — só um retrato do perfil, para a tela
 // aparecer sem esperar a rede. Quem manda é o servidor: toda rota protegida confere o cookie.
 import { useEffect, useState } from 'react'
+import type { Origem } from './origem'
 
 const PERFIL = 'deepcar.perfil'
 
@@ -101,6 +102,8 @@ export async function registrar(dados: {
   oficina?: string
   /** id do CompleteRegistration do pixel: o servidor manda o mesmo pela API de Conversões */
   evento_id?: string
+  /** de onde a pessoa chegou (lib/origem): UTM, fbclid, página de entrada */
+  origem?: Origem
 }): Promise<Session> {
   const s = (await post('/api/registrar', dados)) as Session
   guardarPerfil(s)

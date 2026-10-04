@@ -164,7 +164,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Front: `/`, `/login`, `/cadastro`, `/admin`, `/c/:token` (link compartilhado, público), `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
   `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`, `/privacidade` e `/excluir-conta` (públicas,
   exigidas pela Google Play para o app Android).
-- API: `POST /api/registrar`, `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha),
+- API: `POST /api/registrar`, `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha), `POST /api/sessao` (clique em assinar → InitiateCheckout na Meta),
   `GET|POST|PATCH|DELETE /api/admin/usuarios`, `GET|PUT /api/admin/planos`, `GET|PUT|DELETE /api/admin/segredos`,
   `POST /api/admin/inicializar`, `GET /api/placa/:placa`, `POST|GET /api/compartilhar`.
 - **Limite da Vercel (plano Hobby): 12 funções em `api/`** (sem contar `_lib/`), e o projeto já está com 12. Rota nova
@@ -174,7 +174,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 
 ## 6. Banco de dados (Neon)
 
-- Tabelas: `usuarios` (plano `free|pro|full`, papel `usuario|admin`, `ativo`, `whatsapp`, `free_expira_em`, colunas
+- Tabelas: `usuarios` (plano `free|pro|full`, papel `usuario|admin`, `ativo`, `whatsapp`, `free_expira_em`, `origem` (UTM/fbclid do
+  cadastro pelo site), `rastreio_meta` (fbp/fbc/IP/navegador do cadastro, usado no Purchase), colunas
   `assinatura_*`, `assinatura_ciclo` `mensal|anual` e `plano_expira_em` = fim do anual), `sessoes` (sha-256 do token),
   `segredos` (valores cifrados), `cakto_eventos`, `assinaturas_pendentes` (com `ciclo`), `compartilhamentos`
   (sha-256 do link, esquema, `limite` 2, `aberturas`, `visitantes` = aparelho → 1ª abertura). Função `limpar_sessoes()`.
@@ -243,8 +244,13 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Deploy da Vercel não roda migração nem copia o acervo.
 - **Pixel da Meta (`src/lib/pixel.ts`) só roda nas páginas públicas.** Nunca carregue em `/app`, `/admin` ou `/c/`
   (a URL leva placa e token). Página privada nova fora desses prefixos? Inclua em `PRIVADAS`.
-  O servidor manda `CompleteRegistration` e `Purchase` pela API de Conversões (`api/_lib/meta.js`); o cadastro só
-  vai para a Meta quando vem do site (`evento_id` no corpo). Não use isso nas rotas do app Android.
+  Eventos da Meta: `PageView` e `Contact` (botões de WhatsApp da landing) só pelo pixel; `CompleteRegistration` pelo
+  pixel + API de Conversões (mesmo eventID); `InitiateCheckout` (clique em assinar, `avisarCheckout` → `POST /api/sessao`)
+  e `Purchase` (webhook da Cakto) só pela API (`api/_lib/meta.js`). O cadastro só vai para a Meta quando vem do site
+  (`evento_id` no corpo). Não use isso nas rotas do app Android.
+- **Origem e rastreio:** `src/lib/origem.ts` guarda no navegador o primeiro toque com campanha (UTM, fbclid, gclid) e o
+  fbclid mais recente (vira `fbc`); o cadastro manda e o servidor grava em `usuarios.origem` / `rastreio_meta`. O webhook
+  usa o `rastreio_meta` no Purchase (sem navegador a Meta recebe como `system_generated`). Origem aparece no /admin.
 - **Política de privacidade (`src/pages/Privacidade.tsx`) descreve o que o código coleta.** Mudou coleta, fornecedor ou
   prazo? Atualize o texto e a data no mesmo commit. Ela é o endereço declarado na Google Play.
 - **SEO:** metatags e dados estruturados (JSON-LD) ficam no `index.html`; página pública nova = entrada em

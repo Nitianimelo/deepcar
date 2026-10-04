@@ -61,6 +61,11 @@ export function novoEventoId() {
   return `cad-${crypto.randomUUID()}`
 }
 
+/** Clique num botão de WhatsApp da landing. Só conta se o pixel já carregou (página pública). */
+export function contato(onde: string) {
+  window.fbq?.('track', 'Contact', { content_name: onde })
+}
+
 /** Conta criada. Só existe se o pixel já foi carregado (o cadastro é página pública). */
 export function cadastroConcluido(eventoId: string) {
   window.fbq?.('track', 'CompleteRegistration', {}, { eventID: eventoId })
