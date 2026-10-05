@@ -2,8 +2,10 @@
 // (bloqueador de anuncio, Safari e iOS cortam boa parte do pixel). Mesmo pixel do site (src/lib/pixel.ts).
 //
 // Tokens no cofre (/admin -> Chaves de API): META_CAPI_TOKEN (Gerenciador de Eventos -> pixel -> Configuracoes ->
-// API de Conversoes -> Gerar token). Sem ele, nada e enviado. META_TEST_EVENT_CODE (opcional) manda tudo para a aba
-// "Testar eventos" em vez de contar de verdade: apague depois de testar.
+// API de Conversoes -> Gerar token). Sem ele, nada e enviado. META_TEST_EVENT_CODE (opcional) faz os eventos aparecerem
+// na aba "Testar eventos", MAS ELES CONTAM DE VERDADE (a Meta nao descarta: entram na medicao e na otimizacao dos
+// anuncios; o teste de 03/10/2026 virou 1 compra falsa no Gerenciador). Teste com conta e dados falsos so num conjunto
+// de dados (pixel) separado, nunca no "Deepcar teste 1". Apague o codigo depois.
 //
 // E-mail, telefone, nome e id vao como sha-256 (exigencia da Meta); IP, navegador e os cookies _fbp/_fbc vao como estao.
 // Nunca derruba quem chamou: falha vira log. Mudou o que e enviado? Atualize src/pages/Privacidade.tsx junto.

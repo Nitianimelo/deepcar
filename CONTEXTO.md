@@ -105,6 +105,17 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-04 · Correção: o teste de eventos de 03/10 contou como real na Meta
+- **Quem:** Claude Code (Opus 5.5), ao analisar os anúncios a pedido de Nitiani
+- **O que aconteceu:** os eventos enviados com `META_TEST_EVENT_CODE` em 03/10 (cadastro da conta de teste, 2 a 3
+  InitiateCheckout e 1 Purchase de R$ 289,49) **entraram nos resultados do Gerenciador de Anúncios**, atribuídos ao
+  "criativo 2" (homem 25-34, Reels do Instagram, provavelmente pelo IP/navegador do Mac do dono). A Meta não descarta
+  eventos com código de teste. Não há venda real em outubro (cakto_eventos). Não dá para apagar evento na Meta:
+  desconsiderar essa compra e esses checkouts ao ler 03/10.
+- **O que mudou:** comentário de `api/_lib/meta.js` corrigido (dizia que o código de teste "não conta de verdade").
+- **Regra daqui em diante:** teste com dados falsos só num conjunto de dados (pixel) separado.
+- **Banco / Variáveis:** sem mudança.
+
 ### 2026-10-03 · Aba Plano sempre abre no anual
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** deixar o anual marcado por padrão na aba Plano da plataforma.
