@@ -24,7 +24,7 @@ neste repositório. Leia este arquivo inteiro antes de mudar qualquer coisa.
 
 Deepcar é uma plataforma web para mecânicos consultarem **esquemas elétricos automotivos**
 (injeção leve e diesel, ABS, elétrica e câmbio), com consulta por placa, contas de usuário,
-plano de teste de 10 horas e painel administrativo.
+plano de teste (10 horas por padrão, editável no /admin) e painel administrativo.
 
 Stack: **React 19 + Vite 8 + TypeScript 6 + Tailwind CSS 4 + React Router 7**, funções serverless
 Node na Vercel (`api/`) e Postgres no **Neon**.
@@ -100,12 +100,12 @@ git push origin main            # 8. publica em produção
 ```
 api/                      funções serverless da Vercel (JavaScript, Node)
   _lib/db.js              conexão Neon por HTTP (sql`...`, um())
-  _lib/sessao.js          scrypt, sessão em cookie, exigir(), MINUTOS_FREE, publico()
+  _lib/sessao.js          scrypt, sessão em cookie, exigir(), abrirJanelaFree() (tempo do teste vem do /admin), publico()
   _lib/segredos.js        cofre AES-256-GCM (segredo(), ambienteCom(), guardar())
   _lib/validar.js         validação de cadastro (regra que vale de verdade)
   _lib/cakto.js           webhook da Cakto: prova a origem, evento→ação, produto→plano
   _lib/assinatura.js      o que um pagamento faz com a conta (ativar, derrubar, atraso, pendente)
-  _lib/planos.js          o que cada plano libera (sistemas, placa, aparelhos), acessoDe(), limitarDispositivos()
+  _lib/planos.js          o que cada plano libera (sistemas, placa, aparelhos), duração do teste (minutosTeste()), acessoDe(), limitarDispositivos()
   admin/planos.js         GET/PUT das regras por plano (aba Planos do /admin)
   compartilhar.js         link de esquema que abre 2 vezes: POST cria (sessão + sistema no plano), GET abre/expira
   webhooks/cakto.js       rota pública que recebe os eventos da Cakto
@@ -133,21 +133,20 @@ src/
   components/SeletorComponente.tsx  lista com busca dos componentes do esquema (tecla /), dentro do EsquemaViewer
   components/PaletaBusca.tsx        busca rápida Ctrl+K / ⌘K de qualquer tela do app (placa, esquema, últimas consultas)
   components/landing/     GridBeam (fundo animado), Reveal (entrada no scroll): só a landing. PlanosLanding: seção de planos
-                          da landing (fundo cinza-claro, cartões brancos, tokens --color-papel*/tinta-*/azul-escuro).
-                          CardPlano: cartão escuro da aba Plano da conta e do convite depois do teste (botão vem em `acao`)
+                          da landing (fundo cinza-claro, cartões brancos, tokens --color-papel*/tinta-*/azul-escuro);
+                          exporta CartaoPlanoClaro/ChaveCiclo, usados também na aba Plano da conta e em todo convite
   components/landing/BotaoWhatsapp.tsx  botão flutuante do WhatsApp (só na landing); components/IconeWhatsapp.tsx: ícone da marca
   components/Folha.tsx    folha que sobe de baixo (+ Destaque): sem desfoque, voltar do Android fecha (estado no histórico)
   components/Funil.tsx    BoasVindas (3 passos no início), ConviteMomento (após 1ª placa / 3º esquema), DicaEsquema
   lib/funil.ts            regras do funil no navegador (por conta e aparelho) e marcos de ativação → POST /api/sessao
-  components/PlanoDetalhes.tsx  miolo do CardPlano: chicote de sistemas (cor do fio por sistema, tokens --color-fio-*) e extras
   lib/seo.ts              useTitulo(): título da aba ao navegar (páginas públicas já saem certas do build)
   lib/transicao.ts        marcarTitulo(): título que "voa" da lista ao cabeçalho do esquema (View Transitions)
   lib/auth.ts             cliente de sessão (cookie no servidor; localStorage só guarda retrato do perfil)
-  lib/plano.ts            relógio do teste no navegador (espelha MINUTOS_FREE, DURACAO_FREE nos textos) e reconferência da sessão
-  lib/acesso.tsx          podeSecao()/podePlaca() e useAcesso() (com testeAcabou): cadeado no menu e telas fora do plano
-  components/BloqueioPlano.tsx  tela "não faz parte do seu plano" (seção, esquema e placa)
+  lib/plano.ts            relógio do teste no navegador (duração vem na sessão: testeMinutos; duracaoTeste() nos textos) e reconferência da sessão
+  lib/acesso.tsx          podeSecao()/podePlaca() e useAcesso() (com testeAcabou): cadeado no menu, faixa e esquema borrado
   components/LimiteFree.tsx     plano free: SeloTeste (barra, computador), AssinarNoMenu (menu lateral), AvisoTopo (faixa no celular)
-  components/AssineParaAcessar.tsx  teste vencido: EsquemaEmbacado (esquema borrado) e ConviteAssinatura (cards Full/Pro)
+  components/AssineParaAcessar.tsx  todo bloqueio leva a assinar: EsquemaEmbacado (borrado; teste vencido ou "Somente no plano X"),
+                          ConviteAssinatura (cartões claros, só os planos que liberam), AvisoSistemaBloqueado (faixa da lista)
   lib/suporte.ts          WhatsApp/e-mail de suporte (VITE_SUPORTE_WHATSAPP), sem dependências: a landing usa
   lib/validacao.ts        validação de cadastro no navegador (espelha api/_lib/validar.js)
   lib/acervo.ts           leitura do acervo (VITE_ACERVO_URL ou /acervo)
@@ -167,7 +166,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Front: `/`, `/login`, `/cadastro`, `/admin`, `/c/:token` (link compartilhado, público), `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
   `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`, `/privacidade` e `/excluir-conta` (públicas,
   exigidas pela Google Play para o app Android).
-- API: `POST /api/registrar`, `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha), `POST /api/sessao` (`evento: 'checkout'` → InitiateCheckout na Meta; `evento: 'ativacao'` → marco de primeiros passos),
+- API: `POST /api/registrar` (`GET` devolve `{ testeMinutos }` para a página de cadastro), `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha), `POST /api/sessao` (`evento: 'checkout'` → InitiateCheckout na Meta; `evento: 'ativacao'` → marco de primeiros passos),
   `GET|POST|PATCH|DELETE /api/admin/usuarios`, `GET|PUT /api/admin/planos`, `GET|PUT|DELETE /api/admin/segredos`,
   `POST /api/admin/inicializar`, `GET /api/placa/:placa`, `POST|GET /api/compartilhar`.
 - **Limite da Vercel (plano Hobby): 12 funções em `api/`** (sem contar `_lib/`), e o projeto já está com 12. Rota nova
@@ -183,7 +182,9 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   `assinatura_*`, `assinatura_ciclo` `mensal|anual` e `plano_expira_em` = fim do anual), `sessoes` (sha-256 do token),
   `segredos` (valores cifrados), `cakto_eventos`, `assinaturas_pendentes` (com `ciclo`), `compartilhamentos`
   (sha-256 do link, esquema, `limite` 2, `aberturas`, `visitantes` = aparelho → 1ª abertura). Função `limpar_sessoes()`.
-- **Acesso por plano:** tabela `planos_acesso` (plano → `secoes[]`, `placa`, `dispositivos`), editável no /admin → Planos.
+- **Acesso por plano:** tabela `planos_acesso` (plano → `secoes[]`, `placa`, `dispositivos`; na linha `free`, `minutos_teste` =
+  duração do teste, db/009), editável no /admin → Planos. Sistema fora do plano **não some**: a lista abre e o esquema abre
+  borrado com "Somente no plano X" (`planosQueLiberam`/`textoSomente` em `src/data/planos.ts`).
   Padrão: Pro = injeção leve, ABS, elétrica leve, 2 aparelhos, com placa; Full = tudo, 4 aparelhos; Free (teste) = tudo, 2.
   Admin sempre vê tudo. `sessoes.visto_em` guarda o último uso; o limite derruba o aparelho parado há mais tempo no login.
   **O servidor barra a placa (403); os sistemas são barrados só na tela**, porque o acervo é lido direto do R2 público
@@ -221,7 +222,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Código, nomes e comentários em **português** (`usuario`, `sessao`, `exigir`, `conferirSessao`).
 - Comentários explicam o **porquê**, não o quê. Em `api/` os comentários estão sem acento; siga o arquivo.
 - Regras duplicadas navegador/servidor **precisam mudar juntas**:
-  - `MINUTOS_FREE`: `api/_lib/sessao.js` ↔ `src/lib/plano.ts` (e o texto `DURACAO_FREE` ao lado)
+  - duração do teste: vale o /admin → Planos (`planos_acesso.minutos_teste`); `MINUTOS_TESTE_PADRAO` (api/_lib/planos.js) ↔
+    `MINUTOS_FREE` (src/lib/plano.ts) é só o padrão quando o admin não definiu
   - validação de cadastro: `api/_lib/validar.js` ↔ `src/lib/validacao.ts`
   - chaves das seções: `src/data/nav.ts` ↔ `api/_lib/planos.js` (`SECOES`) ↔ `db/005` (valores iniciais)
   - o que cada plano libera: `api/_lib/planos.js` (`PADRAO`, vale o que estiver no /admin → Planos) ↔ `secoes`/`placa`/`aparelhos`

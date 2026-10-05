@@ -1,7 +1,7 @@
 // Tela /admin → Planos: o que cada plano libera. Vale para todas as contas daquele plano.
 //
 //   GET  /api/admin/planos   { secoes, planos: { free, pro, full } }
-//   PUT  /api/admin/planos   grava { plano, secoes, placa, dispositivos }
+//   PUT  /api/admin/planos   grava { plano, secoes, placa, dispositivos, minutos_teste? (so no free) }
 import { sql } from '../_lib/db.js'
 import { esquecerRegras, PLANOS, regras, SECOES } from '../_lib/planos.js'
 import { corpo, exigir } from '../_lib/sessao.js'
@@ -29,13 +29,22 @@ export default async function handler(req, res) {
       if (dispositivos !== null && (!Number.isInteger(dispositivos) || dispositivos < 1 || dispositivos > 50)) {
         return res.status(400).json({ erro: 'Dispositivos: um número de 1 a 50, ou vazio para sem limite.' })
       }
+      // duracao do teste: so na linha do plano free (10 minutos a 30 dias); vale para testes que comecarem depois
+      let minutos = null
+      if (d.plano === 'free' && d.minutos_teste !== undefined && d.minutos_teste !== null && d.minutos_teste !== '') {
+        minutos = Number(d.minutos_teste)
+        if (!Number.isInteger(minutos) || minutos < 10 || minutos > 43200) {
+          return res.status(400).json({ erro: 'Duração do teste: de 10 minutos a 30 dias.' })
+        }
+      }
       // mantem a ordem do menu, sem repetidos
       const secoes = SECOES.filter((s) => d.secoes.includes(s))
       await sql`
-        insert into planos_acesso (plano, secoes, placa, dispositivos, atualizado_em, atualizado_por)
-        values (${d.plano}, ${secoes}, ${!!d.placa}, ${dispositivos}, now(), ${admin.id})
+        insert into planos_acesso (plano, secoes, placa, dispositivos, minutos_teste, atualizado_em, atualizado_por)
+        values (${d.plano}, ${secoes}, ${!!d.placa}, ${dispositivos}, ${minutos}, now(), ${admin.id})
         on conflict (plano) do update set
           secoes = excluded.secoes, placa = excluded.placa, dispositivos = excluded.dispositivos,
+          minutos_teste = coalesce(excluded.minutos_teste, planos_acesso.minutos_teste),
           atualizado_em = now(), atualizado_por = excluded.atualizado_por`
       esquecerRegras()
       return res.status(200).json({ secoes: SECOES, planos: await regras() })

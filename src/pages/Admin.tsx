@@ -95,7 +95,7 @@ type Evento = {
 
 type Segredo = { chave: string; descricao: string | null; atualizado_em: string; por: string | null }
 
-type RegraPlano = { secoes: string[]; placa: boolean; dispositivos: number | null }
+type RegraPlano = { secoes: string[]; placa: boolean; dispositivos: number | null; minutos_teste?: number | null }
 type RespostaPlanos = { secoes: string[]; planos: Record<Plano, RegraPlano> }
 
 async function api(url: string, init?: RequestInit) {
@@ -664,6 +664,31 @@ function AbaPlanos() {
                       aria-label={`Aparelhos no plano ${rotuloPlano(p)}`}
                       onChange={(e) => ajustar(p, { dispositivos: e.target.value === '' ? null : Math.max(1, Math.min(50, Number(e.target.value) || 1)) })}
                     />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-t seam">
+                <td className="px-5 py-2.5 text-ink-2">
+                  Duração do teste
+                  <span className="block text-[12px] text-ink-4">Em horas, a partir do primeiro acesso (24 = 1 dia). Vale para testes que começarem depois de salvar.</span>
+                </td>
+                {PLANOS.map((p) => (
+                  <td key={p} className="px-3 py-2.5 text-center">
+                    {p === 'free' ? (
+                      <input
+                        type="number"
+                        min={1}
+                        max={720}
+                        step={1}
+                        inputMode="numeric"
+                        className="field mx-auto h-9 w-20 px-2 text-center text-[14px]"
+                        value={rascunho.free.minutos_teste ? Math.round(rascunho.free.minutos_teste / 60) : ''}
+                        aria-label="Duração do teste em horas"
+                        onChange={(e) => ajustar('free', { minutos_teste: e.target.value === '' ? null : Math.max(1, Math.min(720, Math.round(Number(e.target.value) || 1))) * 60 })}
+                      />
+                    ) : (
+                      <span className="text-ink-4" aria-hidden="true">—</span>
+                    )}
                   </td>
                 ))}
               </tr>

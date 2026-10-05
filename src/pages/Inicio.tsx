@@ -7,6 +7,7 @@ import { formatarPlaca, normalizarPlaca, placaValida } from '../lib/placa'
 import { limparRecentes, useRecentes, type Recente } from '../lib/recentes'
 import { marcarTitulo } from '../lib/transicao'
 import { useAcesso } from '../lib/acesso'
+import { ConviteAssinatura } from '../components/AssineParaAcessar'
 
 export default function Inicio() {
   const primeiroNome = getSession()?.nome?.split(' ')[0]
@@ -21,7 +22,22 @@ export default function Inicio() {
         <BuscaTexto />
       </div>
 
+      <PlanosDepoisDoTeste />
       <UltimasConsultas />
+    </div>
+  )
+}
+
+/**
+ * Teste vencido: a placa e a busca continuam aqui em cima (a pessoa vê onde fica cada coisa), e os planos aparecem
+ * logo abaixo. Consultar a placa ou abrir um esquema leva ao mesmo convite.
+ */
+function PlanosDepoisDoTeste() {
+  const { testeAcabou, sessao } = useAcesso()
+  if (!testeAcabou || sessao?.plano !== 'free') return null
+  return (
+    <div className="mt-8 flex justify-center">
+      <ConviteAssinatura titulo="Seu teste terminou. Escolha um plano para continuar." oQue="os esquemas e a consulta pela placa" />
     </div>
   )
 }

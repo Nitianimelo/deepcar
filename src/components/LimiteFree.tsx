@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, FlaskConical, Sparkles, Timer } from 'lucide-react'
-import { DURACAO_FREE, restanteFree, tempoRestante } from '../lib/plano'
+import { duracaoTeste, restanteFree, tempoRestante } from '../lib/plano'
 import { useAcesso } from '../lib/acesso'
 
 const PLANOS = '/app/conta?aba=plano'
@@ -33,6 +33,7 @@ const RETA_FINAL = 2 * 60 * 60 * 1000
 
 /** Some quando não há teste (plano pago ou admin). */
 export function SeloTeste({ restante }: { restante: number | null }) {
+  const { sessao } = useAcesso()
   if (restante === null) return null
   if (restante <= 0) {
     return (
@@ -50,7 +51,7 @@ export function SeloTeste({ restante }: { restante: number | null }) {
   return (
     <Link
       to={PLANOS}
-      data-tip={`Teste gratuito de ${DURACAO_FREE} com todos os sistemas. Ver planos.`}
+      data-tip={`Teste gratuito de ${duracaoTeste(sessao?.testeMinutos)}. Ver planos.`}
       data-tip-side="bottom"
       className={`hidden flex-none items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1 text-[12.5px] transition-colors lg:inline-flex ${
         final ? 'border-warn/50 bg-warn/15 text-ink-1 hover:border-warn' : 'border-trace/30 bg-trace/10 text-ink-2 hover:border-trace/55'
@@ -81,7 +82,8 @@ export function AssinarNoMenu({ collapsed }: { collapsed: boolean }) {
     )
   }
   return (
-    <div className={`mb-3 rounded-xl border p-3.5 ${final ? 'border-warn/40 bg-warn/[0.08]' : 'border-trace/30 bg-trace/[0.07]'}`}>
+    // fundo cinza sólido (antes era vazado, deixava ver a grade do menu por trás)
+    <div className={`mb-3 rounded-xl border bg-bench-3 p-3.5 ${final ? 'border-warn/50' : 'seam-strong'}`}>
       <p className={`code flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.16em] ${final ? 'text-warn' : 'text-trace-hi'}`}>
         <FlaskConical size={12} /> {acabou ? 'Teste encerrado' : 'Plano de teste'}
       </p>

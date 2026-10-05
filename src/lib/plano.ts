@@ -4,10 +4,18 @@ import { useEffect, useState } from 'react'
 import { PLANOS_VENDA, type Ciclo, type PlanoPago } from '../data/planos'
 import { conferirSessao, type Plano, type Session } from './auth'
 
+/** Padrão do teste; o que vale é o /admin → Planos e chega na sessão (testeMinutos). */
 export const MINUTOS_FREE = 600
 
-/** Como o prazo do teste aparece nos textos. Muda junto com MINUTOS_FREE. */
-export const DURACAO_FREE = '10 horas'
+/** "10 horas", "3 dias", "90 minutos": a duração do teste escrita por extenso. */
+export function duracaoTeste(minutos: number = MINUTOS_FREE) {
+  if (minutos % 1440 === 0) return minutos === 1440 ? '1 dia' : `${minutos / 1440} dias`
+  if (minutos % 60 === 0) return minutos === 60 ? '1 hora' : `${minutos / 60} horas`
+  return `${minutos} minutos`
+}
+
+/** Texto padrão do teste (perfil antigo, sem testeMinutos). O que vale vem da sessão: duracaoTeste(s.testeMinutos). */
+export const DURACAO_FREE = duracaoTeste()
 
 const ROTULOS: Record<Plano, string> = { free: 'Teste', pro: 'Pro', full: 'Full' }
 
@@ -74,7 +82,7 @@ export { linkSuporte, temWhatsappSuporte } from './suporte'
  */
 export function restanteFree(s: Session | null, agora = Date.now()): number | null {
   if (!s || s.plano !== 'free' || s.papel === 'admin') return null
-  if (!s.freeExpiraEm) return MINUTOS_FREE * 60_000 // ainda não começou: mostra cheio
+  if (!s.freeExpiraEm) return (s.testeMinutos ?? MINUTOS_FREE) * 60_000 // ainda não começou: mostra cheio
   return new Date(s.freeExpiraEm).getTime() - agora
 }
 

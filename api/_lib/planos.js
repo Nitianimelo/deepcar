@@ -9,8 +9,11 @@ import { sql } from './db.js'
 export const SECOES = ['injecao-leve', 'injecao-diesel', 'abs', 'eletrica', 'eletrica-diesel', 'cambio', 'cambio-diesel']
 export const PLANOS = ['free', 'pro', 'full']
 
+/** Duração padrão do teste gratuito (10 h), quando o /admin não definiu outra. */
+export const MINUTOS_TESTE_PADRAO = 600
+
 export const PADRAO = {
-  free: { secoes: SECOES, placa: true, dispositivos: 2 },
+  free: { secoes: SECOES, placa: true, dispositivos: 2, minutos_teste: MINUTOS_TESTE_PADRAO },
   pro: { secoes: ['injecao-leve', 'abs', 'eletrica'], placa: true, dispositivos: 2 },
   full: { secoes: SECOES, placa: true, dispositivos: 4 },
 }
@@ -27,8 +30,9 @@ export async function regras() {
   if (cache && Date.now() - lidoEm < VALIDADE_MS) return cache
   const todas = { ...PADRAO }
   try {
-    for (const l of await sql`select plano, secoes, placa, dispositivos from planos_acesso`) {
+    for (const l of await sql`select plano, secoes, placa, dispositivos, minutos_teste from planos_acesso`) {
       todas[l.plano] = { secoes: (l.secoes ?? []).filter((s) => SECOES.includes(s)), placa: !!l.placa, dispositivos: l.dispositivos ?? null }
+      if (l.plano === 'free') todas.free.minutos_teste = l.minutos_teste ?? MINUTOS_TESTE_PADRAO
     }
   } catch {
     // tabela ainda nao criada (migracao pendente): vale o padrao
@@ -39,6 +43,9 @@ export async function regras() {
 }
 
 export const esquecerRegras = () => { cache = null }
+
+/** Minutos do teste gratuito que vale agora (/admin → Planos, linha Teste). */
+export const minutosTeste = async () => (await regras()).free?.minutos_teste ?? MINUTOS_TESTE_PADRAO
 
 /** Regras que valem para esta conta. */
 export async function acessoDe(u) {

@@ -34,7 +34,9 @@ Regras de trabalho estão em `AGENTE.md`.
   - `/admin`: usuários (busca, plano, papel, bloquear, trocar senha, apagar, liberar novo teste, WhatsApp como link,
     aparelhos conectados e "desconectar"), aba **Planos** (o que cada plano libera) e cofre de chaves.
   - **Acesso por plano:** Pro = injeção leve, ABS e elétrica leve, 2 aparelhos, com busca pela placa; Full = tudo, 4 aparelhos;
-    Free (teste de 10 h) = tudo, 2 aparelhos. Sistemas fora do plano aparecem com cadeado e abrem a tela de upgrade.
+    Free (teste, 10 h por padrão, editável no /admin → Planos) = tudo, 2 aparelhos. Sistema fora do plano abre normal
+    (lista com faixa "Somente no plano Full"); o esquema abre borrado com o convite e só os planos que liberam.
+    Teste vencido: plataforma navegável, início com a placa e os planos, esquemas borrados.
   - **Funil do teste (desde 03/10):** tempo restante sempre visível (faixa no celular, selo no computador, cartão do
     menu; tom de aviso nas últimas 2 h); boas-vindas em 3 passos na primeira entrada; convite para assinar depois da
     1ª placa ou do 3º esquema; dica do visualizador no 1º esquema. Aba Plano da conta no padrão claro da landing.
@@ -55,7 +57,7 @@ Regras de trabalho estão em `AGENTE.md`.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
-- **Banco (Neon):** migrações `001_inicial` a `008_ativacao` aplicadas.
+- **Banco (Neon):** migrações `001_inicial` a `009_tempo_do_teste` aplicadas.
 - **Último deploy verificado:** commit `b100d52`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
@@ -104,6 +106,34 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-10-05 · Tempo do teste no /admin e todo bloqueio levando a assinar
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** escolher no /admin o tempo do teste e o que ele expõe; o que não estiver exposto abre, mas o esquema fica
+  borrado com "Somente no plano X" e o botão de assinar; depois do teste a plataforma continua navegável, mostrando a
+  placa, os planos e os sistemas borrados; todo caminho de UX leva a assinar. Cartão de assinar do menu com fundo cinza.
+- **O que mudou:**
+  - **Tempo do teste:** `db/009_tempo_do_teste.sql` (`planos_acesso.minutos_teste`, na linha `free`). `api/_lib/planos.js`
+    (`MINUTOS_TESTE_PADRAO` = 600, `minutosTeste()`); `abrirJanelaFree` usa o valor do admin (vale para testes que começam
+    depois); a sessão leva `testeMinutos`; `PUT /api/admin/planos` aceita `minutos_teste` (10 min a 30 dias);
+    `GET /api/registrar` devolve `{ testeMinutos }` para a página de cadastro. /admin → Planos: linha "Duração do teste"
+    (em horas) na coluna Teste. Textos usam `duracaoTeste()` (src/lib/plano.ts).
+  - **Bloqueio vira convite:** `SectionPage` não bloqueia mais (faixa `AvisoSistemaBloqueado` no topo); `EsquemaPage` abre
+    e mostra `EsquemaEmbacado` com motivo `plano` ("Somente no plano Full", só o cartão do Full) ou `teste`; busca e Ctrl+K
+    procuram em todos os sistemas; placa sem acesso mostra o convite. `ConviteAssinatura` no padrão claro
+    (`CartaoPlanoClaro`), "Passar para o Full" para quem já paga. Esquema borrado não conta para ativação nem convite.
+  - **Teste vencido:** `Inicio` mostra a placa e a busca e, abaixo, os planos (`PlanosDepoisDoTeste`).
+  - Boas-vindas não prometem "todos os sistemas" quando o admin tirou algum do teste.
+  - Cartão "Assinar um plano" do menu com fundo cinza sólido (`bg-bench-3`).
+  - Removidos (sem uso): `BloqueioPlano.tsx`, `landing/CardPlano.tsx`, `PlanoDetalhes.tsx`, `SeletorCiclo.tsx` e o CSS
+    deles (cartões escuros com o chicote colorido, tokens `--color-fio-*`).
+- **Banco:** `009_tempo_do_teste` **aplicada no Neon antes do push** (valor vazio = 10 h).
+- **Variáveis/infra:** sem mudança (continua 12 funções).
+- **Verificação:** build ok, lint 10 avisos; servidor lê 600 min do banco; celular simulado com o acervo real: Pro em
+  Injeção Diesel vê a faixa e a lista (37 montadoras), busca "scania" acha 60 esquemas diesel, o esquema abre borrado com
+  "Somente no plano Full" e só "Passar para o Full" (sem visualizador); teste vencido: início com campo de placa e
+  convite, faixa no ABS; menu com cartão cinza; /admin com a duração (24 h editável).
+- **Pendências:** o acervo continua público no R2 (o borrado é só na tela). App Android segue com as telas antigas.
 
 ### 2026-10-04 · Correção: o teste de eventos de 03/10 contou como real na Meta
 - **Quem:** Claude Code (Opus 5.5), ao analisar os anúncios a pedido de Nitiani

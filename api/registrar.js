@@ -1,9 +1,11 @@
 // POST /api/registrar  { nome, email, whatsapp, senha }  → cria a conta (plano free) e já entra.
+// GET  /api/registrar  → { testeMinutos }: duração do teste que a página de cadastro anuncia (/admin → Planos).
 import { sql, um } from './_lib/db.js'
 import { abrirJanelaFree, cifrarSenha, corpo, criarSessao, porCookie, publicoCompleto } from './_lib/sessao.js'
 import { emailValido, nomeValido, normalizarWhatsapp, senhaValida, SENHA_MINIMA } from './_lib/validar.js'
 import { consumirPendente } from './_lib/assinatura.js'
 import { dadosDoNavegador, enviarEvento, rastreioParaGuardar } from './_lib/meta.js'
+import { minutosTeste } from './_lib/planos.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -21,8 +23,12 @@ function limparOrigem(o) {
 }
 
 export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300')
+    return res.status(200).json({ testeMinutos: await minutosTeste() })
+  }
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST')
+    res.setHeader('Allow', 'GET, POST')
     return res.status(405).json({ erro: 'Use POST.' })
   }
   res.setHeader('Cache-Control', 'no-store')

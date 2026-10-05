@@ -6,18 +6,16 @@ import { SECOES } from '../data/nav'
 import { carregarTudo, fmt, useCarga } from '../lib/acervo'
 import { filtrar, indexar, termosDe } from '../lib/busca'
 import { ListaEsquemas } from '../components/ListaEsquemas'
-import { useAcesso } from '../lib/acesso'
 
 export default function Busca() {
   const [params, setParams] = useSearchParams()
   const q = params.get('q') ?? ''
   const buscar = (texto: string) => setParams(texto ? { q: texto } : {}, { replace: true })
 
-  // só os sistemas do plano; o catálogo desce uma vez (fica em cache) e a lista acompanha a digitação
-  const { podeSecao } = useAcesso()
-  const secoes = SECOES.filter(podeSecao)
+  // todos os sistemas, inclusive os fora do plano: o esquema deles abre borrado com o convite para assinar
+  // (AssineParaAcessar). O catálogo desce uma vez (fica em cache) e a lista acompanha a digitação.
+  const secoes = SECOES
   const chave = secoes.join(',')
-  const foraDoPlano = secoes.length < SECOES.length
   const carga = useCarga(() => carregarTudo(secoes), [chave]) // eslint-disable-line react-hooks/exhaustive-deps
   const indice = useMemo(() => (carga.estado === 'ok' ? indexar(carga.dados, { comSecao: true }) : []), [carga])
   const termoAdiado = useDeferredValue(q)
@@ -29,7 +27,7 @@ export default function Busca() {
       <p className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Busca</p>
       <h1 className="mt-1.5 text-[26px] font-semibold tracking-tight sm:text-3xl">Buscar esquema</h1>
       <p className="mt-1 text-ink-3">
-        {foraDoPlano ? 'Nos sistemas do seu plano' : 'Em todos os sistemas'}: modelo, motor, código, gerenciamento ou o nome do sistema.
+        Em todos os sistemas: modelo, motor, código, gerenciamento ou o nome do sistema.
       </p>
 
       <label className="relative mt-6 block">

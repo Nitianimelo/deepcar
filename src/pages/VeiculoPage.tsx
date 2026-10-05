@@ -11,7 +11,7 @@ import { TracePad } from '../components/TracePad'
 import { LogoMarca } from '../components/LogoMarca'
 import { DetalhesEsquema } from '../components/DetalhesEsquema'
 import MARCAS from '../data/marcas.json'
-import { BloqueioPlano } from '../components/BloqueioPlano'
+import { PLANOS_VENDA, textoSomente } from '../data/planos'
 import { ConviteAssinatura } from '../components/AssineParaAcessar'
 import { useAcesso } from '../lib/acesso'
 import { getSession } from '../lib/auth'
@@ -21,20 +21,29 @@ type Estado = { fase: 'carregando' } | { fase: 'ok'; veiculo: Veiculo } | { fase
 
 export default function VeiculoPage() {
   const { podePlaca, testeAcabou } = useAcesso()
-  if (!podePlaca) return <BloqueioPlano titulo="Consulta por placa" oQue="A busca pela placa" />
-  // teste vencido: o servidor responderia 402; nem gasta a consulta, mostra direto o convite
-  if (testeAcabou) return <PlacaDepoisDoTeste />
+  // fora do plano (403 no servidor) ou teste vencido (402): nem gasta a consulta, mostra direto o convite
+  if (!podePlaca || testeAcabou) return <PlacaComConvite foraDoPlano={!podePlaca} />
   return <ConsultaVeiculo />
 }
 
-function PlacaDepoisDoTeste() {
+function PlacaComConvite({ foraDoPlano }: { foraDoPlano: boolean }) {
   const { placa = '' } = useParams()
+  const comPlaca = PLANOS_VENDA.filter((p) => p.placa)
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-8">
       <p className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Consulta por placa</p>
       <h1 className="code mt-1.5 text-[26px] font-semibold tracking-[0.08em] sm:text-3xl">{formatarPlaca(placa)}</h1>
       <div className="mt-6 flex justify-center">
-        <ConviteAssinatura titulo="Assine um plano para consultar pela placa." oQue="a ficha deste veículo e os esquemas compatíveis" />
+        {foraDoPlano ? (
+          <ConviteAssinatura
+            etiqueta="Busca pela placa fora do seu plano"
+            titulo={`${textoSomente(comPlaca)}.`}
+            oQue="a ficha deste veículo e os esquemas compatíveis"
+            planos={comPlaca}
+          />
+        ) : (
+          <ConviteAssinatura titulo="Assine um plano para consultar pela placa." oQue="a ficha deste veículo e os esquemas compatíveis" />
+        )}
       </div>
     </div>
   )

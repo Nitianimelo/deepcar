@@ -5,15 +5,12 @@ import { SECTION_META, type SectionKey } from '../data/nav'
 import { adiantarCatalogo, carregarCatalogo, carregarMarcas, useCarga, type Esquema } from '../lib/acervo'
 import { filtrar, indexar } from '../lib/busca'
 import { ListaEsquemas } from '../components/ListaEsquemas'
-import { BloqueioPlano } from '../components/BloqueioPlano'
-import { useAcesso } from '../lib/acesso'
+import { AvisoSistemaBloqueado } from '../components/AssineParaAcessar'
 import { LogoMarca } from '../components/LogoMarca'
 import { useTitulo } from '../lib/seo'
 
+// Sistema fora do plano (ou teste vencido) abre normal: a faixa no alto avisa, e o esquema abre borrado com o convite.
 export default function SectionPage({ secao }: { secao: SectionKey }) {
-  if (!useAcesso().podeSecao(secao)) {
-    return <BloqueioPlano titulo={SECTION_META[secao].trilha.join(' · ')} oQue={SECTION_META[secao].titulo} />
-  }
   return <Secao secao={secao} />
 }
 
@@ -47,6 +44,7 @@ function Secao({ secao }: { secao: SectionKey }) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+      <AvisoSistemaBloqueado secao={secao} />
       {/* cabeçalho */}
       {marca ? (
         <div>

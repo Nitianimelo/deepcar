@@ -44,6 +44,8 @@ export type Session = {
   assinatura?: Assinatura | null
   /** Ausente em perfis guardados antes do controle por plano: a tela libera e o servidor corrige ao conferir. */
   acesso?: Acesso
+  /** duração do teste gratuito que vale agora (/admin → Planos); ausente em perfis antigos */
+  testeMinutos?: number
 }
 
 function guardarPerfil(s: Session | null) {

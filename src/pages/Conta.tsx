@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
-import { avisarCheckout, DURACAO_FREE, linkCheckout, linkSuporte, restanteFree, rotuloPlano, tempoRestante, temWhatsappSuporte } from '../lib/plano'
+import { avisarCheckout, duracaoTeste, linkCheckout, linkSuporte, restanteFree, rotuloPlano, tempoRestante, temWhatsappSuporte } from '../lib/plano'
 import { PLANOS_VENDA, type Ciclo } from '../data/planos'
 import { CartaoPlanoClaro, ChaveCiclo } from '../components/landing/PlanosLanding'
 import { classeBotaoClaro } from '../components/landing/estiloPlanos'
@@ -155,8 +155,8 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
             {/* num span só: solto no flex, o texto e o negrito viravam colunas no celular */}
             <span>
               {restante !== null && restante > 0
-                ? <>Você está no plano de teste: restam <b className="font-medium text-ink-1">{tempoRestante(restante)}</b> das {DURACAO_FREE}.</>
-                : <>Seu teste de {DURACAO_FREE} terminou. Escolha um plano abaixo para abrir os esquemas.</>}
+                ? <>Você está no plano de teste: restam <b className="font-medium text-ink-1">{tempoRestante(restante)}</b> das {duracaoTeste(s.testeMinutos)}.</>
+                : <>Seu teste de {duracaoTeste(s.testeMinutos)} terminou. Escolha um plano abaixo para abrir os esquemas.</>}
             </span>
           </p>
         )}

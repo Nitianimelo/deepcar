@@ -6,14 +6,14 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
 import { sql, um } from './db.js'
-import { acessoDe } from './planos.js'
+import { acessoDe, MINUTOS_TESTE_PADRAO, minutosTeste } from './planos.js'
 
 const scryptAsync = promisify(scrypt)
 const COOKIE = 'deepcar_sessao'
 const DIAS = 30
 
-/** Quanto tempo de acesso o plano free da. Trocar aqui muda o produto inteiro. */
-export const MINUTOS_FREE = 600 // 10 horas
+/** Padrao do teste gratuito. O que vale e o /admin -> Planos (planos_acesso.minutos_teste, db/009). */
+export const MINUTOS_FREE = MINUTOS_TESTE_PADRAO
 
 /** Planos pagos: nao tem relogio de teste. */
 export const PAGOS = new Set(['pro', 'full'])
@@ -24,7 +24,7 @@ export const PAGOS = new Set(['pro', 'full'])
  */
 export async function abrirJanelaFree(u) {
   if (!u || u.plano !== 'free' || u.free_expira_em) return u
-  const ate = new Date(Date.now() + MINUTOS_FREE * 60_000)
+  const ate = new Date(Date.now() + (await minutosTeste()) * 60_000)
   await sql`update usuarios set free_expira_em = ${ate} where id = ${u.id} and free_expira_em is null`
   return { ...u, free_expira_em: ate }
 }
@@ -175,7 +175,8 @@ export const publico = (u) => ({
 /** `publico` mais o que o plano libera: e o que login, cadastro e /api/sessao devolvem. */
 export async function publicoCompleto(u) {
   const a = await acessoDe(u)
-  return { ...publico(u), acesso: { secoes: a.secoes, placa: a.placa, dispositivos: a.dispositivos } }
+  // testeMinutos: a duracao do teste que vale agora, para os textos ("teste de 10 horas") e o relogio cheio
+  return { ...publico(u), acesso: { secoes: a.secoes, placa: a.placa, dispositivos: a.dispositivos }, testeMinutos: await minutosTeste() }
 }
 
 export const corpo = (req) => (typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body ?? {}))

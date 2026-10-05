@@ -10,6 +10,7 @@ import { Destaque, Folha } from './Folha'
 import { useAcesso } from '../lib/acesso'
 import { restanteFree, tempoRestante } from '../lib/plano'
 import { PLANOS_VENDA } from '../data/planos'
+import { SECOES } from '../data/nav'
 import {
   boasVindasVistas, conviteMostrado, convitePendente, dicaEsquemaVista, marcarBoasVindas, marcarDicaEsquema,
   ouvirMomentoDeValor,
@@ -40,14 +41,18 @@ export function BoasVindas() {
   const encerrar = () => { marcarBoasVindas(email); setEncerrada(true) }
   const restante = restanteFree(sessao)
   const nome = sessao.nome?.split(' ')[0]
+  // o /admin escolhe o que o teste libera: o texto não promete "todos os sistemas" quando não é o caso
+  const tudoLiberado = !sessao.acesso || sessao.acesso.secoes.length >= SECOES.length
 
   // uma folha só para os três passos: trocar de folha mexeria no histórico (o voltar do Android) entre um passo e outro
   const passos = [
     {
       titulo: <>Bem-vindo ao Deepcar{nome ? `, ${nome}` : ''}!</>,
       texto: <>
-        Seu teste grátis está valendo{restante && restante > 0 ? <>: <b className="font-semibold text-ink-1">{tempoRestante(restante)}</b></> : ''} com
-        todos os sistemas liberados (injeção, ABS, elétrica e câmbio, do leve ao diesel). Quer ver como usar? Leva 20 segundos.
+        Seu teste grátis está valendo{restante && restante > 0 ? <>: <b className="font-semibold text-ink-1">{tempoRestante(restante)}</b></> : ''}
+        {tudoLiberado
+          ? ' com todos os sistemas liberados (injeção, ABS, elétrica e câmbio, do leve ao diesel).'
+          : '. O que não está no teste abre borrado, com os planos que liberam.'} Quer ver como usar? Leva 20 segundos.
       </>,
       principal: <>Mostrar como usar <ArrowRight size={16} /></>,
       secundario: 'Agora não',

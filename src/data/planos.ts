@@ -76,3 +76,12 @@ export const planoVenda = (id: PlanoPago) => PLANOS_VENDA.find((p) => p.id === i
 
 /** Preço por mês que aparece no cartão, conforme o ciclo escolhido. */
 export const precoDoCiclo = (p: PlanoVenda, ciclo: Ciclo) => (ciclo === 'anual' ? p.precoAnual : p.preco)
+
+/** Planos à venda que liberam o sistema (pelos cartões de src/data/planos.ts). */
+export const planosQueLiberam = (secao: SectionKey | string) => PLANOS_VENDA.filter((p) => p.secoes.includes(secao as SectionKey))
+
+/** "Somente no plano Full" / "Nos planos Pro e Full". */
+export function textoSomente(planos: PlanoVenda[]) {
+  if (planos.length === 1) return `Somente no plano ${planos[0].nome}`
+  return `Nos planos ${planos.map((p) => p.nome).join(' e ')}`
+}

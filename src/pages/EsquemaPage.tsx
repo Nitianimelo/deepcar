@@ -7,7 +7,6 @@ import { EsquemaViewer } from '../components/EsquemaViewer'
 import { LogoMarca } from '../components/LogoMarca'
 import { BotaoCompartilhar } from '../components/CompartilharEsquema'
 import { registrarRecente } from '../lib/recentes'
-import { BloqueioPlano } from '../components/BloqueioPlano'
 import { EsquemaEmbacado } from '../components/AssineParaAcessar'
 import { useAcesso } from '../lib/acesso'
 import { useTitulo } from '../lib/seo'
@@ -18,34 +17,33 @@ import { DicaEsquema } from '../components/Funil'
 export default function EsquemaPage() {
   const id = useParams()['*'] ?? ''
   const secao = id.split('/')[0] as SectionKey
-  const { podeSecao } = useAcesso()
-  // link salvo, recente ou compartilhado de um sistema fora do plano
-  if (SECTION_META[secao] && !podeSecao(secao)) {
-    return <BloqueioPlano titulo={SECTION_META[secao].trilha.join(' · ')} oQue={SECTION_META[secao].titulo} />
-  }
   return <VerEsquema id={id} secao={secao} />
 }
 
 function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
   const meta = SECTION_META[secao]
   const carga = useCarga(() => carregarEsquema(id), [id])
-  // teste gratuito vencido: a página abre (título, montadora, dados), mas o desenho fica embaçado
-  const { testeAcabou } = useAcesso()
+  // fora do plano (ex.: diesel no Pro) ou teste vencido: a página abre (título, montadora, dados), mas o desenho fica
+  // embaçado com o convite. Fora do plano diz qual plano libera ("Somente no plano Full").
+  const { testeAcabou, podeSecao } = useAcesso()
+  const foraDoPlano = !!SECTION_META[secao] && !podeSecao(secao)
+  const bloqueado = testeAcabou || foraDoPlano
   useTitulo(carga.estado === 'ok' ? `${carga.dados.marca} ${carga.dados.modelo} · ${meta?.titulo ?? ''} · Deepcar` : null)
 
   // entra nas últimas consultas da tela inicial
   const aberto = carga.estado === 'ok' ? carga.dados : null
   useEffect(() => {
     if (!aberto || !SECTION_META[aberto.secao]) return
+    // esquema borrado não conta como aberto (nem para a ativação nem para o convite do teste)
     const email = getSession()?.email
-    if (email) momentoDeValor(email, 'esquema')
+    if (email && !bloqueado) momentoDeValor(email, 'esquema')
     registrarRecente({
       tipo: 'esquema',
       id: aberto.id,
       titulo: `${aberto.marca} ${aberto.modelo}`,
       detalhe: SECTION_META[aberto.secao].titulo,
     })
-  }, [aberto])
+  }, [aberto]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!meta) return <NaoEncontrado />
 
@@ -97,7 +95,7 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
                   {d.subtitulo && <p className="mt-1 text-ink-3">{subtituloCurto(d.subtitulo)}</p>}
                 </div>
               </div>
-              {!testeAcabou && <BotaoCompartilhar d={d} />}
+              {!bloqueado && <BotaoCompartilhar d={d} />}
             </div>
 
             <dl className={`mt-5 grid grid-cols-2 gap-3 ${d.specs.length ? '' : 'hidden'} md:grid-cols-4`}>
@@ -110,7 +108,9 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
             </dl>
 
             <div className="sem-impressao mt-6">
-              {testeAcabou ? <EsquemaEmbacado d={d} /> : <><DicaEsquema /><EsquemaViewer key={d.id} d={d} /></>}
+              {bloqueado
+                ? <EsquemaEmbacado d={d} motivo={foraDoPlano ? { tipo: 'plano', secao } : { tipo: 'teste' }} />
+                : <><DicaEsquema /><EsquemaViewer key={d.id} d={d} /></>}
             </div>
           </>
         )

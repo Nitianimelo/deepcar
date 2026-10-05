@@ -57,9 +57,9 @@ function Janela({ onFechar }: { onFechar: () => void }) {
   const [marcado, setMarcado] = useState(0)
   const recentes = useRecentes()
 
-  // placa e sistemas conforme o plano: fora dele a opção nem aparece
-  const { podeSecao, podePlaca } = useAcesso()
-  const secoes = SECOES.filter(podeSecao)
+  // todos os sistemas: o que está fora do plano abre borrado com o convite (nunca some da busca)
+  const { podePlaca } = useAcesso()
+  const secoes = SECOES
   const chaveSecoes = secoes.join(',')
   const carga = useCarga(() => carregarTudo(secoes), [chaveSecoes]) // eslint-disable-line react-hooks/exhaustive-deps
   const indice = useMemo(() => (carga.estado === 'ok' ? indexar(carga.dados, { comSecao: true }) : []), [carga])
