@@ -925,7 +925,7 @@ function FormaNovoUsuario({ onPronto, onErro }: { onPronto: (u: Usuario) => void
       <input className="field" placeholder="Oficina" value={d.oficina} onChange={(e) => setD({ ...d, oficina: e.target.value })} />
       <input className="field" type="tel" inputMode="numeric" placeholder="WhatsApp (11) 98765-4321" maxLength={16}
         value={d.whatsapp} onChange={(e) => setD({ ...d, whatsapp: mascararWhatsapp(e.target.value) })} />
-      <input className="field" type="password" placeholder="Senha (8+ caracteres)" minLength={8} value={d.senha} onChange={(e) => setD({ ...d, senha: e.target.value })} required />
+      <input className="field" type="password" placeholder={`Senha (${SENHA_MINIMA}+ caracteres)`} minLength={SENHA_MINIMA} value={d.senha} onChange={(e) => setD({ ...d, senha: e.target.value })} required />
       <div className="sm:col-span-2">
         <button type="submit" className="btn-primary" disabled={salvando}>{salvando ? 'Criando…' : 'Criar conta'}</button>
       </div>

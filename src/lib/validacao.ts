@@ -1,7 +1,7 @@
 // Validação do cadastro no navegador. Espelha api/_lib/validar.js — quem decide é o
 // servidor; isto existe para a pessoa ver o erro antes de enviar, não depois.
 
-export const SENHA_MINIMA = 8
+export const SENHA_MINIMA = 4
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 

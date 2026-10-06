@@ -107,6 +107,11 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-06 · Senha mínima de 4 caracteres
+- Pedido do dono (cliente não conseguia entrar no celular com a senha criada para ele): `SENHA_MINIMA` 8 → 4 em
+  `api/_lib/validar.js` e `src/lib/validacao.ts` (cadastro, /admin criar/editar usuário). O login nunca checou tamanho,
+  então senhas antigas seguem valendo.
+
 ### 2026-10-06 · Pro com câmbio leve na página de vendas e botões maiores no celular
 - O cartão do Pro (`src/data/planos.ts`) e o padrão de `api/_lib/planos.js` não mostravam o câmbio leve, mas o /admin em
   produção já libera `cambio` no Pro. Regra do dono: Pro = tudo que é leve; Full = leve + diesel. Agora os três batem.

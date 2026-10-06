@@ -34,5 +34,5 @@ export function formatarWhatsapp(guardado) {
   return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`
 }
 
-export const SENHA_MINIMA = 8
+export const SENHA_MINIMA = 4
 export const senhaValida = (v) => String(v ?? '').length >= SENHA_MINIMA
