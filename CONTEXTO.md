@@ -107,6 +107,19 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-06 · Usuário só de leitura no Neon para o CRM de WhatsApp
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **O que mudou:** criado no Neon o papel `crm_leitura` (login, **só leitura**), com `grant select` apenas nas colunas
+  `id, nome, email, whatsapp, plano, papel, criado_em, free_expira_em, assinatura_status, assinatura_ciclo,
+  plano_expira_em, origem, boas_vindas_em, primeira_placa_em, primeiro_esquema_em` de `usuarios`. Sem acesso a senha,
+  sessões, cofre (`segredos`) nem pagamentos; não escreve nada (testado: `permission denied`).
+  Quem usa: o CRM de WhatsApp (`https://crm.deepcar.app.br`, VPS, código no iCloud `Grupo Inttus/crm-whatsapp`), que lê
+  os cadastros a cada 2 min e junta pelo WhatsApp. A senha do papel fica só no `.env` do CRM na VPS.
+- **Regra:** mudar o que o CRM lê = ajustar o `grant select (…)` no Neon e o `select` de `server/src/deepcar.js` do CRM.
+  Remover o acesso: `drop role crm_leitura` (depois de `revoke`).
+- **Banco:** sem migração (papel criado por SQL direto, não vai para `db/` porque a senha não pode ir para o repositório público).
+- **Variáveis/infra:** sem mudança na Vercel. DNS: registro A `crm.deepcar.app.br` → 2.24.64.163 (VPS) criado na Vercel.
+
 ### 2026-10-05 · Tempo do teste no /admin e todo bloqueio levando a assinar
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** escolher no /admin o tempo do teste e o que ele expõe; o que não estiver exposto abre, mas o esquema fica
