@@ -107,6 +107,13 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-06 · Pro com câmbio leve na página de vendas e botões maiores no celular
+- O cartão do Pro (`src/data/planos.ts`) e o padrão de `api/_lib/planos.js` não mostravam o câmbio leve, mas o /admin em
+  produção já libera `cambio` no Pro. Regra do dono: Pro = tudo que é leve; Full = leve + diesel. Agora os três batem.
+- Botões de cadastro da landing (`btn-cta-grande`: hero, "Testar com uma placa", "Testar gratuitamente") ocupam a
+  largura toda e têm 58 px de altura no celular; botões dos cartões de plano (`classeBotaoClaro`) com 56 px no celular.
+- Observado no /admin: teste grátis está em 300 min (5 h) e libera só os sistemas leves.
+
 ### 2026-10-06 · Cadastro também manda Lead para a Meta
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** padronizar os eventos do funil: cadastro = Lead; chamou no WhatsApp sem se cadastrar = Contact (CRM);

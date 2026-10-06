@@ -14,7 +14,7 @@ export const MINUTOS_TESTE_PADRAO = 600
 
 export const PADRAO = {
   free: { secoes: SECOES, placa: true, dispositivos: 2, minutos_teste: MINUTOS_TESTE_PADRAO },
-  pro: { secoes: ['injecao-leve', 'abs', 'eletrica'], placa: true, dispositivos: 2 },
+  pro: { secoes: ['injecao-leve', 'abs', 'eletrica', 'cambio'], placa: true, dispositivos: 2 },
   full: { secoes: SECOES, placa: true, dispositivos: 4 },
 }
 

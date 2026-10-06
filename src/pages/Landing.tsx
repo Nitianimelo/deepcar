@@ -88,11 +88,11 @@ function Hero() {
             Informações técnicas de mais de 15 mil modelos de veículos: só precisa digitar a placa do carro.
             Injeção eletrônica, elétrica, ABS e câmbio. No celular, no tablet ou no computador da sua oficina.
           </Reveal>
-          <Reveal index={3} className="mt-8 flex flex-wrap items-center gap-3">
-            <Link to="/cadastro" className="btn-cta inline-flex items-center gap-2 px-6">
-              Criar conta grátis <ArrowRight size={17} />
+          <Reveal index={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <Link to="/cadastro" className="btn-cta btn-cta-grande inline-flex items-center justify-center gap-2 px-6">
+              Criar conta grátis <ArrowRight size={19} />
             </Link>
-            <a href="#cobertura" className="btn-ghost inline-flex h-12 items-center px-5">Ver cobertura</a>
+            <a href="#cobertura" className="btn-ghost inline-flex h-12 items-center justify-center px-5">Ver cobertura</a>
           </Reveal>
 
           <Reveal index={4} className="mt-12">
@@ -159,8 +159,8 @@ function BuscaPlaca() {
           </ol>
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Link to="/cadastro" className="btn-cta inline-flex items-center gap-2 px-6">
-              Testar com uma placa <ArrowRight size={17} />
+            <Link to="/cadastro" className="btn-cta btn-cta-grande inline-flex items-center justify-center gap-2 px-6">
+              Testar com uma placa <ArrowRight size={19} />
             </Link>
           </div>
         </Reveal>
@@ -248,7 +248,7 @@ function Cobertura() {
                     aria-label="Placa do veículo"
                   />
                 </label>
-                <button type="submit" className="btn-cta px-6" disabled={!ok}>Testar gratuitamente</button>
+                <button type="submit" className="btn-cta btn-cta-grande px-6" disabled={!ok}>Testar gratuitamente</button>
               </form>
               <p className="code mt-3 text-[11.5px] text-ink-4">Placas Mercosul e padrão antigo. Sem cartão de crédito.</p>
             </div>
