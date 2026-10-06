@@ -107,6 +107,12 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-06 · Cadastro pelo app Android marcado com origem "app"
+- `api/registrar.js`: o app 1.2.0 manda `origem: { entrada: 'app' }`; sem eventID (não vai para a Meta), o servidor
+  grava `{ entrada: 'app', em }` em `usuarios.origem`. Assim o /admin e o CRM sabem que a conta nasceu no Android.
+- O app 1.2.0 (iCloud `Grupo Inttus/deepcar-android`) passou a ter a mesma lógica de planos do site, sem preço nem
+  compra (regra da Google Play). A venda de quem testa pelo app vai pela régua do CRM no WhatsApp.
+
 ### 2026-10-06 · Senha mínima de 4 caracteres
 - Pedido do dono (cliente não conseguia entrar no celular com a senha criada para ele): `SENHA_MINIMA` 8 → 4 em
   `api/_lib/validar.js` e `src/lib/validacao.ts` (cadastro, /admin criar/editar usuário). O login nunca checou tamanho,

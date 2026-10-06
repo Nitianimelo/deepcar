@@ -42,7 +42,9 @@ export default async function handler(req, res) {
     const eventoId = /^[\w-]{8,64}$/.test(String(dados.evento_id ?? '')) ? String(dados.evento_id) : null
     const oficina = String(dados.oficina ?? '').trim() || 'Minha oficina'
     // origem e rastreio so do site (mesma regra do eventID): cadastro pelo app Android nao vai para a Meta
-    const origem = eventoId ? limparOrigem(dados.origem) : null
+    // o app marca { entrada: 'app' } (sem campanha): o /admin e o CRM mostram que a conta nasceu no Android
+    const doApp = !eventoId && dados.origem?.entrada === 'app'
+    const origem = eventoId ? limparOrigem(dados.origem) : doApp ? { entrada: 'app', em: new Date().toISOString() } : null
     const navegador = eventoId ? dadosDoNavegador(req) : null
     const rastreio = navegador ? rastreioParaGuardar(navegador, dados.origem?.fbc) : null
 
