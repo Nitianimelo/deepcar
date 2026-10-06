@@ -63,11 +63,13 @@ export default async function handler(req, res) {
               ${origem ? JSON.stringify(origem) : null}::jsonb, ${rastreio ? JSON.stringify(rastreio) : null}::jsonb)
       returning *`)
 
+    // CompleteRegistration + Lead, com os mesmos ids do pixel (cad-… e lead-cad-…): a Meta junta navegador e servidor
+    const doCadastro = { url: 'https://deepcar.app.br/cadastro', pessoa: { email, whatsapp, nome, idExterno: u.id }, navegador: { ...navegador, fbc: rastreio?.fbc } }
     const meta = eventoId
-      ? enviarEvento({
-          nome: 'CompleteRegistration', id: eventoId, url: 'https://deepcar.app.br/cadastro',
-          pessoa: { email, whatsapp, nome, idExterno: u.id }, navegador: { ...navegador, fbc: rastreio?.fbc },
-        })
+      ? Promise.all([
+          enviarEvento({ nome: 'CompleteRegistration', id: eventoId, ...doCadastro }),
+          enviarEvento({ nome: 'Lead', id: `lead-${eventoId}`, ...doCadastro }),
+        ])
       : null
 
     // pagou antes de ter conta: o plano entra agora, sem passar pelo bloqueio do free

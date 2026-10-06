@@ -69,4 +69,7 @@ export function contato(onde: string) {
 /** Conta criada. Só existe se o pixel já foi carregado (o cadastro é página pública). */
 export function cadastroConcluido(eventoId: string) {
   window.fbq?.('track', 'CompleteRegistration', {}, { eventID: eventoId })
+  // cadastro também é o Lead do funil (o CRM manda Contact para quem só chamou no WhatsApp). Os dois juntos porque a
+  // campanha publicada otimiza por CompleteRegistration e a Meta não deixa trocar o evento de um conjunto publicado.
+  window.fbq?.('track', 'Lead', {}, { eventID: `lead-${eventoId}` })
 }

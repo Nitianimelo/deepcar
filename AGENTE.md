@@ -256,7 +256,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - **Pixel da Meta (`src/lib/pixel.ts`) só roda nas páginas públicas.** Nunca carregue em `/app`, `/admin` ou `/c/`
   (a URL leva placa e token). Página privada nova fora desses prefixos? Inclua em `PRIVADAS`.
   Eventos da Meta: `PageView` e `Contact` (botões de WhatsApp da landing) só pelo pixel; `CompleteRegistration` pelo
-  pixel + API de Conversões (mesmo eventID); `InitiateCheckout` (clique em assinar, `avisarCheckout` → `POST /api/sessao`)
+  pixel + API de Conversões (mesmo eventID), e junto um `Lead` (eventID `lead-<id do cadastro>`), porque no funil o
+  cadastro é o Lead (o CRM de WhatsApp manda `Contact` para quem só chamou no WhatsApp); `InitiateCheckout` (clique em assinar, `avisarCheckout` → `POST /api/sessao`)
   e `Purchase` (webhook da Cakto) só pela API (`api/_lib/meta.js`). O cadastro só vai para a Meta quando vem do site
   (`evento_id` no corpo). Não use isso nas rotas do app Android.
 - **Origem e rastreio:** `src/lib/origem.ts` guarda no navegador o primeiro toque com campanha (UTM, fbclid, gclid) e o

@@ -107,6 +107,17 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-06 · Cadastro também manda Lead para a Meta
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** padronizar os eventos do funil: cadastro = Lead; chamou no WhatsApp sem se cadastrar = Contact (CRM);
+  assinou = Purchase (já existe, pela Cakto).
+- **O que mudou:** `src/lib/pixel.ts` (`cadastroConcluido`) e `api/registrar.js` mandam **Lead** junto do
+  **CompleteRegistration** (pixel + API de Conversões, eventID `lead-cad-…` para a Meta juntar os dois lados). O
+  CompleteRegistration continua porque o conjunto de anúncios publicado otimiza por ele (e a Meta não troca o evento de
+  um conjunto publicado). Cadastro pelo app Android segue sem evento.
+- **Banco / Variáveis:** sem mudança. Privacidade: mesmos dados de antes, sem mudança de texto.
+- **Pendências:** quando duplicar o conjunto de anúncios, dá para otimizar por Lead.
+
 ### 2026-10-06 · Usuário só de leitura no Neon para o CRM de WhatsApp
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **O que mudou:** criado no Neon o papel `crm_leitura` (login, **só leitura**), com `grant select` apenas nas colunas
