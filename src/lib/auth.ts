@@ -106,6 +106,8 @@ export async function registrar(dados: {
   evento_id?: string
   /** de onde a pessoa chegou (lib/origem): UTM, fbclid, página de entrada */
   origem?: Origem
+  /** id anônimo do navegador (lib/pixel visitanteId): o servidor manda na API de Conversões */
+  visitante?: string
 }): Promise<Session> {
   const s = (await post('/api/registrar', dados)) as Session
   guardarPerfil(s)

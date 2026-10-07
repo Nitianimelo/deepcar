@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 're
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, AtSign, Check, CircleAlert, CircleCheck, Eye, EyeOff, LockKeyhole, Smartphone, Timer, UserRound } from 'lucide-react'
 import { registrar, type ErroApi } from '../lib/auth'
-import { cadastroConcluido, novoEventoId } from '../lib/pixel'
+import { cadastroConcluido, novoEventoId, visitanteId } from '../lib/pixel'
 import { origemParaCadastro } from '../lib/origem'
 import { DURACAO_FREE, duracaoTeste } from '../lib/plano'
 import {
@@ -84,8 +84,9 @@ export default function Cadastro() {
         senha: d.senha,
         evento_id: eventoId,
         origem: origemParaCadastro(),
+        visitante: visitanteId(),
       })
-      cadastroConcluido(eventoId)
+      cadastroConcluido(eventoId, { email: d.email, whatsapp: whatsappParaApi(d.whatsapp), nome: d.nome })
       // veio da busca por placa na landing? cai direto no veículo consultado
       const destino = (loc.state as { from?: string } | null)?.from ?? '/app'
       nav(destino, { replace: true })

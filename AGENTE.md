@@ -262,6 +262,10 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   cadastro é o Lead (o CRM de WhatsApp manda `Contact` para quem só chamou no WhatsApp); `InitiateCheckout` (clique em assinar, `avisarCheckout` → `POST /api/sessao`)
   e `Purchase` (webhook da Cakto) só pela API (`api/_lib/meta.js`). O cadastro só vai para a Meta quando vem do site
   (`evento_id` no corpo). Não use isso nas rotas do app Android.
+- **Correspondência avançada (07/10/2026):** o pixel inicia com `country: br`, `external_id` = id anônimo do navegador
+  (`visitanteId()`, localStorage `deepcar.visitante`) e, se há retrato da conta (`deepcar.perfil`), e-mail/WhatsApp/nome
+  (o fbevents faz o hash). O servidor manda o MESMO visitante no `external_id` (junto do id da conta) no cadastro,
+  checkout e compra (`usuarios.rastreio_meta.visitante`). Mudou um lado? Mude o outro.
 - **Origem e rastreio:** `src/lib/origem.ts` guarda no navegador o primeiro toque com campanha (UTM, fbclid, gclid) e o
   fbclid mais recente (vira `fbc`); o cadastro manda e o servidor grava em `usuarios.origem` / `rastreio_meta`. O webhook
   usa o `rastreio_meta` no Purchase (sem navegador a Meta recebe como `system_generated`). Origem aparece no /admin.

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { PLANOS_VENDA, type Ciclo, type PlanoPago } from '../data/planos'
 import { conferirSessao, type Plano, type Session } from './auth'
+import { visitanteId } from './pixel'
 
 /** Padrão do teste; o que vale é o /admin → Planos e chega na sessão (testeMinutos). */
 export const MINUTOS_FREE = 600
@@ -53,7 +54,7 @@ export function avisarCheckout(plano: PlanoPago, ciclo: Ciclo) {
       keepalive: true,
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ evento: 'checkout', plano, ciclo, valor, id: crypto.randomUUID() }),
+      body: JSON.stringify({ evento: 'checkout', plano, ciclo, valor, id: crypto.randomUUID(), visitante: visitanteId() }),
     }).catch(() => {})
   } catch { /* navegador antigo sem keepalive/randomUUID: segue sem o evento */ }
 }

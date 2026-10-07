@@ -29,6 +29,18 @@ const telefone = (v) => {
 }
 
 const lista = (v) => (v ? [v] : undefined)
+/** Lista sem vazios; vazia vira undefined (campo omitido, como antes). */
+const ids = (...v) => (v.filter(Boolean).length ? v.filter(Boolean) : undefined)
+
+/**
+ * Id anonimo do visitante (src/lib/pixel.ts: visitanteId), o MESMO que o pixel manda como external_id desde o primeiro
+ * PageView. Mandar ele aqui (cadastro, checkout, compra) liga as visitas e cliques anonimos a pessoa que se cadastrou.
+ * O pixel faz o sha-256 dele; aqui o hash() faz o mesmo, entao os dois lados batem.
+ */
+const VISITANTE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+export const visitanteValido = (v) => (VISITANTE.test(String(v ?? '')) ? String(v) : undefined)
+// todo cliente da Deepcar e do Brasil: o pais conta na qualidade da correspondencia (o pixel manda o mesmo)
+const PAIS = hash('br')
 
 /** Cookie da propria pagina: o pixel grava _fbp/_fbc no dominio do site, e eles chegam junto na chamada da API. */
 function cookie(req, nome) {
@@ -45,8 +57,9 @@ export const fbcValido = (v) => (FBC.test(String(v ?? '')) ? String(v) : undefin
  * a compra vem do webhook da Cakto, servidor a servidor. `fbcReserva` = fbc montado do fbclid (src/lib/origem.ts),
  * usado quando o cookie _fbc nao existe (Safari apaga em 7 dias, ou o pixel nao chegou a carregar).
  */
-export function rastreioParaGuardar(navegador, fbcReserva) {
+export function rastreioParaGuardar(navegador, fbcReserva, visitante) {
   const r = {
+    visitante: visitanteValido(visitante),
     fbp: navegador.fbp,
     fbc: navegador.fbc ?? fbcValido(fbcReserva),
     ip: navegador.client_ip_address,
@@ -72,7 +85,7 @@ export function dadosDoNavegador(req) {
 
 /**
  * Envia um evento. `id` e o mesmo eventID que o pixel mandou do navegador (a Meta junta os dois e conta uma vez).
- * `pessoa`: { email, whatsapp, nome, idExterno }. `navegador`: saida de dadosDoNavegador, quando houver.
+ * `pessoa`: { email, whatsapp, nome, idExterno, visitante }. `navegador`: saida de dadosDoNavegador, quando houver.
  */
 export async function enviarEvento({ nome, id, url, pessoa = {}, navegador = {}, dados }) {
   try {
@@ -93,7 +106,8 @@ export async function enviarEvento({ nome, id, url, pessoa = {}, navegador = {},
         ph: lista(telefone(pessoa.whatsapp)),
         fn: lista(hash(primeiro)),
         ln: lista(hash(resto.at(-1))),
-        external_id: lista(hash(pessoa.idExterno)),
+        external_id: ids(hash(pessoa.idExterno), hash(visitanteValido(pessoa.visitante))),
+        country: [PAIS],
         ...navegador,
       },
       custom_data: dados,

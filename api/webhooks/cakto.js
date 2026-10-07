@@ -101,7 +101,7 @@ export default async function handler(req, res) {
         const conta = r.usuarioId ? await um(sql`select rastreio_meta from usuarios where id = ${r.usuarioId}`) : null
         await enviarEvento({
           nome: 'Purchase', id: `compra-${d.pedidoId}`, url: 'https://deepcar.app.br/#planos',
-          pessoa: { email: d.email, whatsapp: d.whatsapp, nome: d.nome, idExterno: r.usuarioId },
+          pessoa: { email: d.email, whatsapp: d.whatsapp, nome: d.nome, idExterno: r.usuarioId, visitante: conta?.rastreio_meta?.visitante },
           navegador: navegadorGuardado(conta?.rastreio_meta),
           dados: { value: d.valor ?? undefined, currency: 'BRL', content_name: `${plano} ${ciclo}`, content_type: 'product' },
         })

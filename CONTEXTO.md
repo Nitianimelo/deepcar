@@ -110,6 +110,23 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-07 · Meta: correspondência avançada no pixel (PageView e Contact com 6,1/10)
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Diagnóstico (Gerenciador de Eventos, 07/10):** Compra, Concluir inscrição, Lead e Iniciar checkout com 9,3/10 e
+  chegando normalmente (a Compra do Thiago, 21:14 de 06/10, foi recebida pela API de Conversões). PageView e Entrar em
+  contato com 6,1/10: "nenhum parâmetro de correspondência avançada detectado" no pixel; US$ 13 de investimento afetado.
+  A Cakto NÃO tem pixel (`facebook_pixels: []` nos 4 checkouts): a Compra sai só do nosso servidor, uma vez.
+- **O que mudou:** `src/lib/pixel.ts`: `visitanteId()` (uuid em `deepcar.visitante`) e `fbq('init', id, correspondencia())`
+  com `country`, `external_id` e, se houver conta no navegador, `em`/`ph`/`fn`/`ln`; no cadastro o pixel é reiniciado com
+  os dados da pessoa antes do CompleteRegistration/Lead. Cadastro e "assinar" mandam `visitante`; `api/_lib/meta.js`
+  manda `external_id` = [conta, visitante] e `country` em todos os eventos; `rastreio_meta.visitante` guardado no
+  cadastro e usado no Purchase do webhook e no InitiateCheckout. Política de privacidade atualizada (07/10).
+- **Banco:** sem migração (o visitante vai dentro do jsonb `rastreio_meta`). **Variáveis:** sem mudança.
+- **Verificação:** build ok, lint 10 avisos; pixel real carregado com o envio à Meta BLOQUEADO no teste: anônimo guarda
+  `country` + `external_id`, com conta guarda também em/ph/fn/ln; evento do servidor montado com `fetch` interceptado:
+  external_id com os 2 hashes, `country` = hash("br"), sem `test_event_code`. App Android sem mudança (campos opcionais).
+- **Pendências:** a nota do PageView/Contact sobe em até 48 h no Gerenciador de Eventos; conferir.
+
 ### 2026-10-07 · Cakto: página pós-compra, WhatsApp de suporte e logo nos 4 produtos
 - **Quem:** Claude Code (Opus 5.5), pelo Safari do dono (painel app.cakto.com.br logado), a pedido de Nitiani
 - **O que mudou na Cakto (os 4 produtos):** `upsell: true` + `upsellPage: https://deepcar.app.br/obrigado` (quem paga

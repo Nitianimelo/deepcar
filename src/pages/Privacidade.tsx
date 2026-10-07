@@ -5,7 +5,7 @@ import { PaginaSimples } from '../components/PaginaSimples'
 import { useTitulo } from '../lib/seo'
 
 const EMAIL = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'nitiani@compilla.dev'
-const ATUALIZADA_EM = '3 de outubro de 2026'
+const ATUALIZADA_EM = '7 de outubro de 2026'
 
 export default function Privacidade() {
   useTitulo('Política de privacidade · Deepcar')
@@ -49,11 +49,14 @@ export default function Privacidade() {
           <b>Anúncios (só no site):</b> nas páginas públicas do site (página inicial, cadastro, login e esta política)
           usamos o Pixel da Meta para medir os nossos anúncios no Facebook e no Instagram. Ele registra a visita à página
           a criação de conta e o clique nos botões de WhatsApp, junto com o endereço da página, dados técnicos do navegador
-          e cookies da própria Meta. Quando você cria a conta pelo site, clica para assinar um plano ou assina, o nosso
+          e cookies da própria Meta. Junto vão o país (Brasil) e um código aleatório que o site cria e guarda no seu
+          navegador para reconhecer visitas do mesmo aparelho; se você já tem conta e entrou por este navegador, vão também
+          o e-mail, o WhatsApp e o nome, sempre em formato irreversível (hash), feito pelo próprio pixel antes do envio.
+          Quando você cria a conta pelo site, clica para assinar um plano ou assina, o nosso
           servidor também avisa a Meta (API de Conversões) com o e-mail, o WhatsApp e o nome em formato irreversível (hash),
-          o endereço IP, o navegador e os identificadores de anúncio da Meta (cookies _fbp/_fbc), para ela saber se a conta
-          ou a compra veio de um anúncio. Para isso guardamos, junto da conta, o IP, o navegador e esses identificadores do
-          momento do cadastro. Dentro da plataforma, nos esquemas, nas placas consultadas e nos links compartilhados nada
+          o endereço IP, o navegador, os identificadores de anúncio da Meta (cookies _fbp/_fbc) e o código aleatório do
+          navegador, para ela saber se a conta ou a compra veio de um anúncio. Para isso guardamos, junto da conta, o IP, o
+          navegador, esses identificadores e o código aleatório do momento do cadastro. Dentro da plataforma, nos esquemas, nas placas consultadas e nos links compartilhados nada
           disso é enviado: no aviso de assinatura vai só o plano escolhido. O aplicativo Android não usa o pixel e cadastros feitos por ele não são
           informados à Meta. Para limitar o uso desses dados em anúncios, use as configurações de
           anúncios da sua conta da Meta ou bloqueie cookies de terceiros no navegador.

@@ -22,6 +22,50 @@ declare global {
 
 const PRIVADAS = ['/app', '/admin', '/c/']
 
+const VISITANTE = 'deepcar.visitante'
+/**
+ * Id anônimo e fixo deste navegador. Vai no pixel como external_id desde a primeira visita e o servidor manda o mesmo
+ * no cadastro, no checkout e na compra (api/_lib/meta.js): assim a Meta liga as visitas anônimas à pessoa.
+ * Não identifica ninguém sozinho (é um sorteio).
+ */
+export function visitanteId(): string | undefined {
+  try {
+    let id = localStorage.getItem(VISITANTE)
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem(VISITANTE, id)
+    }
+    return id
+  } catch {
+    return undefined // modo anônimo / armazenamento bloqueado
+  }
+}
+
+type Correspondencia = { email?: string; whatsapp?: string | null; nome?: string }
+
+/**
+ * "Correspondência avançada" do pixel: sem ela a Meta recebe PageView e Contact sem nada que ligue a uma pessoa
+ * (qualidade 6,1/10 em 07/10/2026). O fbevents.js normaliza e faz o sha-256 de tudo antes de enviar.
+ * E-mail, WhatsApp e nome só existem para quem já tem conta neste navegador (retrato em deepcar.perfil).
+ */
+function correspondencia(extra: Correspondencia = {}) {
+  let perfil: Correspondencia = {}
+  try {
+    perfil = JSON.parse(localStorage.getItem('deepcar.perfil') ?? '{}') ?? {}
+  } catch { /* sem perfil */ }
+  const p = { ...perfil, ...extra }
+  const [fn, ...resto] = String(p.nome ?? '').trim().toLowerCase().split(/\s+/)
+  const ph = String(p.whatsapp ?? '').replace(/\D/g, '')
+  const dados: Record<string, string> = { country: 'br' }
+  const v = visitanteId()
+  if (v) dados.external_id = v
+  if (p.email) dados.em = String(p.email).trim().toLowerCase()
+  if (ph) dados.ph = ph.length <= 11 ? `55${ph}` : ph
+  if (fn) dados.fn = fn
+  if (resto.length) dados.ln = resto[resto.length - 1]
+  return dados
+}
+
 export function rotaRastreavel(caminho: string) {
   return !PRIVADAS.some((p) => caminho === p || caminho.startsWith(p.endsWith('/') ? p : `${p}/`))
 }
@@ -47,7 +91,7 @@ function carregar(): Fbq | null {
   s.src = 'https://connect.facebook.net/en_US/fbevents.js'
   document.head.appendChild(s)
   fbq('set', 'autoConfig', false, PIXEL_ID) // sem captura automática de cliques e formulários
-  fbq('init', PIXEL_ID)
+  fbq('init', PIXEL_ID, correspondencia())
   return fbq
 }
 
@@ -67,7 +111,9 @@ export function contato(onde: string) {
 }
 
 /** Conta criada. Só existe se o pixel já foi carregado (o cadastro é página pública). */
-export function cadastroConcluido(eventoId: string) {
+export function cadastroConcluido(eventoId: string, pessoa?: Correspondencia) {
+  // agora a Meta pode receber os dados da pessoa também pelo navegador (o servidor já manda os mesmos)
+  if (pessoa) window.fbq?.('init', PIXEL_ID, correspondencia(pessoa))
   window.fbq?.('track', 'CompleteRegistration', {}, { eventID: eventoId })
   // cadastro também é o Lead do funil (o CRM manda Contact para quem só chamou no WhatsApp). Os dois juntos porque a
   // campanha publicada otimiza por CompleteRegistration e a Meta não deixa trocar o evento de um conjunto publicado.

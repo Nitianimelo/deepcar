@@ -11,7 +11,7 @@
 // (src/lib/funil.ts). Guarda só a primeira data; aparece no /admin.
 import { randomUUID } from 'node:crypto'
 import { sql, um } from './_lib/db.js'
-import { dadosDoNavegador, enviarEvento } from './_lib/meta.js'
+import { dadosDoNavegador, enviarEvento, visitanteValido } from './_lib/meta.js'
 import { abrirJanelaFree, conferirSenha, corpo, limparCookie, publicoCompleto, usuarioDaSessao } from './_lib/sessao.js'
 
 export const config = { runtime: 'nodejs' }
@@ -64,13 +64,13 @@ async function eventoCheckout(req, res, u) {
     const id = /^[\w-]{8,64}$/.test(String(d.id ?? '')) ? String(d.id) : randomUUID()
     const valor = Number(d.valor)
     const navegador = dadosDoNavegador(req)
-    if (!navegador.fbc) {
-      const conta = await um(sql`select rastreio_meta from usuarios where id = ${u.id}`)
-      navegador.fbc = conta?.rastreio_meta?.fbc
-    }
+    const conta = await um(sql`select rastreio_meta from usuarios where id = ${u.id}`)
+    if (!navegador.fbc) navegador.fbc = conta?.rastreio_meta?.fbc
+    // o do navegador de agora; sem ele, o do cadastro (liga o clique em assinar as visitas anonimas)
+    const visitante = visitanteValido(d.visitante) ?? conta?.rastreio_meta?.visitante
     await enviarEvento({
       nome: 'InitiateCheckout', id: `checkout-${id}`, url: 'https://deepcar.app.br/app/conta',
-      pessoa: { email: u.email, whatsapp: u.whatsapp, nome: u.nome, idExterno: u.id }, navegador,
+      pessoa: { email: u.email, whatsapp: u.whatsapp, nome: u.nome, idExterno: u.id, visitante }, navegador,
       dados: {
         value: valor > 0 && valor < 5000 ? valor : undefined, currency: 'BRL',
         content_name: `${d.plano} ${d.ciclo}`, content_ids: [`${d.plano}-${d.ciclo}`], content_type: 'product',

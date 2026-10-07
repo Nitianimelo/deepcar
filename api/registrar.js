@@ -4,7 +4,7 @@ import { sql, um } from './_lib/db.js'
 import { abrirJanelaFree, cifrarSenha, corpo, criarSessao, porCookie, publicoCompleto } from './_lib/sessao.js'
 import { emailValido, nomeValido, normalizarWhatsapp, senhaValida, SENHA_MINIMA } from './_lib/validar.js'
 import { consumirPendente } from './_lib/assinatura.js'
-import { dadosDoNavegador, enviarEvento, rastreioParaGuardar } from './_lib/meta.js'
+import { dadosDoNavegador, enviarEvento, rastreioParaGuardar, visitanteValido } from './_lib/meta.js'
 import { minutosTeste } from './_lib/planos.js'
 
 export const config = { runtime: 'nodejs' }
@@ -46,7 +46,8 @@ export default async function handler(req, res) {
     const doApp = !eventoId && dados.origem?.entrada === 'app'
     const origem = eventoId ? limparOrigem(dados.origem) : doApp ? { entrada: 'app', em: new Date().toISOString() } : null
     const navegador = eventoId ? dadosDoNavegador(req) : null
-    const rastreio = navegador ? rastreioParaGuardar(navegador, dados.origem?.fbc) : null
+    const visitante = eventoId ? visitanteValido(dados.visitante) : undefined
+    const rastreio = navegador ? rastreioParaGuardar(navegador, dados.origem?.fbc, visitante) : null
 
     // uma mensagem por campo, na ordem da tela: quem errar dois sabe qual corrigir primeiro
     if (!nomeValido(nome)) return res.status(400).json({ erro: 'Informe seu nome.', campo: 'nome' })
@@ -66,7 +67,7 @@ export default async function handler(req, res) {
       returning *`)
 
     // CompleteRegistration + Lead, com os mesmos ids do pixel (cad-… e lead-cad-…): a Meta junta navegador e servidor
-    const doCadastro = { url: 'https://deepcar.app.br/cadastro', pessoa: { email, whatsapp, nome, idExterno: u.id }, navegador: { ...navegador, fbc: rastreio?.fbc } }
+    const doCadastro = { url: 'https://deepcar.app.br/cadastro', pessoa: { email, whatsapp, nome, idExterno: u.id, visitante }, navegador: { ...navegador, fbc: rastreio?.fbc } }
     const meta = eventoId
       ? Promise.all([
           enviarEvento({ nome: 'CompleteRegistration', id: eventoId, ...doCadastro }),
