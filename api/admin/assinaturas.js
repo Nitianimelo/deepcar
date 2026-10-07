@@ -12,9 +12,9 @@ import { vincularPendente } from '../_lib/assinatura.js'
 import { avisarTesteAcabou } from '../_lib/push.js'
 import { avisarTesteAcabouEmail } from '../_lib/emails.js'
 
-// e-mail automatico so para testes que acabam depois de ele existir: os 96 vencidos antes (regra antiga de 10 h)
-// ficam para um envio separado, aprovado pelo dono
-const EMAIL_DESDE = '2026-10-07T23:44:00Z'
+// e-mail "teste acabou" para todo teste vencido que ainda nao recebeu (o dono aprovou mandar tambem para os antigos,
+// 08/10/2026), no maximo 40 por dia: o plano gratis do Resend aceita 100 e-mails/dia, contando cadastro e senha
+const EMAILS_POR_DIA = 40
 
 export const config = { runtime: 'nodejs' }
 
@@ -76,7 +76,8 @@ async function cron(req, res) {
   for (const c of contas) await avisarTesteAcabou(c.id)
   const porEmail = await sql`select id from usuarios
                               where plano = 'free' and papel <> 'admin' and ativo and email_teste_acabou_em is null
-                                and free_expira_em <= now() and free_expira_em > greatest(now() - interval '3 days', ${EMAIL_DESDE}::timestamptz)`
+                                and free_expira_em <= now()
+                              order by free_expira_em desc limit ${EMAILS_POR_DIA}`
   for (const c of porEmail) await avisarTesteAcabouEmail(c.id)
   // registro de uso: guarda 120 dias (o /admin → Logs olha no máximo 90)
   const limpos = await sql`delete from eventos_uso where em < now() - interval '120 days' returning 1`

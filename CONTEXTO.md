@@ -116,6 +116,14 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · "Teste acabou" mandado para os testes já vencidos
+- **Pedido do dono:** mandar o e-mail para todo mundo que já tinha encerrado o teste (cruzado com o CRM: 96 contas,
+  82 em "Cadastrou, não falou", 13 que já conversaram, 1 fora do CRM; nenhuma com `sem_disparo`; 7 pagantes fora).
+- **Feito:** 75 enviados na virada do dia UTC (mais recentes primeiro, marcando `email_teste_acabou_em` só no sucesso).
+  Dois e-mails inválidos (`zarlan2008@gmail.comzarlan10`, `fernando@teste.com.br`) marcados sem envio. O cron diário
+  agora manda para **todo** teste vencido sem o e-mail, até `EMAILS_POR_DIA` = 40 (limite do Resend grátis: 100/dia),
+  então o resto sai às 10h. Tirado o corte `EMAIL_DESDE`.
+
 ### 2026-10-07 · E-mail "Seu teste grátis acabou"
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **O que mudou:** `emailTesteAcabou()` em `api/_lib/emails.js`: conta continua lá e o acesso volta na hora; "Por que
