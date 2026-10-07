@@ -50,7 +50,7 @@ Regras de trabalho estão em `AGENTE.md`.
   - Busca rápida Ctrl+K / ⌘K em qualquer tela do app (placa, esquemas, últimas consultas).
   - **App Android publicado na Google Play** (`deepcar.app.android`, versão 1.1.0): selo Google Play da landing e botão
     "Baixe nosso app" no menu lateral (escondido em iPhone/iPad) levam para a loja (`LINK_GOOGLE_PLAY` em `StoreBadges.tsx`).
-  - **WhatsApp de suporte** `+55 48 3197-4297` (`VITE_SUPORTE_WHATSAPP` na Vercel): botão flutuante na landing, botão
+  - **WhatsApp de suporte** `+55 48 3197-3217` (desde 07/10/2026; o antigo 3197-4297 foi bloqueado pela Meta) (`VITE_SUPORTE_WHATSAPP` na Vercel): botão flutuante na landing, botão
     verde "Fale com nossa equipe" abaixo dos planos, item
     "Suporte" no menu lateral do app e os botões de suporte (esqueci a senha, assinatura) abrem o WhatsApp.
   - Consulta por placa (`/app/veiculo/:placa`): Falcon Data Hub → modo simulado, com cache de 24 h em memória.
@@ -137,6 +137,13 @@ Regras de trabalho estão em `AGENTE.md`.
   `country` + `external_id`, com conta guarda também em/ph/fn/ln; evento do servidor montado com `fetch` interceptado:
   external_id com os 2 hashes, `country` = hash("br"), sem `test_event_code`. App Android sem mudança (campos opcionais).
 - **Pendências:** a nota do PageView/Contact sobe em até 48 h no Gerenciador de Eventos; conferir.
+
+### 2026-10-07 · Número de WhatsApp trocado (o antigo foi bloqueado pela Meta)
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **O que mudou:** `+55 48 3197-4297` → `+55 48 3197-3217`. `VITE_SUPORTE_WHATSAPP=554831973217` na Vercel (Production e
+  Preview) + nova publicação (é `VITE_`, só vale depois do build). Cakto: `supportWhatsapp` dos 4 produtos (ver abaixo).
+- **App Android:** não mexido agora; o dono vai mandar outra atualização do Android e o número entra nela.
+- **CRM:** régua de cadastro suspensa enquanto o número novo não está conectado (ver `CONTEXTO.md` do CRM).
 
 ### 2026-10-07 · Cakto: página pós-compra, WhatsApp de suporte e logo nos 4 produtos
 - **Quem:** Claude Code (Opus 5.5), pelo Safari do dono (painel app.cakto.com.br logado), a pedido de Nitiani
