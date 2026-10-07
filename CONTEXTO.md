@@ -116,6 +116,19 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-07 · Firebase para notificações push do app (configuração, sem código ainda)
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Feito:** projeto Firebase **"Deepcar" (`deepcar-671ea`, nº 522361338790, plano Spark gratuito)**, criado pelo dono.
+  App Android registrado (`deepcar.app.android`, app id `1:522361338790:android:01879105471ebdf254ad67`); o
+  `google-services.json` foi para o projeto do app (iCloud `deepcar-android/android/app/`). Chave da conta de serviço
+  `firebase-adminsdk-fbsvc@deepcar-671ea.iam.gserviceaccount.com` gravada no **cofre** como `FIREBASE_SERVICE_ACCOUNT`
+  (o arquivo baixado foi apagado). Testado: token OAuth ok e FCM v1 responde (validate_only com token falso → 400
+  "not a valid FCM registration token", o esperado).
+- **Falta:** app (plugin de push, permissão do Android 13+, registrar o aparelho na conta) e servidor (tabela de
+  aparelhos + envio). Mesmo projeto Google Cloud pode servir para validar as compras da Google Play.
+- **Também em 07/10:** conta de comerciante da Google Play criada (perfil de pagamentos INTTUS, CNPJ
+  50.256.051/0001-57); conta bancária de recebimento preenchida pelo dono (validação pendente).
+
 ### 2026-10-07 · Teste grátis por consultas (5) em vez de horas, sem número na tela
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** trocar o teste de 10 h corridas (acabava de madrugada para quem se cadastrava à noite: 52 de 63 cadastros
