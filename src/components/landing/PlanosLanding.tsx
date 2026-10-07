@@ -10,6 +10,7 @@ import { PLANOS_VENDA, type Ciclo, type PlanoVenda } from '../../data/planos'
 import { Reveal } from './Reveal'
 import { BotaoEquipe } from './BotaoWhatsapp'
 import { classeBotaoClaro } from './estiloPlanos'
+import { IconeGooglePlay, LINK_GOOGLE_PLAY, PlayStoreBadge } from '../StoreBadges'
 
 const reais = (v: string) => Number(v.replace('.', '').replace(',', '.'))
 const brl = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -155,6 +156,14 @@ export function CartaoPlanoClaro({ p, ciclo, acao, atual = false }: PropsCartao)
               Começar com o teste grátis <span aria-hidden="true">→</span>
             </Link>
             <p className="mt-2.5 text-center text-[12.5px] text-tinta-3">Crie a conta, teste à vontade e assine depois.</p>
+            <a
+              href={LINK_GOOGLE_PLAY}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 flex items-center justify-center gap-2 text-[13.5px] font-medium text-azul-escuro underline-offset-4 hover:underline"
+            >
+              <IconeGooglePlay className="h-4 w-4" /> Baixar o app Android
+            </a>
           </>
         )}
       </div>
@@ -193,6 +202,17 @@ export function PlanosLanding() {
             </Reveal>
           ))}
         </div>
+
+        {/* Os dois jeitos de começar, logo abaixo dos planos: cadastro no site ou o app Android. */}
+        <Reveal index={2} className="mx-auto mt-8 max-w-[920px]">
+          <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-papel-linha bg-papel-card px-5 py-5 text-center sm:flex-row sm:gap-6 sm:text-left">
+            <p className="text-[15px] font-semibold">Comece agora, grátis:</p>
+            <Link to="/cadastro" className={`${classeBotaoClaro(true)} sm:w-auto sm:px-6`}>
+              Criar minha conta <span aria-hidden="true">→</span>
+            </Link>
+            <PlayStoreBadge />
+          </div>
+        </Reveal>
 
         <Reveal index={2} className="mx-auto mt-14 max-w-[920px]">
           <h3 className="text-center text-[20px] font-semibold">Como funciona</h3>

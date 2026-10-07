@@ -110,6 +110,17 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-07 · Planos da landing com o link do app Android e faixa "Comece agora"
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **O que mudou:** `src/components/landing/PlanosLanding.tsx`: nos cartões da landing (ação padrão do `CartaoPlanoClaro`),
+  abaixo de "Começar com o teste grátis", o link "Baixar o app Android" (Google Play); abaixo dos dois cartões, a faixa
+  "Comece agora, grátis" com "Criar minha conta" (/cadastro) e o selo do Google Play. A aba Plano da conta e o convite
+  passam `acao` própria e não mudam. No CRM, os textos de "fora do horário" e do link de pagamento também levam o
+  cadastro e o app Android.
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** build ok, lint 10 avisos; WebKit 1280 e 390 px: 3 links do Google Play e 3 de cadastro na seção, sem
+  rolagem lateral.
+
 ### 2026-10-07 · Meta: correspondência avançada no pixel (PageView e Contact com 6,1/10)
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Diagnóstico (Gerenciador de Eventos, 07/10):** Compra, Concluir inscrição, Lead e Iniciar checkout com 9,3/10 e
