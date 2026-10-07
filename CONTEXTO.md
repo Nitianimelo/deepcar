@@ -116,6 +116,19 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-07 · E-mail "Bem-vindo ao plano" depois da compra
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **O que mudou:** `emailCompra()` em `api/_lib/emails.js`: selo verde "Plano X ativo" no topo, boas-vindas, quadro da
+  assinatura (plano, cobrança mensal/anual, válido até ou próxima renovação, aparelhos, conta), o que está liberado,
+  botão "Abrir a Deepcar", dicas de uso e como trocar cartão/cancelar (Cakto → WhatsApp; Play → Play Store). Itens dos
+  planos copiados de `src/data/planos.ts` (mudou lá, mude aqui). `avisarCompra(antes, depois)` é chamado em
+  `aplicarNaConta` (`api/_lib/assinatura.js`: webhook da Cakto, pagamento antes do cadastro, vincular no /admin) e em
+  `aplicarPlay` (`api/_lib/play.js`). Só manda se o plano pago é novo (free → pago) ou mudou plano/ciclo: renovação e
+  reentrega do webhook não mandam. Mudança manual de plano no /admin (sem pagamento) não manda. `modelo()` ganhou `selo`.
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** prévia em 390 e 760 px; contra o banco com conta descartável (apagada): free → Full anual mandou,
+  mesma compra de novo não, troca para Pro mensal mandou.
+
 ### 2026-10-07 · E-mails sem o compilla no "Responder para"
 - A pedido de Nitiani: `reply_to` dos e-mails passou de `nitiani@compilla.dev` para `contato@deepcar.app.br`
   (`api/_lib/email.js`). Resposta de cliente cai na caixa de entrada do Resend (resend.com → Receiving); o rodapé tirou

@@ -106,7 +106,8 @@ api/                      funções serverless da Vercel (JavaScript, Node)
   _lib/cakto.js           webhook da Cakto: prova a origem, evento→ação, produto→plano
   _lib/assinatura.js      o que um pagamento faz com a conta (ativar, derrubar, atraso, pendente)
   _lib/email.js           e-mail pelo Resend (cofre RESEND_API_KEY, de e reply_to contato@deepcar.app.br; respostas caem no Receiving do Resend) + modelo HTML com a logo
-  _lib/emails.js          textos: emailBoasVindas (no cadastro) e emailRedefinirSenha
+  _lib/emails.js          textos: emailBoasVindas (no cadastro), emailRedefinirSenha e emailCompra; avisarCompra(antes, depois) sai de
+                          aplicarNaConta (Cakto, pendência, /admin vincular) e aplicarPlay (Google Play) só em compra nova ou troca de plano/ciclo
   _lib/google.js          token OAuth da conta de serviço (FIREBASE_SERVICE_ACCOUNT) para FCM e Android Publisher
   _lib/push.js            notificações do app (FCM v1): enviarPush(), avisarTesteAcabou(), públicos do /admin
   _lib/play.js            assinatura pela Google Play: registrarCompraPlay() (confere + reconhece), conferirPlay() na sessão

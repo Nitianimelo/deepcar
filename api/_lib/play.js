@@ -9,6 +9,7 @@
 import { createHash } from 'node:crypto'
 import { sql, um } from './db.js'
 import { chamarGoogle, ESCOPO_PLAY } from './google.js'
+import { avisarCompra } from './emails.js'
 
 export const PACOTE = 'deepcar.app.android'
 export const PRODUTOS = { deepcar_pro: 'pro', deepcar_full: 'full' }
@@ -55,7 +56,8 @@ export async function registrarCompraPlay(u, token) {
 }
 
 async function aplicarPlay(usuarioId, token, c) {
-  return um(sql`
+  const antes = await um(sql`select plano, assinatura_ciclo from usuarios where id = ${usuarioId}`)
+  const depois = await um(sql`
     update usuarios set
       plano = ${c.plano}, assinatura_plano = ${c.plano}, assinatura_origem = 'play',
       assinatura_status = case when ${c.estado} = 'SUBSCRIPTION_STATE_CANCELED' then 'cancelada_no_fim' else 'ativa' end,
@@ -64,6 +66,8 @@ async function aplicarPlay(usuarioId, token, c) {
       play_token = ${token}, play_produto = ${c.produto}, play_expira_em = ${c.expira}, play_estado = ${c.estado}, play_conferido_em = now()
     where id = ${usuarioId} and papel <> 'admin'
     returning *`)
+  await avisarCompra(antes, depois) // renovação conferida pela sessão não muda plano/ciclo: não manda
+  return depois
 }
 
 /**

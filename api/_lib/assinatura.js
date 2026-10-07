@@ -1,5 +1,6 @@
 // O que um pagamento faz com a conta. Fica separado do webhook porque o cadastro
 // (api/registrar.js), o login e o /admin aplicam exatamente as mesmas regras.
+import { avisarCompra } from './emails.js'
 import { sql, um } from './db.js'
 
 /** Motivos que derrubam o acesso, na coluna assinatura_status. */
@@ -44,7 +45,8 @@ export async function aplicarNaConta(usuarioId, plano, d = {}) {
     await sql`update usuarios set assinatura_id = null where assinatura_id = ${d.assinaturaId} and id <> ${usuarioId}`
   }
   const inicio = d.inicio ?? new Date()
-  return um(sql`
+  const antes = await um(sql`select plano, assinatura_ciclo from usuarios where id = ${usuarioId}`)
+  const depois = await um(sql`
     update usuarios set
       plano = ${plano},
       assinatura_id = coalesce(${d.assinaturaId ?? null}, assinatura_id),
@@ -68,6 +70,8 @@ export async function aplicarNaConta(usuarioId, plano, d = {}) {
       free_expira_em = null
     where id = ${usuarioId}
     returning *`)
+  await avisarCompra(antes, depois) // "Bem-vindo ao plano X": só em compra nova ou troca, nunca na renovação
+  return depois
 }
 
 /**

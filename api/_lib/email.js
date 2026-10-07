@@ -22,7 +22,7 @@ export const botao = (texto, url, cor = AZUL) => `
 </td></tr></table>`
 
 /** Casca comum: `previa` é o texto que aparece ao lado do assunto na caixa de entrada. */
-export function modelo({ previa, titulo, corpo }) {
+export function modelo({ previa, titulo, corpo, selo }) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><title>${esc(titulo)}</title></head>
 <body style="margin:0;padding:0;background:#eef1f5">
@@ -31,7 +31,9 @@ export function modelo({ previa, titulo, corpo }) {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;border-radius:18px;overflow:hidden;background:#ffffff;box-shadow:0 6px 24px rgba(15,23,42,.08)">
     <tr><td style="background:#151b24;padding:30px 36px 26px">
       <a href="${SITE}" style="text-decoration:none"><img src="${SITE}/brand/email-logo.png" width="176" height="48" alt="Deepcar" style="display:block;border:0;outline:none;width:176px;height:48px"></a>
-      <div style="margin-top:22px;height:3px;width:56px;border-radius:3px;background:${AZUL}"></div>
+      ${selo
+        ? `<div style="margin-top:22px"><span style="display:inline-block;padding:7px 14px;border-radius:999px;background:#163a2b;border:1px solid #1f7a52;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#5fe0a3">&#10003;&nbsp; ${esc(selo)}</span></div>`
+        : `<div style="margin-top:22px;height:3px;width:56px;border-radius:3px;background:${AZUL}"></div>`}
     </td></tr>
     <tr><td style="padding:36px 36px 30px;font-family:Arial,Helvetica,sans-serif;color:#0f1419">
       <h1 style="margin:0 0 14px;font-size:24px;line-height:1.3;font-weight:bold;color:#0f1419">${esc(titulo)}</h1>
