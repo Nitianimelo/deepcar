@@ -1,6 +1,7 @@
 // Regras do plano free vistas pelo navegador. O corte que vale é do servidor
 // (api/_lib/sessao.js): aqui é só a hora de virar a chave na tela e o texto que a pessoa lê.
 import { useEffect, useState } from 'react'
+import { registrar as anotar } from './log'
 import { PLANOS_VENDA, type Ciclo, type PlanoPago } from '../data/planos'
 import { conferirSessao, type Plano, type Session } from './auth'
 import { visitanteId } from './pixel'
@@ -47,6 +48,7 @@ const CHECKOUT: Record<Ciclo, Record<PlanoPago, string | undefined>> = {
  * keepalive: o checkout abre em outra aba e a página pode sair antes da resposta. Falha não atrapalha ninguém.
  */
 export function avisarCheckout(plano: PlanoPago, ciclo: Ciclo) {
+  anotar('clicou_assinar', { plano, ciclo })
   const p = PLANOS_VENDA.find((x) => x.id === plano)
   const valor = p ? Number((ciclo === 'anual' ? p.precoAnualVista : p.preco).replace(',', '.')) : undefined
   try {

@@ -116,6 +116,28 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-07 · Navegador do Instagram e registro de uso (/admin → Logs)
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani, depois do levantamento de conversão (135 cadastros, 3 vendas
+  pela Cakto; 66 usavam o navegador do Instagram/Facebook e nenhum pagou; só 11% voltaram depois do 1º dia).
+- **O que mudou:**
+  - `components/NavegadorInterno.tsx` (montado no `App.tsx`, fora de /admin, /c/, /obrigado, /privacidade,
+    /excluir-conta): detecta Instagram/Facebook/TikTok pelo agente; iPhone → "Abrir no Safari e me cadastrar"
+    (`x-safari-https://`, iOS 17+), instrução do menu "···" e "Copiar o link"; Android → "Baixar o app" (intent
+    `market://` da Play) e "Abrir no Chrome" (`intent://…;package=com.android.chrome;S.browser_fallback_url`). Da landing
+    leva ao /cadastro; sempre com a query (utm/fbclid). Uma vez por visita (`sessionStorage deepcar.iab.dispensado`).
+  - Registro de uso: `db/012_eventos_uso.sql`; `src/lib/log.ts` (fila + lote); `api/sessao.js` aceita `evento: 'log'`
+    sem login (máx. 40 itens, tipo `[a-z_]`, detalhe ≤ 1500, aparelho resumido do agente). Eventos: pagina, busca
+    (termo + resultados), placa / placa_erro, esquema (liberado, recusado, teste_encerrado, fora_do_plano),
+    viu_planos, clicou_assinar, cadastro / cadastro_erro, login / login_erro, compartilhou, navegador_interno (ação).
+    `/admin` → aba **Logs** (`?acao=logs`): filtros de período, tipo, pessoa; resumo (por tipo, clicaram em assinar e
+    se assinaram, buscas sem resultado, placas com erro, navegador do Instagram por ação) e os 400 eventos mais
+    recentes. Cron diário apaga eventos com mais de 120 dias. Política de privacidade com o item "Registro de uso".
+- **Banco:** `012` **aplicada no Neon antes do push**. **Variáveis:** sem mudança.
+- **Verificação:** build ok, lint 10; lote gravado contra o banco (tipo inválido descartado, aparelho "iPhone ·
+  Instagram"); WebKit 390 px com agente do Instagram no iPhone e no Android (links certos, com a campanha) e Chrome
+  normal sem aviso; o lote sai ao esconder a aba.
+- **App Android:** o app tem código próprio e ainda não registra eventos (entra numa próxima versão).
+
 ### 2026-10-07 · App 1.3.0 em revisão para produção; assinaturas da Play criadas
 - API "Google Play Android Developer" ativada no projeto `deepcar-671ea`; a conta de serviço do cofre tem acesso ao
   Play Console. Assinaturas ativas (só BR): `deepcar_pro` R$ 56,90/mês e R$ 340,90/ano; `deepcar_full` R$ 70,90/mês e

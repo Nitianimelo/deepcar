@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { registrar as anotar } from '../lib/log'
 import { Link, useParams } from 'react-router-dom'
 import { AlertTriangle, ArrowLeft } from 'lucide-react'
 import { SECTION_META, type SectionKey } from '../data/nav'
@@ -43,6 +44,12 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
   const conferindo = precisaConferir && liberacao?.id !== id
   const recusado = precisaConferir && liberacao?.id === id && !liberacao.ok
   const bloqueado = testeAcabou || foraDoPlano || recusado
+  // registro de uso: cada esquema aberto e como terminou (liberado, recusado pela 6ª consulta, teste vencido, fora do plano)
+  const pronto = carga.estado === 'ok' && !conferindo
+  useEffect(() => {
+    if (!pronto) return
+    anotar('esquema', { id: id.slice(0, 160), estado: recusado ? 'recusado' : testeAcabou ? 'teste_encerrado' : foraDoPlano ? 'fora_do_plano' : 'liberado' })
+  }, [id, pronto]) // eslint-disable-line react-hooks/exhaustive-deps
   useTitulo(carga.estado === 'ok' ? `${carga.dados.marca} ${carga.dados.modelo} · ${meta?.titulo ?? ''} · Deepcar` : null)
 
   // entra nas últimas consultas da tela inicial

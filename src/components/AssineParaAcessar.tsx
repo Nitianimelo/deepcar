@@ -6,7 +6,8 @@
 // O desenho embaçado é a primeira fatia do esquema numa <img> solta, nunca o visualizador: o visualizador
 // tem tela cheia, e em tela cheia o filtro do pai não vale — o esquema apareceria nítido.
 // O acervo é público no R2: o borrado é só na tela (ver Pendências no CONTEXTO.md).
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { registrar as anotar } from '../lib/log'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Lock, MessageCircle, Sparkles } from 'lucide-react'
 import { avisarCheckout, linkCheckout, linkSuporte, temWhatsappSuporte } from '../lib/plano'
@@ -70,6 +71,8 @@ type PropsConvite = {
  */
 export function ConviteAssinatura({ titulo, oQue, planos, etiqueta }: PropsConvite) {
   const { sessao } = useAcesso()
+  // registro de uso: quem chegou a ver os planos, e por qual motivo (teste acabou, sistema fora do plano...)
+  useEffect(() => { anotar('viu_planos', { onde: etiqueta ?? titulo.slice(0, 60) }) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   // abre no anual, o mais barato por mês: a mesma escolha da landing e da aba Plano
   const [ciclo, setCiclo] = useState<Ciclo>('anual')
   // a mesma tela vale quando o anual vence (api/_lib/sessao.js → vencerAnual)

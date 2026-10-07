@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { registrar as anotar } from '../lib/log'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, LogOut, MessageCircle, FlaskConical, ShieldCheck, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
@@ -121,6 +122,7 @@ export default function Conta() {
 /** Aba Plano: em que pé está a assinatura e como assinar (ou trocar de plano). */
 function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
   const pago = s.plano === 'pro' || s.plano === 'full'
+  useEffect(() => { anotar('viu_planos', { onde: 'conta' }) }, [])
   const mensagem = `Olá! Sou ${s.nome} (${s.email}) e quero falar sobre a assinatura do Deepcar.`
   const cicloAtual: Ciclo = s.assinatura?.ciclo === 'anual' ? 'anual' : 'mensal'
   // sempre abre no anual (o mais barato por mês): quem paga o mensal já vê ali o convite para passar ao anual

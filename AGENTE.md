@@ -143,6 +143,8 @@ src/
   components/landing/BotaoWhatsapp.tsx  botão flutuante do WhatsApp (só na landing); components/IconeWhatsapp.tsx: ícone da marca
   components/Folha.tsx    folha que sobe de baixo (+ Destaque): sem desfoque, voltar do Android fecha (estado no histórico)
   components/Funil.tsx    BoasVindas (3 passos no início), ConviteMomento (após 1ª placa / 3º esquema), DicaEsquema
+  lib/log.ts              registro de uso: registrar(tipo, detalhe) em fila, lote de até 40 a cada 30 s ou ao esconder a aba (sendBeacon) → POST /api/sessao { evento: 'log' } → eventos_uso; /admin → Logs
+  components/NavegadorInterno.tsx  navegador do Instagram/Facebook/TikTok: iPhone → Safari (x-safari-https) no /cadastro; Android → Play Store ou Chrome (intent://); com a query da campanha
   lib/consulta.ts         liberarEsquema() (POST /api/sessao evento consulta) e o sinal para o layout reconferir a sessão
   lib/funil.ts            regras do funil no navegador (por conta e aparelho) e marcos de ativação → POST /api/sessao
   lib/seo.ts              useTitulo(): título da aba ao navegar (páginas públicas já saem certas do build)
@@ -173,7 +175,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   depois do pagamento: espera o webhook liberar o plano e entra em `/app`; sem sessão manda ao login), `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
   `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`, `/privacidade` e `/excluir-conta` (públicas,
   exigidas pela Google Play para o app Android).
-- API: `POST /api/registrar` (`GET` devolve `{ testeMinutos }` para a página de cadastro), `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha), `POST /api/sessao` (`evento: 'checkout'` → InitiateCheckout na Meta; `evento: 'ativacao'` → marco de primeiros passos; `evento: 'consulta', item` → conta o esquema aberto no teste e responde `{ liberado }`; `evento: 'play', token` → assinatura feita no app; `evento: 'push', token` → aparelho para notificação), `GET|POST /api/admin/usuarios?acao=push` (avisos no app), `GET /api/admin/assinaturas?acao=cron` (cron diário 13h UTC, `CRON_SECRET`),
+- API: `POST /api/registrar` (`GET` devolve `{ testeMinutos }` para a página de cadastro), `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha), `POST /api/sessao` (`evento: 'checkout'` → InitiateCheckout na Meta; `evento: 'ativacao'` → marco de primeiros passos; `evento: 'consulta', item` → conta o esquema aberto no teste e responde `{ liberado }`; `evento: 'play', token` → assinatura feita no app; `evento: 'push', token` → aparelho para notificação; `evento: 'log'` → lote do registro de uso, aceito SEM login), `GET /api/admin/usuarios?acao=logs` (eventos + resumo), `GET|POST /api/admin/usuarios?acao=push` (avisos no app), `GET /api/admin/assinaturas?acao=cron` (cron diário 13h UTC, `CRON_SECRET`),
   `GET|POST|PATCH|DELETE /api/admin/usuarios`, `GET|PUT /api/admin/planos`, `GET|PUT|DELETE /api/admin/segredos`,
   `POST /api/admin/inicializar`, `GET /api/placa/:placa`, `POST|GET /api/compartilhar`.
 - **Limite da Vercel (plano Hobby): 12 funções em `api/`** (sem contar `_lib/`), e o projeto já está com 12. Rota nova

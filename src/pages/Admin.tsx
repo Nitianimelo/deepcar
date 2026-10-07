@@ -2,7 +2,7 @@
 // Toda a autorização é do servidor (api/admin/*): aqui a checagem só evita mostrar a tela.
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { BadgeDollarSign, Bell, Check, Copy, Eye, EyeOff, KeyRound, Layers, Link2, Loader2, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
+import { Activity, BadgeDollarSign, Bell, Check, Copy, Eye, EyeOff, KeyRound, Layers, Link2, Loader2, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
 import { useSessao } from '../lib/auth'
 import { rotuloPlano, tempoRestante } from '../lib/plano'
 import { mascararWhatsapp, SENHA_MINIMA } from '../lib/validacao'
@@ -124,7 +124,7 @@ function teste(ate: string | null) {
 
 export default function Admin() {
   const { session, conferindo } = useSessao()
-  const [aba, setAba] = useState<'usuarios' | 'planos' | 'assinaturas' | 'avisos' | 'chaves'>('usuarios')
+  const [aba, setAba] = useState<'usuarios' | 'planos' | 'assinaturas' | 'avisos' | 'logs' | 'chaves'>('usuarios')
 
   if (!session) return conferindo ? <div aria-busy="true" className="min-h-screen" /> : <Navigate to="/login" replace />
   if (session.papel !== 'admin') return <Navigate to="/app" replace />
@@ -137,7 +137,7 @@ export default function Admin() {
           <span className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Administração</span>
         </div>
         <div className="flex items-center gap-1 rounded-lg border seam bg-bench-2 p-1">
-          {([['usuarios', 'Usuários', Users], ['planos', 'Planos', Layers], ['assinaturas', 'Assinaturas', BadgeDollarSign], ['avisos', 'Avisos no app', Bell], ['chaves', 'Chaves de API', KeyRound]] as const).map(([k, rotulo, Icone]) => (
+          {([['usuarios', 'Usuários', Users], ['planos', 'Planos', Layers], ['assinaturas', 'Assinaturas', BadgeDollarSign], ['avisos', 'Avisos no app', Bell], ['logs', 'Logs', Activity], ['chaves', 'Chaves de API', KeyRound]] as const).map(([k, rotulo, Icone]) => (
             <button
               key={k}
               type="button"
@@ -155,6 +155,7 @@ export default function Admin() {
         {aba === 'planos' && <AbaPlanos />}
         {aba === 'assinaturas' && <AbaAssinaturas />}
         {aba === 'avisos' && <AbaAvisos />}
+        {aba === 'logs' && <AbaLogs />}
         {aba === 'chaves' && <AbaChaves />}
       </main>
     </div>
@@ -1007,6 +1008,161 @@ function AbaAvisos() {
           </li>
         ))}
       </ul>
+    </>
+  )
+}
+
+type EventoUso = { id: number; tipo: string; detalhe: Record<string, unknown> | null; rota: string | null; aparelho: string | null; em: string
+  visitante: string | null; usuario_id: string | null; nome: string | null; email: string | null; plano: Plano | null }
+type ResumoLogs = {
+  porTipo: { tipo: string; n: number; pessoas: number }[]
+  semResultado: { termo: string; n: number }[]
+  placasErro: { erro: string; n: number }[]
+  assinar: { id: string; nome: string; email: string; plano: Plano; cliques: number; ultimo: string }[]
+  navegador: { so: string; acao: string; n: number }[]
+}
+
+const NOMES_EVENTO: Record<string, string> = {
+  pagina: 'Página', busca: 'Busca', placa: 'Placa encontrada', placa_erro: 'Placa com erro', esquema: 'Esquema',
+  viu_planos: 'Viu os planos', clicou_assinar: 'Clicou em assinar', cadastro: 'Cadastrou', cadastro_erro: 'Erro no cadastro',
+  login: 'Entrou', login_erro: 'Erro ao entrar', compartilhou: 'Compartilhou', navegador_interno: 'Navegador do Instagram/Facebook',
+}
+
+/** Uma linha legível do detalhe de cada tipo de evento. */
+function resumoEvento(e: EventoUso) {
+  const d = (e.detalhe ?? {}) as Record<string, string | number | null>
+  switch (e.tipo) {
+    case 'pagina': return e.rota ?? ''
+    case 'busca': return `"${d.termo}" · ${d.resultados} resultado(s)`
+    case 'placa': return `${d.placa} · ${[d.marca, d.modelo, d.ano].filter(Boolean).join(' ')}`
+    case 'placa_erro': return `${d.placa} · ${d.erro}`
+    case 'esquema': return `${String(d.id ?? '').split('/').slice(1).join(' / ')} · ${d.estado}`
+    case 'viu_planos': return String(d.onde ?? '')
+    case 'clicou_assinar': return `${d.plano} ${d.ciclo}`
+    case 'navegador_interno': return `${d.app} · ${d.so} · ${d.acao}`
+    default: return d.erro ? String(d.erro) : e.rota ?? ''
+  }
+}
+
+/** O que cada pessoa faz no site e no app (eventos_uso), para achar onde o cadastro trava. */
+function AbaLogs() {
+  const [dias, setDias] = useState(7)
+  const [tipo, setTipo] = useState('')
+  const [q, setQ] = useState('')
+  const [usuario, setUsuario] = useState<{ id: string; nome: string } | null>(null)
+  const [dados, setDados] = useState<{ eventos: EventoUso[]; resumo: ResumoLogs } | null>(null)
+  const [erro, setErro] = useState('')
+
+  const carregar = useCallback(async () => {
+    try {
+      const p = new URLSearchParams({ acao: 'logs', dias: String(dias), tipo, q })
+      if (usuario) p.set('usuario', usuario.id)
+      setDados((await api(`/api/admin/usuarios?${p}`)) as { eventos: EventoUso[]; resumo: ResumoLogs }); setErro('')
+    } catch (e) { setErro(e instanceof Error ? e.message : 'Falha ao carregar.') }
+  }, [dias, tipo, q, usuario])
+  useEffect(() => { const t = setTimeout(() => void carregar(), 300); return () => clearTimeout(t) }, [carregar])
+
+  const r = dados?.resumo
+  const cartao = 'rounded-xl border seam bg-bench-2 p-4'
+  return (
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-[26px] font-semibold tracking-tight">Logs</h1>
+          <p className="mt-1 text-ink-3">O que as pessoas fazem no site e no app: páginas, buscas, placas, esquemas, planos e erros.</p>
+        </div>
+        <button type="button" onClick={() => void carregar()} className="btn-ghost inline-flex items-center gap-2"><RefreshCw size={15} /> Atualizar</button>
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        {[1, 7, 30, 90].map((d) => (
+          <button key={d} type="button" onClick={() => setDias(d)} className={`rounded-lg border px-3 py-1.5 text-[13px] ${dias === d ? 'border-trace/50 bg-trace/15 text-ink-1' : 'seam text-ink-3'}`}>
+            {d === 1 ? 'Hoje' : `${d} dias`}
+          </button>
+        ))}
+        <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="field h-9 w-auto py-0 text-[13px]">
+          <option value="">Todos os eventos</option>
+          {Object.entries(NOMES_EVENTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <label className="relative">
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+          <input className="field h-9 w-56 pl-8 text-[13px]" placeholder="Nome ou e-mail" value={q} onChange={(e) => setQ(e.target.value)} />
+        </label>
+        {usuario && (
+          <button type="button" onClick={() => setUsuario(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-trace/40 bg-trace/10 px-3 py-1.5 text-[13px] text-ink-1">
+            Só {usuario.nome} <X size={13} />
+          </button>
+        )}
+      </div>
+      {erro && <p role="alert" className="mt-4 rounded-lg border border-fault/30 bg-fault/10 px-4 py-3 text-sm text-fault">{erro}</p>}
+
+      {r && !usuario && (
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <section className={cartao}>
+            <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">No período</h2>
+            <ul className="mt-2 space-y-1 text-[13.5px]">
+              {r.porTipo.map((t) => <li key={t.tipo} className="flex justify-between gap-3"><span className="text-ink-2">{NOMES_EVENTO[t.tipo] ?? t.tipo}</span><span className="text-ink-3">{t.n} · {t.pessoas} pessoa(s)</span></li>)}
+              {!r.porTipo.length && <li className="text-ink-4">Nada registrado ainda.</li>}
+            </ul>
+          </section>
+          <section className={cartao}>
+            <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Clicaram em assinar</h2>
+            <ul className="mt-2 space-y-1.5 text-[13.5px]">
+              {r.assinar.map((a) => (
+                <li key={a.id} className="flex justify-between gap-3">
+                  <button type="button" onClick={() => setUsuario({ id: a.id, nome: a.nome })} className="truncate text-left text-trace hover:underline">{a.nome}</button>
+                  <span className={a.plano === 'free' ? 'text-warn' : 'text-ok'}>{a.plano === 'free' ? 'não assinou' : rotuloPlano(a.plano)} · {a.cliques}x</span>
+                </li>
+              ))}
+              {!r.assinar.length && <li className="text-ink-4">Ninguém no período.</li>}
+            </ul>
+          </section>
+          <section className={cartao}>
+            <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Buscas sem resultado</h2>
+            <ul className="mt-2 space-y-1 text-[13.5px]">
+              {r.semResultado.map((b) => <li key={b.termo} className="flex justify-between gap-3"><span className="truncate text-ink-2">{b.termo}</span><span className="text-ink-3">{b.n}x</span></li>)}
+              {!r.semResultado.length && <li className="text-ink-4">Nenhuma.</li>}
+            </ul>
+          </section>
+          <section className={cartao}>
+            <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Placas com erro</h2>
+            <ul className="mt-2 space-y-1 text-[13.5px]">
+              {r.placasErro.map((p) => <li key={p.erro} className="flex justify-between gap-3"><span className="truncate text-ink-2">{p.erro}</span><span className="text-ink-3">{p.n}x</span></li>)}
+              {!r.placasErro.length && <li className="text-ink-4">Nenhuma.</li>}
+            </ul>
+          </section>
+          <section className={cartao}>
+            <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Navegador do Instagram/Facebook</h2>
+            <ul className="mt-2 space-y-1 text-[13.5px]">
+              {r.navegador.map((n) => <li key={`${n.so}${n.acao}`} className="flex justify-between gap-3"><span className="text-ink-2">{n.so} · {n.acao}</span><span className="text-ink-3">{n.n}</span></li>)}
+              {!r.navegador.length && <li className="text-ink-4">Nada no período.</li>}
+            </ul>
+          </section>
+        </div>
+      )}
+
+      <div className="mt-6 overflow-x-auto rounded-xl border seam">
+        <table className="w-full min-w-[820px] text-left text-[13px]">
+          <thead className="bg-bench-2 text-ink-4"><tr><th className="px-3 py-2 font-medium">Quando</th><th className="px-3 py-2 font-medium">Quem</th><th className="px-3 py-2 font-medium">Aparelho</th><th className="px-3 py-2 font-medium">Evento</th><th className="px-3 py-2 font-medium">Detalhe</th></tr></thead>
+          <tbody>
+            {(dados?.eventos ?? []).map((e) => (
+              <tr key={e.id} className="border-t seam-soft align-top">
+                <td className="whitespace-nowrap px-3 py-2 text-ink-3">{new Date(e.em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+                <td className="px-3 py-2">
+                  {e.usuario_id
+                    ? <button type="button" onClick={() => setUsuario({ id: e.usuario_id!, nome: e.nome ?? '' })} className="text-left text-trace hover:underline">{e.nome}<span className="block text-[11.5px] text-ink-4">{e.email}</span></button>
+                    : <span className="text-ink-4">visitante {e.visitante?.slice(0, 6) ?? ''}</span>}
+                </td>
+                <td className="whitespace-nowrap px-3 py-2 text-ink-3">{e.aparelho}</td>
+                <td className="whitespace-nowrap px-3 py-2 text-ink-1">{NOMES_EVENTO[e.tipo] ?? e.tipo}</td>
+                <td className="px-3 py-2 text-ink-2">{resumoEvento(e)}</td>
+              </tr>
+            ))}
+            {dados && !dados.eventos.length && <tr><td colSpan={5} className="px-3 py-6 text-center text-ink-4">Nenhum evento com esses filtros.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-[12px] text-ink-4">Mostra os 400 eventos mais recentes do filtro. O registro guarda 120 dias.</p>
     </>
   )
 }

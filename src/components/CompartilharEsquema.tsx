@@ -2,6 +2,7 @@
 // e-mail, copiar e o compartilhamento do sistema (celular). No celular a janela sobe de baixo, como
 // as folhas de compartilhar nativas; no computador fica centralizada.
 import { useEffect, useRef, useState } from 'react'
+import { registrar as anotar } from '../lib/log'
 import { createPortal } from 'react-dom'
 import { Check, Copy, Link2, LoaderCircle, Mail, Share2, X } from 'lucide-react'
 import { SECTION_META } from '../data/nav'
@@ -50,6 +51,7 @@ function JanelaCompartilhar({ d, onFechar }: { d: EsquemaDetalhe; onFechar: () =
         const j = await r.json().catch(() => ({}))
         if (!r.ok) throw new Error(j.erro ?? 'Não foi possível gerar o link.')
         if (vivo) setEstado({ fase: 'pronto', url: j.url, limite: j.limite })
+        anotar('compartilhou', { esquema: d.id })
       })
       .catch((e: Error) => vivo && setEstado({ fase: 'erro', msg: e.message }))
     return () => { vivo = false }

@@ -3,6 +3,8 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Landing from './pages/Landing'
 import { paginaVista } from './lib/pixel'
 import { registrarChegada } from './lib/origem'
+import { registrar } from './lib/log'
+import { NavegadorInterno } from './components/NavegadorInterno'
 
 /** Redireciona mantendo a query (`?marca=Volvo` de link salvo não pode se perder). */
 function Redireciona({ para }: { para: string }) {
@@ -30,7 +32,8 @@ const Obrigado = lazy(() => import('./pages/Obrigado'))
 /** PageView do pixel da Meta a cada troca de página (o filtro das rotas privadas fica em lib/pixel). */
 function PixelMeta() {
   const { pathname } = useLocation()
-  useEffect(() => { registrarChegada(pathname); paginaVista(pathname) }, [pathname])
+  // registro de uso (lib/log.ts): toda página vista, pública ou do app; vai em lote para o nosso banco
+  useEffect(() => { registrarChegada(pathname); paginaVista(pathname); registrar('pagina') }, [pathname])
   return null
 }
 
@@ -38,6 +41,7 @@ export default function App() {
   return (
     <Suspense fallback={<div aria-busy="true" className="min-h-screen bg-bench-1" />}>
       <PixelMeta />
+      <NavegadorInterno />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

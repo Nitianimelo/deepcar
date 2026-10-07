@@ -14,6 +14,8 @@
 // POST /api/sessao { evento: 'play', token } → assinatura feita no app Android (Google Play Billing): o servidor confere
 // com a Google, reconhece a compra e libera o plano; responde a sessão completa (api/_lib/play.js). Também "restaurar".
 // POST /api/sessao { evento: 'push', token } → aparelho do app aceitou notificação (token do FCM, api/_lib/push.js).
+// POST /api/sessao { evento: 'log', visitante, itens: [{ tipo, detalhe, rota, em }] } → lote do registro de uso
+// (src/lib/log.ts), também SEM login (visitante anônimo); gravado em eventos_uso, visto no /admin → Logs.
 import { randomUUID } from 'node:crypto'
 import { sql, um } from './_lib/db.js'
 import { dadosDoNavegador, enviarEvento, visitanteValido } from './_lib/meta.js'
@@ -26,6 +28,7 @@ export const config = { runtime: 'nodejs' }
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
   try {
+    if (req.method === 'POST' && corpo(req).evento === 'log') return await registrarLog(req, res)
     const u = await usuarioDaSessao(req)
     if (!u) return res.status(401).json({ erro: 'Sem sessão.' })
     if (req.method === 'DELETE') return await excluirConta(req, res, u)
@@ -117,5 +120,38 @@ async function registrarAparelho(req, res, u) {
   if (!/^[\w:.-]{20,400}$/.test(token)) return res.status(400).json({ erro: 'Aparelho inválido.' })
   await sql`insert into aparelhos_push (token, usuario_id) values (${token}, ${u.id})
             on conflict (token) do update set usuario_id = excluded.usuario_id, visto_em = now()`
+  return res.status(204).end()
+}
+
+/** Celular/computador e navegador, em poucas palavras (o agente inteiro não interessa ao /admin). */
+function aparelhoDe(ua) {
+  ua = String(ua ?? '')
+  const lugar = /^Dalvik\//.test(ua) ? 'app Android' : /Instagram/.test(ua) ? 'Instagram' : /FBAN|FBAV|FB_IAB|FBIOS/.test(ua) ? 'Facebook'
+    : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /Firefox\//.test(ua) ? 'Firefox' : 'outro'
+  const so = /iPhone|iPad|iPod/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Macintosh/.test(ua) ? 'Mac' : ''
+  return `${so}${so ? ' · ' : ''}${lugar}`
+}
+
+// lote do registro de uso: no máximo 40 itens, textos curtos; a data do navegador vale se for das últimas 24 h
+async function registrarLog(req, res) {
+  const d = corpo(req)
+  const itens = Array.isArray(d.itens) ? d.itens.slice(0, 40) : []
+  if (!itens.length) return res.status(204).end()
+  const u = await usuarioDaSessao(req).catch(() => null)
+  const visitante = /^[\w-]{8,64}$/.test(String(d.visitante ?? '')) ? String(d.visitante) : null
+  const aparelho = aparelhoDe(req.headers['user-agent'])
+  const agora = Date.now()
+  const linhas = itens.filter((i) => /^[a-z_]{2,40}$/.test(String(i?.tipo ?? ''))).map((i) => {
+    const em = Date.parse(i.em)
+    let detalhe = i.detalhe && typeof i.detalhe === 'object' ? JSON.stringify(i.detalhe) : null
+    if (detalhe && detalhe.length > 1500) detalhe = JSON.stringify({ cortado: detalhe.slice(0, 1400) })
+    return { tipo: i.tipo, detalhe, rota: String(i.rota ?? '').slice(0, 300) || null, em: em > agora - 864e5 && em <= agora + 60_000 ? new Date(em).toISOString() : new Date(agora).toISOString() }
+  })
+  if (linhas.length) {
+    await sql`insert into eventos_uso (usuario_id, visitante, tipo, detalhe, rota, aparelho, em)
+              select ${u?.id ?? null}, ${visitante}, t.tipo, t.detalhe::jsonb, t.rota, ${aparelho}, t.em::timestamptz
+                from unnest(${linhas.map((l) => l.tipo)}::text[], ${linhas.map((l) => l.detalhe)}::text[], ${linhas.map((l) => l.rota)}::text[], ${linhas.map((l) => l.em)}::text[])
+                     as t(tipo, detalhe, rota, em)`
+  }
   return res.status(204).end()
 }

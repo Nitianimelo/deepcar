@@ -68,5 +68,7 @@ async function cron(req, res) {
                             where u.plano = 'free' and u.papel <> 'admin' and u.push_teste_acabou_em is null
                               and u.free_expira_em <= now() and u.free_expira_em > now() - interval '3 days'`
   for (const c of contas) await avisarTesteAcabou(c.id)
-  return res.status(200).json({ avisados: contas.length })
+  // registro de uso: guarda 120 dias (o /admin → Logs olha no máximo 90)
+  const limpos = await sql`delete from eventos_uso where em < now() - interval '120 days' returning 1`
+  return res.status(200).json({ avisados: contas.length, eventosApagados: limpos.length })
 }

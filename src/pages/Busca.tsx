@@ -1,5 +1,6 @@
 // Busca em todos os sistemas: modelo, motor, código, gerenciamento, fabricação e nome do sistema.
-import { useDeferredValue, useMemo } from 'react'
+import { useDeferredValue, useEffect, useMemo } from 'react'
+import { registrar as anotar } from '../lib/log'
 import { useSearchParams } from 'react-router-dom'
 import { AlertTriangle, Search, X } from 'lucide-react'
 import { SECOES } from '../data/nav'
@@ -22,6 +23,13 @@ export default function Busca() {
   const termoAdiado = useDeferredValue(q)
   const temTermo = termosDe(termoAdiado).length > 0
   const lista = useMemo(() => (temTermo ? filtrar(indice, termoAdiado) : []), [indice, termoAdiado, temTermo])
+  // registro de uso: o termo buscado e quantos achou (busca sem resultado = acervo que falta), depois de parar de digitar
+  const prontos = carga.estado === 'ok'
+  useEffect(() => {
+    if (!temTermo || !prontos) return
+    const t = window.setTimeout(() => anotar('busca', { termo: termoAdiado.trim().slice(0, 80), resultados: lista.length }), 1500)
+    return () => window.clearTimeout(t)
+  }, [termoAdiado, temTermo, prontos, lista.length])
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">

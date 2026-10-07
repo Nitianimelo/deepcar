@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { registrar as anotar } from '../lib/log'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AtSign, Eye, EyeOff, LockKeyhole } from 'lucide-react'
 import { login } from '../lib/auth'
@@ -26,9 +27,11 @@ export default function Login() {
     setCarregando(true)
     try {
       await login(email, senha)
+      anotar('login')
       const dest = (loc.state as { from?: string } | null)?.from ?? '/app'
       nav(dest, { replace: true })
     } catch (err) {
+      anotar('login_erro', { erro: err instanceof Error ? err.message.slice(0, 160) : 'desconhecido' })
       setErro(err instanceof Error ? err.message : 'Não foi possível entrar.')
     } finally {
       setCarregando(false)

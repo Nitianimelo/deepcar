@@ -7,6 +7,7 @@
 //   GET    /api/admin/usuarios?acao=push  avisos já enviados + quantos aparelhos há por público
 //   POST   /api/admin/usuarios?acao=push  { titulo, texto, publico: todos|teste|pagos } notificação no app Android
 //          (fica aqui porque a Vercel Hobby aceita só 12 funções)
+//   GET    /api/admin/usuarios?acao=logs&q=&tipo=&dias=&usuario=  registro de uso (eventos_uso) + resumo do período
 import { sql, um } from '../_lib/db.js'
 import { cifrarSenha, corpo, exigir } from '../_lib/sessao.js'
 import { normalizarWhatsapp, SENHA_MINIMA } from '../_lib/validar.js'
@@ -24,6 +25,7 @@ export default async function handler(req, res) {
 
   try {
     if (req.query.acao === 'push') return await avisos(req, res, admin)
+    if (req.query.acao === 'logs') return await logs(req, res)
     const id = req.query.id
     if (req.method === 'GET') {
       const termo = String(req.query.q ?? '').trim()
@@ -145,4 +147,36 @@ async function avisos(req, res, admin) {
   await sql`insert into notificacoes (titulo, texto, publico, aparelhos, entregues, enviado_por)
             values (${titulo}, ${texto}, ${publico}, ${tokens.length}, ${entregues}, ${admin.id})`
   return res.status(200).json({ aparelhos: tokens.length, entregues })
+}
+
+// Registro de uso (src/lib/log.ts do site/app). Filtros: q (nome/e-mail), tipo, usuario (id), dias (1-90, padrão 7).
+async function logs(req, res) {
+  const dias = Math.min(90, Math.max(1, Number(req.query.dias) || 7))
+  const q = String(req.query.q ?? '').trim()
+  const tipo = String(req.query.tipo ?? '').trim()
+  const usuario = /^[0-9a-f-]{36}$/.test(String(req.query.usuario ?? '')) ? String(req.query.usuario) : null
+  const busca = q ? `%${q}%` : null
+  const [eventos, porTipo, semResultado, placasErro, assinar, navegador] = await Promise.all([
+    sql`select e.id, e.tipo, e.detalhe, e.rota, e.aparelho, e.em, e.visitante, u.id as usuario_id, u.nome, u.email, u.plano
+          from eventos_uso e left join usuarios u on u.id = e.usuario_id
+         where e.em > now() - make_interval(days => ${dias})
+           and (${tipo}::text = '' or e.tipo = ${tipo})
+           and (${usuario}::uuid is null or e.usuario_id = ${usuario}::uuid)
+           and (${busca}::text is null or u.nome ilike ${busca} or u.email ilike ${busca} or e.visitante ilike ${busca})
+         order by e.em desc limit 400`,
+    sql`select tipo, count(*)::int n, count(distinct coalesce(usuario_id::text, visitante))::int pessoas
+          from eventos_uso where em > now() - make_interval(days => ${dias}) group by 1 order by 2 desc`,
+    sql`select lower(detalhe->>'termo') termo, count(*)::int n from eventos_uso
+         where tipo = 'busca' and (detalhe->>'resultados')::int = 0 and em > now() - make_interval(days => ${dias})
+         group by 1 order by 2 desc limit 15`,
+    sql`select detalhe->>'erro' erro, count(*)::int n from eventos_uso
+         where tipo = 'placa_erro' and em > now() - make_interval(days => ${dias}) group by 1 order by 2 desc limit 10`,
+    sql`select u.id, u.nome, u.email, u.plano, count(*)::int cliques, max(e.em) ultimo
+          from eventos_uso e join usuarios u on u.id = e.usuario_id
+         where e.tipo = 'clicou_assinar' and e.em > now() - make_interval(days => ${dias})
+         group by 1,2,3,4 order by max(e.em) desc limit 30`,
+    sql`select detalhe->>'so' so, detalhe->>'acao' acao, count(*)::int n from eventos_uso
+         where tipo = 'navegador_interno' and em > now() - make_interval(days => ${dias}) group by 1,2 order by 1,3 desc`,
+  ])
+  return res.status(200).json({ dias, eventos, resumo: { porTipo, semResultado, placasErro, assinar, navegador } })
 }

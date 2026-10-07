@@ -44,6 +44,12 @@ export default function Privacidade() {
           para confirmar renovações e cancelamentos. Não recebemos nem guardamos dados de cartão.
         </li>
         <li>
+          <b>Registro de uso:</b> guardamos o que você faz no site e no aplicativo (páginas abertas, buscas e quantos
+          resultados tiveram, placas consultadas, esquemas abertos, quando vê os planos ou toca em assinar, erros), com a
+          data, o tipo de aparelho e um código anônimo do navegador. Serve para entender onde o serviço falha e melhorá-lo.
+          Fica no nosso banco de dados por até 120 dias e não é compartilhado.
+        </li>
+        <li>
           <b>Notificações (só no aplicativo para Android):</b> se você permitir, guardamos um código do aparelho gerado pelo
           Firebase Cloud Messaging, ligado à sua conta, para enviar avisos como o fim do teste grátis e novidades da
           Deepcar. Dá para desligar nas configurações do Android; o código é apagado quando o aplicativo é desinstalado ou

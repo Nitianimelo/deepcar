@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { registrar as anotar } from '../lib/log'
 import { Link, useParams } from 'react-router-dom'
 import { AlertTriangle, ChevronRight, FlaskConical } from 'lucide-react'
 import { consultarPlaca, formatarPlaca, normalizarPlaca, type Veiculo } from '../lib/placa'
@@ -63,11 +64,12 @@ function ConsultaVeiculo() {
       .then((v) => {
         if (!vivo) return
         setEstado({ fase: 'ok', veiculo: v })
+        anotar('placa', { placa: v.placa, marca: v.marca, modelo: v.modelo, ano: v.anoModelo ?? v.anoFabricacao ?? null })
         const email = getSession()?.email
         if (email) momentoDeValor(email, 'placa')
         registrarRecente({ tipo: 'placa', placa: v.placa, titulo: tituloVeiculo(v), detalhe: detalheVeiculo(v), veiculo: v })
       })
-      .catch((e: Error) => vivo && setEstado({ fase: 'erro', msg: e.message }))
+      .catch((e: Error) => { anotar('placa_erro', { placa: normalizarPlaca(placa), erro: e.message.slice(0, 160) }); if (vivo) setEstado({ fase: 'erro', msg: e.message }) })
     return () => { vivo = false }
   }, [placa])
 

@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { registrar as anotar } from '../lib/log'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, AtSign, Check, CircleAlert, CircleCheck, Eye, EyeOff, LockKeyhole, Smartphone, Sparkles, UserRound } from 'lucide-react'
 import { registrar, type ErroApi } from '../lib/auth'
@@ -86,12 +87,14 @@ export default function Cadastro() {
         visitante: visitanteId(),
       })
       cadastroConcluido(eventoId, { email: d.email, whatsapp: whatsappParaApi(d.whatsapp), nome: d.nome })
+      anotar('cadastro')
       // veio da busca por placa na landing? cai direto no veículo consultado
       const destino = (loc.state as { from?: string } | null)?.from ?? '/app'
       nav(destino, { replace: true })
     } catch (err) {
       const e2 = err as ErroApi
       const campo = e2.campo as NomeCampo | undefined
+      anotar('cadastro_erro', { campo: campo ?? null, erro: String(e2.message ?? '').slice(0, 160) })
       if (campo && campo in VAZIO) setErroServidor((v) => ({ ...v, [campo]: e2.message }))
       else setErroGeral(e2.message || 'Não foi possível criar a conta.')
     } finally {
