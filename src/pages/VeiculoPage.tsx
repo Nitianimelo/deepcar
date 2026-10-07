@@ -12,7 +12,7 @@ import { LogoMarca } from '../components/LogoMarca'
 import { DetalhesEsquema } from '../components/DetalhesEsquema'
 import MARCAS from '../data/marcas.json'
 import { PLANOS_VENDA, textoSomente } from '../data/planos'
-import { ConviteAssinatura } from '../components/AssineParaAcessar'
+import { ConviteAssinatura, FaixaAssinar } from '../components/AssineParaAcessar'
 import { useAcesso } from '../lib/acesso'
 import { getSession } from '../lib/auth'
 import { momentoDeValor } from '../lib/funil'
@@ -200,6 +200,7 @@ function Resultado({ v }: { v: Veiculo }) {
           </div>
         )}
       </div>
+      <FaixaAssinar lugar="placa" className="mt-6" />
     </>
   )
 }

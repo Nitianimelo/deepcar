@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, BadgeDollarSign, LogOut, MessageCircle, ShieldCheck, Timer, UserRound } from 'lucide-react'
+import { ArrowRight, BadgeDollarSign, LogOut, MessageCircle, FlaskConical, ShieldCheck, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
-import { avisarCheckout, duracaoTeste, linkCheckout, linkSuporte, restanteFree, rotuloPlano, tempoRestante, temWhatsappSuporte } from '../lib/plano'
+import { avisarCheckout, linkCheckout, linkSuporte, restanteFree, rotuloPlano, temWhatsappSuporte } from '../lib/plano'
 import { PLANOS_VENDA, type Ciclo } from '../data/planos'
 import { CartaoPlanoClaro, ChaveCiclo } from '../components/landing/PlanosLanding'
 import { classeBotaoClaro } from '../components/landing/estiloPlanos'
@@ -80,7 +80,7 @@ export default function Conta() {
             {s.whatsapp && <Row k="WhatsApp" v={s.whatsapp.replace(/^55(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3')} />}
           </dl>
           <button type="button" onClick={() => setAba('plano')} className="mt-3 inline-flex items-center gap-1.5 border-t seam-soft pt-3 text-[13px] text-trace hover:text-trace-hi">
-            {restante !== null && restante > 0 ? `Plano de teste: restam ${tempoRestante(restante)} · ver planos` : 'Ver planos e assinar'}
+            {restante !== null && restante > 0 ? 'Teste grátis · ver planos' : 'Ver planos e assinar'}
             <ArrowRight size={14} />
           </button>
         </section>
@@ -151,12 +151,12 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
 
         {!pago && (
           <p className="mt-3 flex items-center gap-2 border-t seam-soft pt-3 text-[13.5px] text-ink-3">
-            <Timer size={15} className="flex-none text-trace" />
+            <FlaskConical size={15} className="flex-none text-trace" />
             {/* num span só: solto no flex, o texto e o negrito viravam colunas no celular */}
             <span>
               {restante !== null && restante > 0
-                ? <>Você está no plano de teste: restam <b className="font-medium text-ink-1">{tempoRestante(restante)}</b> das {duracaoTeste(s.testeMinutos)}.</>
-                : <>Seu teste de {duracaoTeste(s.testeMinutos)} terminou. Escolha um plano abaixo para abrir os esquemas.</>}
+                ? <>Você está no <b className="font-medium text-ink-1">teste grátis</b>. Assine e mantenha a placa e os esquemas liberados.</>
+                : <>Seu teste grátis terminou. Escolha um plano abaixo para abrir os esquemas.</>}
             </span>
           </p>
         )}

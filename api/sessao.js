@@ -9,10 +9,13 @@
 // InitiateCheckout pela API de Conversões da Meta (o pixel não roda dentro do /app). O app Android não usa.
 // POST /api/sessao { evento: 'ativacao', marco: 'boas_vindas' | 'esquema' } → primeira vez que a conta fez isso
 // (src/lib/funil.ts). Guarda só a primeira data; aparece no /admin.
+// POST /api/sessao { evento: 'consulta', item } → esquema aberto no site (src/lib/consulta.ts): conta a consulta do
+// teste grátis e responde { liberado }. Sem liberado, o teste acabou e a tela borra (api/_lib/consultas.js).
 import { randomUUID } from 'node:crypto'
 import { sql, um } from './_lib/db.js'
 import { dadosDoNavegador, enviarEvento, visitanteValido } from './_lib/meta.js'
-import { abrirJanelaFree, conferirSenha, corpo, limparCookie, publicoCompleto, usuarioDaSessao } from './_lib/sessao.js'
+import { abrirJanelaFree, conferirSenha, corpo, ehApp, limparCookie, publicoCompleto, usuarioDaSessao } from './_lib/sessao.js'
+import { registrarConsulta } from './_lib/consultas.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -22,13 +25,18 @@ export default async function handler(req, res) {
     const u = await usuarioDaSessao(req)
     if (!u) return res.status(401).json({ erro: 'Sem sessão.' })
     if (req.method === 'DELETE') return await excluirConta(req, res, u)
-    if (req.method === 'POST') return corpo(req).evento === 'ativacao' ? await marcarAtivacao(req, res, u) : await eventoCheckout(req, res, u)
+    if (req.method === 'POST') {
+      const { evento } = corpo(req)
+      if (evento === 'ativacao') return await marcarAtivacao(req, res, u)
+      if (evento === 'consulta') return await consultaEsquema(req, res, u)
+      return await eventoCheckout(req, res, u)
+    }
     if (req.method !== 'GET') {
       res.setHeader('Allow', 'GET, POST, DELETE')
       return res.status(405).json({ erro: 'Use GET, POST ou DELETE.' })
     }
     // conta criada pelo /admin, ou rebaixada para free: o relógio parte no primeiro acesso
-    return res.status(200).json(await publicoCompleto(await abrirJanelaFree(u)))
+    return res.status(200).json(await publicoCompleto(await abrirJanelaFree(u, { app: ehApp(req) })))
   } catch (err) {
     return res.status(500).json({ erro: err.message ?? 'Falha ao ler a sessão.' })
   }
@@ -87,4 +95,12 @@ async function marcarAtivacao(req, res, u) {
   else if (marco === 'esquema') await sql`update usuarios set primeiro_esquema_em = coalesce(primeiro_esquema_em, now()) where id = ${u.id}`
   else return res.status(400).json({ erro: 'Marco inválido.' })
   return res.status(204).end()
+}
+
+// esquema aberto no site: o id do acervo (secao/marca/modelo). Texto curto e sem quebra; o resto o banco aguenta.
+async function consultaEsquema(req, res, u) {
+  const item = String(corpo(req).item ?? '').trim()
+  if (!item || item.length > 240 || /\p{Cc}/u.test(item)) return res.status(400).json({ erro: 'Esquema inválido.' })
+  const r = await registrarConsulta(u, 'esquema', item)
+  return res.status(200).json({ liberado: r.liberado })
 }

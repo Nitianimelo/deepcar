@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AlertTriangle, ArrowLeft } from 'lucide-react'
 import { SECTION_META, type SectionKey } from '../data/nav'
@@ -13,6 +13,8 @@ import { useTitulo } from '../lib/seo'
 import { getSession } from '../lib/auth'
 import { momentoDeValor } from '../lib/funil'
 import { DicaEsquema } from '../components/Funil'
+import { FaixaAssinar } from '../components/AssineParaAcessar'
+import { liberarEsquema } from '../lib/consulta'
 
 export default function EsquemaPage() {
   const id = useParams()['*'] ?? ''
@@ -25,15 +27,28 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
   const carga = useCarga(() => carregarEsquema(id), [id])
   // fora do plano (ex.: diesel no Pro) ou teste vencido: a página abre (título, montadora, dados), mas o desenho fica
   // embaçado com o convite. Fora do plano diz qual plano libera ("Somente no plano Full").
-  const { testeAcabou, podeSecao } = useAcesso()
+  const { testeAcabou, podeSecao, sessao } = useAcesso()
   const foraDoPlano = !!SECTION_META[secao] && !podeSecao(secao)
-  const bloqueado = testeAcabou || foraDoPlano
+  // teste grátis por consultas: o servidor conta este esquema e diz se ainda pode abrir (lib/consulta.ts).
+  // Enquanto confere, o desenho espera (o esquema não pisca nítido para quem já não tem consulta).
+  const noTeste = sessao?.plano === 'free' && sessao.papel !== 'admin'
+  const [liberacao, setLiberacao] = useState<{ id: string; ok: boolean } | null>(null)
+  const precisaConferir = noTeste && !testeAcabou && !foraDoPlano
+  useEffect(() => {
+    if (!precisaConferir || carga.estado !== 'ok') return
+    let vivo = true
+    void liberarEsquema(id).then((ok) => { if (vivo) setLiberacao({ id, ok }) })
+    return () => { vivo = false }
+  }, [id, precisaConferir, carga.estado])
+  const conferindo = precisaConferir && liberacao?.id !== id
+  const recusado = precisaConferir && liberacao?.id === id && !liberacao.ok
+  const bloqueado = testeAcabou || foraDoPlano || recusado
   useTitulo(carga.estado === 'ok' ? `${carga.dados.marca} ${carga.dados.modelo} · ${meta?.titulo ?? ''} · Deepcar` : null)
 
   // entra nas últimas consultas da tela inicial
   const aberto = carga.estado === 'ok' ? carga.dados : null
   useEffect(() => {
-    if (!aberto || !SECTION_META[aberto.secao]) return
+    if (!aberto || !SECTION_META[aberto.secao] || conferindo) return
     // esquema borrado não conta como aberto (nem para a ativação nem para o convite do teste)
     const email = getSession()?.email
     if (email && !bloqueado) momentoDeValor(email, 'esquema')
@@ -43,7 +58,7 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
       titulo: `${aberto.marca} ${aberto.modelo}`,
       detalhe: SECTION_META[aberto.secao].titulo,
     })
-  }, [aberto]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [aberto, conferindo]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!meta) return <NaoEncontrado />
 
@@ -95,7 +110,7 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
                   {d.subtitulo && <p className="mt-1 text-ink-3">{subtituloCurto(d.subtitulo)}</p>}
                 </div>
               </div>
-              {!bloqueado && <BotaoCompartilhar d={d} />}
+              {!bloqueado && !conferindo && <BotaoCompartilhar d={d} />}
             </div>
 
             <dl className={`mt-5 grid grid-cols-2 gap-3 ${d.specs.length ? '' : 'hidden'} md:grid-cols-4`}>
@@ -110,8 +125,12 @@ function VerEsquema({ id, secao }: { id: string; secao: SectionKey }) {
             <div className="sem-impressao mt-6">
               {bloqueado
                 ? <EsquemaEmbacado d={d} motivo={foraDoPlano ? { tipo: 'plano', secao } : { tipo: 'teste' }} />
-                : <><DicaEsquema /><EsquemaViewer key={d.id} d={d} /></>}
+                : conferindo
+                  ? <div aria-busy="true" className="skeleton h-[60vh] rounded-xl" />
+                  : <><DicaEsquema /><EsquemaViewer key={d.id} d={d} /></>}
             </div>
+            {/* teste em andamento: o convite fica logo abaixo do desenho, sem cobrir nada */}
+            {noTeste && !bloqueado && !conferindo && <FaixaAssinar className="mt-6" lugar="esquema" />}
           </>
         )
       })()}

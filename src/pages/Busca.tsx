@@ -5,6 +5,7 @@ import { AlertTriangle, Search, X } from 'lucide-react'
 import { SECOES } from '../data/nav'
 import { carregarTudo, fmt, useCarga } from '../lib/acervo'
 import { filtrar, indexar, termosDe } from '../lib/busca'
+import { FaixaAssinar } from '../components/AssineParaAcessar'
 import { ListaEsquemas } from '../components/ListaEsquemas'
 
 export default function Busca() {
@@ -69,6 +70,7 @@ export default function Busca() {
             {lista.length === 1 ? '1 esquema encontrado' : `${fmt(lista.length)} esquemas encontrados`}
           </p>
           <ListaEsquemas lista={lista} mostrarLogo mostrarSecao vazio="Tente menos palavras ou outro termo." />
+          <FaixaAssinar lugar="lista" className="mt-6" />
         </>
       )}
 

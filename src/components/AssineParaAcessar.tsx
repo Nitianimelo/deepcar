@@ -8,7 +8,7 @@
 // O acervo é público no R2: o borrado é só na tela (ver Pendências no CONTEXTO.md).
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Lock, MessageCircle } from 'lucide-react'
+import { ArrowRight, Lock, MessageCircle, Sparkles } from 'lucide-react'
 import { avisarCheckout, linkCheckout, linkSuporte, temWhatsappSuporte } from '../lib/plano'
 import { useAcesso } from '../lib/acesso'
 import { urlImagem, type EsquemaDetalhe } from '../lib/acervo'
@@ -170,6 +170,41 @@ export function AvisoSistemaBloqueado({ secao }: { secao: SectionKey }) {
       </p>
       <Link to="/app/conta?aba=plano" className="btn-primary inline-flex !h-11 flex-none items-center justify-center gap-2 px-5 text-[14.5px]">
         {fora && pago ? 'Mudar de plano' : 'Assinar um plano'} <ArrowRight size={16} />
+      </Link>
+    </div>
+  )
+}
+
+/** Menor parcela do anual entre os planos ("29,90"): o número que mais convence quem está testando. */
+const MENOR_PARCELA = PLANOS_VENDA.map((p) => p.precoAnual).sort((a, b) => Number(a.replace(',', '.')) - Number(b.replace(',', '.')))[0]
+
+const TEXTOS_FAIXA = {
+  inicio: ['Você está no teste grátis.', 'Assine e tenha a placa e os esquemas liberados em todo carro que entrar na oficina.'],
+  esquema: ['Achou o que precisava?', 'Com um plano, todo esquema fica liberado, sempre que o carro estiver na sua frente.'],
+  placa: ['A placa resolve em segundos.', 'Assine e identifique cada carro que chegar, já com os esquemas certos.'],
+  lista: ['Teste grátis em andamento.', 'Assine e mantenha o acervo inteiro liberado, sem interrupção.'],
+} as const
+
+/**
+ * Teste grátis em andamento: o convite para assinar espalhado pelas telas (início, esquema, placa, listas), sem cobrir
+ * nada. Não fala em limite nem em quanto falta (decisão do dono, 07/10/2026): quando o teste acaba, o convite grande
+ * (ConviteAssinatura) toma o lugar. Some para plano pago, admin e teste encerrado.
+ */
+export function FaixaAssinar({ lugar, className = '' }: { lugar: keyof typeof TEXTOS_FAIXA; className?: string }) {
+  const { sessao, testeAcabou } = useAcesso()
+  if (!sessao || sessao.plano !== 'free' || sessao.papel === 'admin' || testeAcabou) return null
+  const [titulo, texto] = TEXTOS_FAIXA[lugar]
+  return (
+    <div className={`flex flex-col gap-3 rounded-xl border border-trace/30 bg-bench-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5 ${className}`}>
+      <p className="flex items-start gap-2.5 text-[14.5px] leading-snug text-ink-2">
+        <Sparkles size={17} className="mt-0.5 flex-none text-trace-hi" aria-hidden="true" />
+        <span>
+          <b className="font-semibold text-ink-1">{titulo}</b> {texto}{' '}
+          <span className="whitespace-nowrap text-ink-3">A partir de 12x de R$ {MENOR_PARCELA}.</span>
+        </span>
+      </p>
+      <Link to="/app/conta?aba=plano" className="btn-primary inline-flex !h-11 flex-none items-center justify-center gap-2 px-5 text-[14.5px]">
+        Ver planos <ArrowRight size={16} />
       </Link>
     </div>
   )

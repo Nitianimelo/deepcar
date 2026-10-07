@@ -1,7 +1,7 @@
 // POST /api/registrar  { nome, email, whatsapp, senha }  → cria a conta (plano free) e já entra.
 // GET  /api/registrar  → { testeMinutos }: duração do teste que a página de cadastro anuncia (/admin → Planos).
 import { sql, um } from './_lib/db.js'
-import { abrirJanelaFree, cifrarSenha, corpo, criarSessao, porCookie, publicoCompleto } from './_lib/sessao.js'
+import { abrirJanelaFree, cifrarSenha, ehApp, corpo, criarSessao, porCookie, publicoCompleto } from './_lib/sessao.js'
 import { emailValido, nomeValido, normalizarWhatsapp, senhaValida, SENHA_MINIMA } from './_lib/validar.js'
 import { consumirPendente } from './_lib/assinatura.js'
 import { dadosDoNavegador, enviarEvento, rastreioParaGuardar, visitanteValido } from './_lib/meta.js'
@@ -78,7 +78,7 @@ export default async function handler(req, res) {
     // pagou antes de ter conta: o plano entra agora, sem passar pelo bloqueio do free
     const comPlano = await consumirPendente(u)
     // a conta nasce free: o relógio do teste começa aqui, porque o cadastro já entra no app
-    const comJanela = await abrirJanelaFree(comPlano)
+    const comJanela = await abrirJanelaFree(comPlano, { app: doApp || ehApp(req) })
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])
     porCookie(res, token, expira)
     await meta // a funcao congela depois da resposta: o envio termina antes (no maximo 2,5 s, e nunca falha o cadastro)

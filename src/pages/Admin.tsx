@@ -36,6 +36,8 @@ type Usuario = {
   boas_vindas_em?: string | null
   primeira_placa_em?: string | null
   primeiro_esquema_em?: string | null
+  /** esquemas e placas DIFERENTES que a conta já consultou (api/_lib/consultas.js); o teste do site vale 5 */
+  consultas?: number
 }
 
 /** Os três primeiros passos, na ordem do funil: ✓ com a data na dica, ou — quando ainda não fez. */
@@ -52,6 +54,8 @@ function Ativacao({ u }: { u: Usuario }) {
           {i > 0 && <span className="text-ink-4"> · </span>}{quando ? '✓' : '—'} {nome}
         </span>
       ))}
+      <span className="text-ink-4"> · </span>
+      <span className={u.consultas ? 'text-ink-2' : 'text-ink-4'}>{u.consultas ?? 0} {u.consultas === 1 ? 'consulta' : 'consultas'}</span>
     </span>
   )
 }

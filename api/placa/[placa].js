@@ -5,6 +5,8 @@ import { ambienteCom } from '../_lib/segredos.js'
 import { sql } from '../_lib/db.js'
 import { exigir } from '../_lib/sessao.js'
 import { acessoDe } from '../_lib/planos.js'
+import { podeConsultar, registrarConsulta } from '../_lib/consultas.js'
+import { normalizarPlaca } from '../../server/placa/veiculo.mjs'
 
 export const config = { runtime: 'nodejs' }
 
@@ -22,9 +24,18 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store')
     return res.status(403).json({ erro: 'A busca pela placa não faz parte do seu plano.', semPlaca: true })
   }
+  // teste gratis por consultas (api/_lib/consultas.js): vale tambem para o app Android, que chama esta rota.
+  // Confere antes do provedor; conta so depois de achar o veiculo (placa nao encontrada nao gasta consulta).
+  const placa = normalizarPlaca(req.query.placa)
+  if (placa && !(await podeConsultar(u, 'placa', placa))) {
+    res.setHeader('Cache-Control', 'no-store')
+    // mesmo corpo do 402 de exigir(): site e app ja mostram o convite para assinar
+    return res.status(402).json({ erro: 'Seu teste gratuito terminou. Assine um plano para acessar os sistemas.', expirado: true, plano: u.plano })
+  }
   try {
     const env = await ambienteCom(...VARIAVEIS_PLACA)
     const veiculo = await consultarPlaca(req.query.placa, env)
+    if (placa && veiculo.origem !== 'simulado') await registrarConsulta(u, 'placa', placa)
     // rota autenticada: nada de cache compartilhado na borda, que serviria a resposta
     // a quem nao fez login. Repetir a mesma placa ja e barato pelo cache em server/placa/index.mjs.
     res.setHeader('Cache-Control', 'private, no-store')

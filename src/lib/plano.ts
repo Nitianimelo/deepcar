@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { PLANOS_VENDA, type Ciclo, type PlanoPago } from '../data/planos'
 import { conferirSessao, type Plano, type Session } from './auth'
 import { visitanteId } from './pixel'
+import { ouvirSessaoMudou } from './consulta'
 
 /** Padrão do teste; o que vale é o /admin → Planos e chega na sessão (testeMinutos). */
 export const MINUTOS_FREE = 600
@@ -133,7 +134,9 @@ export function useLimiteFree(inicial: Session | null) {
     return () => { vivo = false; clearInterval(t) }
   }, [ehFree])
 
-  // voltou da aba do checkout (ou de outro app): confere na hora, em vez de esperar o intervalo
+  // voltou da aba do checkout (ou de outro app): confere na hora, em vez de esperar o intervalo.
+  // Também quando o servidor recusou uma consulta (lib/consulta.ts): o teste acabou e a tela borra na hora.
+  useEffect(() => ouvirSessaoMudou(() => { void conferirSessao().then(aplicar) }), [])
   useEffect(() => {
     const olhar = () => {
       if (document.visibilityState === 'visible') void conferirSessao().then(aplicar)

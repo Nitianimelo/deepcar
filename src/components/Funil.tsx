@@ -8,7 +8,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, Lightbulb, X } from 'lucide-react'
 import { Destaque, Folha } from './Folha'
 import { useAcesso } from '../lib/acesso'
-import { restanteFree, tempoRestante } from '../lib/plano'
 import { PLANOS_VENDA } from '../data/planos'
 import { SECOES } from '../data/nav'
 import {
@@ -39,7 +38,6 @@ export function BoasVindas() {
   // decidido na renderização: também abre para quem chega ao início depois (vinha de um link direto)
   if (encerrada || !sessao || !ativo || !noInicio || !email || boasVindasVistas(email)) return null
   const encerrar = () => { marcarBoasVindas(email); setEncerrada(true) }
-  const restante = restanteFree(sessao)
   const nome = sessao.nome?.split(' ')[0]
   // o /admin escolhe o que o teste libera: o texto não promete "todos os sistemas" quando não é o caso
   const tudoLiberado = !sessao.acesso || sessao.acesso.secoes.length >= SECOES.length
@@ -49,7 +47,7 @@ export function BoasVindas() {
     {
       titulo: <>Bem-vindo ao Deepcar{nome ? `, ${nome}` : ''}!</>,
       texto: <>
-        Seu teste grátis está valendo{restante && restante > 0 ? <>: <b className="font-semibold text-ink-1">{tempoRestante(restante)}</b></> : ''}
+        Seu teste grátis já está valendo
         {tudoLiberado
           ? ' com todos os sistemas liberados (injeção, ABS, elétrica e câmbio, do leve ao diesel).'
           : '. O que não está no teste abre borrado, com os planos que liberam.'} Quer ver como usar? Leva 20 segundos.
@@ -118,7 +116,6 @@ export function ConviteMomento() {
   }, [ativo, email, lugarCerto])
 
   if (!tipo || !sessao) return null
-  const restante = restanteFree(sessao)
   const fechar = () => setTipo(null)
   return (
     <Folha
@@ -134,7 +131,6 @@ export function ConviteMomento() {
     >
       Assine e mantenha a placa e os esquemas liberados o ano inteiro: <b className="font-semibold text-ink-1">a partir de 12x de R$ {MENOR_PARCELA}</b> no
       cartão, ou à vista no Pix.
-      {restante && restante > 0 ? <> Seu teste ainda tem <b className="font-semibold text-ink-1">{tempoRestante(restante)}</b>.</> : null}
     </Folha>
   )
 }

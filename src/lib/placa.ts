@@ -1,3 +1,5 @@
+import { avisarSessaoMudou } from './consulta'
+
 export type Veiculo = {
   placa: string
   marca: string | null
@@ -36,6 +38,8 @@ export async function consultarPlaca(placa: string): Promise<Veiculo> {
   const limpa = normalizarPlaca(placa)
   const res = await fetch(`/api/placa/${encodeURIComponent(limpa)}`)
   const body = await res.json().catch(() => ({}))
+  // 402: o teste grátis acabou (inclusive nesta consulta): o layout reconfere a sessão e a tela vira o convite
+  if (res.status === 402) avisarSessaoMudou()
   if (!res.ok) throw new Error(body?.erro ?? `Falha na consulta (HTTP ${res.status}).`)
   return body as Veiculo
 }

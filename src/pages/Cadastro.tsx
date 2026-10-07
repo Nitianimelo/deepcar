@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowRight, AtSign, Check, CircleAlert, CircleCheck, Eye, EyeOff, LockKeyhole, Smartphone, Timer, UserRound } from 'lucide-react'
+import { ArrowRight, AtSign, Check, CircleAlert, CircleCheck, Eye, EyeOff, LockKeyhole, Smartphone, Sparkles, UserRound } from 'lucide-react'
 import { registrar, type ErroApi } from '../lib/auth'
 import { cadastroConcluido, novoEventoId, visitanteId } from '../lib/pixel'
 import { origemParaCadastro } from '../lib/origem'
-import { DURACAO_FREE, duracaoTeste } from '../lib/plano'
 import {
   emailValido,
   forcaSenha,
@@ -247,10 +246,10 @@ export default function Cadastro() {
 
               {/* O que a conta grátis dá — dito antes de criar, não depois */}
               <div className="flex items-start gap-3 rounded-xl border seam bg-well/60 px-4 py-3">
-                <Timer size={17} className="mt-[2px] flex-none text-trace" />
+                <Sparkles size={17} className="mt-[2px] flex-none text-trace" />
                 <p className="text-[13px] leading-relaxed text-ink-3">
-                  Você começa no <b className="font-medium text-ink-2">plano de teste</b>: <DuracaoTeste /> para conhecer a
-                  plataforma, sem cartão. Depois é só escolher um plano para continuar abrindo os esquemas.
+                  Você começa no <b className="font-medium text-ink-2">teste grátis</b> para conhecer a plataforma por dentro,
+                  sem cartão. Depois é só escolher um plano para continuar abrindo os esquemas.
                 </p>
               </div>
 
@@ -323,16 +322,3 @@ function Campo({
   )
 }
 
-/** Duração do teste que o /admin definiu (GET /api/registrar); enquanto não chega, o padrão. */
-function DuracaoTeste() {
-  const [texto, setTexto] = useState(DURACAO_FREE)
-  useEffect(() => {
-    let vivo = true
-    fetch('/api/registrar')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: { testeMinutos?: number } | null) => { if (vivo && d?.testeMinutos) setTexto(duracaoTeste(d.testeMinutos)) })
-      .catch(() => {})
-    return () => { vivo = false }
-  }, [])
-  return <>{texto}</>
-}

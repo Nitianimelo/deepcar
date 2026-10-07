@@ -1,6 +1,6 @@
 // POST /api/login  { email, senha }  → sessão em cookie httpOnly.
 import { sql, um } from './_lib/db.js'
-import { abrirJanelaFree, conferirSenha, corpo, criarSessao, porCookie, publicoCompleto, vencerAnual } from './_lib/sessao.js'
+import { abrirJanelaFree, conferirSenha, ehApp, corpo, criarSessao, porCookie, publicoCompleto, vencerAnual } from './_lib/sessao.js'
 import { limitarDispositivos } from './_lib/planos.js'
 import { consumirPendente } from './_lib/assinatura.js'
 
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     // pagamento que chegou enquanto a pessoa estava fora (ou vinculado no /admin)
     const comPlano = await consumirPendente(await vencerAnual(u))
     // quem entra pela primeira vez no plano free começa a contar o teste agora
-    const comJanela = await abrirJanelaFree(comPlano)
+    const comJanela = await abrirJanelaFree(comPlano, { app: ehApp(req) })
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])
     // passou do limite de aparelhos do plano: cai o que estava parado havia mais tempo
     await limitarDispositivos(comJanela)

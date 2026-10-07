@@ -23,7 +23,9 @@ Regras de trabalho estão em `AGENTE.md`.
     Movimento na landing (`src/components/landing/`): fundo com pulsos de corrente na grade, entrada das dobras no scroll,
     barra de progresso no cabeçalho e cards de plano com holofote, borda viva no Full e preço contando.
   - Cadastro aberto (`/cadastro`: nome, e-mail, WhatsApp, senha) e login (`/login`) com sessão em cookie httpOnly de 30 dias no Neon.
-  - **Plano de teste (free) = 10 horas**, contadas a partir do primeiro acesso. Sem contador na tela: a barra mostra só o
+  - **Plano de teste (free) no site = 5 consultas** diferentes (esquema aberto ou placa encontrada), desde 07/10/2026,
+    sem o número na tela; no app Android antigo, as horas do /admin (a placa conta também lá). Texto antigo abaixo:
+    **Plano de teste (free) = 10 horas**, contadas a partir do primeiro acesso. Sem contador na tela: a barra mostra só o
     selo "Plano de teste" (computador). Para quem está no plano free há sempre um caminho para os planos: cartão
     "Assinar um plano" no rodapé do menu lateral e, no celular, faixa fina no topo da tela. Quando acaba, a plataforma continua abrindo (menu, montadoras, listas, busca), o selo vira
     "Assinar plano" e o esquema abre **embaçado** com o convite "Assine um plano para acessar o sistema" (cards Full/Pro,
@@ -57,7 +59,7 @@ Regras de trabalho estão em `AGENTE.md`.
     `FALCON_TOKEN` gravado no cofre do banco (tabela `segredos`) em 2026-09-16: produção consulta o Falcon de verdade.
     Consulta real testada pelo usuário e funcionando. A ficha mostra também procedência (importado/nacional) e chassi.
 - **Visual:** tema escuro em grafite azulado (fundo `#151b24`), todos os textos com contraste ≥ 4,5:1 sobre os cartões.
-- **Banco (Neon):** migrações `001_inicial` a `009_tempo_do_teste` aplicadas.
+- **Banco (Neon):** migrações `001_inicial` a `010_consultas` aplicadas.
 - **Último deploy verificado:** commit `b100d52`, estado `success` (2026-09-16).
 
 ## Pendências e problemas conhecidos
@@ -93,6 +95,10 @@ Regras de trabalho estão em `AGENTE.md`.
 - [ ] O webhook da Cakto nunca recebeu uma compra real (só o evento de teste, 21/09, respondido 200). Primeira venda:
       conferir no /admin → Assinaturas.
 - [ ] Portal do assinante (trocar cartão, cancelar) — hoje isso é feito pelo painel da Cakto.
+- [ ] **App Android: teste por consultas na próxima versão.** O app antigo não avisa o servidor quando abre um esquema
+      (o acervo vem do R2), então lá só a placa conta e o prazo de horas continua. Na próxima versão: chamar
+      `POST /api/sessao { evento: 'consulta', item: <id do esquema> }` ao abrir um esquema (como `src/lib/consulta.ts`)
+      e tratar `liberado: false` como teste encerrado; daí a conta do app pode usar o prazo de 7 dias do site.
 - [ ] **App Android** ainda fala em "10 minutos" e tem a tela de bloqueio antiga; o prazo de 10 h já vale nele (vem do
       servidor em `freeExpiraEm`). **Decisão do dono (2026-09-29): manter o app como está** por enquanto.
 - [ ] Conferir numa placa real se chassi e procedência aparecem (nomes dos campos não estão na documentação pública
@@ -109,6 +115,38 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-10-07 · Teste grátis por consultas (5) em vez de horas, sem número na tela
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** trocar o teste de 10 h corridas (acabava de madrugada para quem se cadastrava à noite: 52 de 63 cadastros
+  de anúncio com "teste acabou", só 1 assinatura certa) por 5 consultas; contador no servidor, ligado ao CRM; não contar
+  à pessoa quantas tem; avisos para assinar em todo lugar; acabou = planos na tela principal; Android pelo servidor se
+  der, senão como está.
+- **O que mudou:**
+  - `db/010_consultas.sql`: tabela `consultas` (conta × item, chave primária) e `usuarios.consultas` (total), com
+    `grant select (consultas)` para `crm_leitura`.
+  - `api/_lib/consultas.js` (novo): `podeConsultar()` e `registrarConsulta()`; mesma coisa de novo não gasta; 5ª com folga
+    de 30 min; 6ª nova encerra o teste no banco. Pago/admin também contam (CRM), nunca são barrados.
+  - `api/_lib/sessao.js`: `abrirJanelaFree(u, { app })` = 7 dias no site (`DIAS_TESTE_SITE`, só prazo de segurança) e
+    as horas do /admin para o app; `ehApp(req)` pelo `User-Agent` `Dalvik/` (HTTP nativo do app). `registrar.js`,
+    `login.js` e `GET /api/sessao` passam a informação.
+  - `api/sessao.js`: `POST { evento: 'consulta', item }` → `{ liberado }`. `api/placa/[placa].js`: confere antes da Falcon
+    (402 no mesmo formato de `exigir()`), conta só depois de achar o veículo. Vale para o app Android sem versão nova.
+  - Site: `src/lib/consulta.ts` (novo); `EsquemaPage` espera o servidor antes de mostrar o desenho (esqueleto), recusado =
+    borrado com os planos; `useLimiteFree` reconfere a sessão na hora com o sinal `deepcar:sessao-mudou` (também no 402
+    da placa). `LimiteFree.tsx` sem relógio ("Teste grátis · Assinar"); Funil, Conta e Cadastro sem citar horas.
+    `FaixaAssinar` (AssineParaAcessar.tsx) no início, embaixo do esquema, na placa, nas listas e na busca, com "a partir de
+    12x de R$ 29,90". Teste encerrado: os planos sobem para o topo do início. /admin mostra "N consultas" por usuário.
+- **Banco:** `010_consultas` **aplicada no Neon antes do push**.
+- **Variáveis/infra:** sem mudança (continua 12 funções).
+- **Verificação:** build ok, lint 10 avisos. Contra o banco de produção, com contas descartáveis apagadas no fim, pelas
+  próprias rotas: prazo de 7 dias no site e 10 h no app (`Dalvik/`); 5 esquemas liberados, 5ª com folga de 30 min,
+  reabrir não conta, 6º recusado e teste encerrado; `/api/sessao` devolve o teste vencido; placa depois do fim → 402
+  sem chamar a Falcon; no app, 6ª placa nova → 402 e teste encerrado. WebKit 390 e 1280 px com sessão simulada: faixa
+  sem limite/horas, esquema confere e abre, recusado vira convite, vencido com planos no topo, sem rolagem lateral.
+- **CRM (fora deste repo):** lê `consultas` e mostra no card e na ficha.
+- **Pendências:** app Android (ver Pendências). Quem já estava com o teste de 10 h vencido continua vencido (não foi
+  reaberto ninguém).
 
 ### 2026-10-07 · Planos da landing com o link do app Android e faixa "Comece agora"
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani

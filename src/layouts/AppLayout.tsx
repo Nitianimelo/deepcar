@@ -69,7 +69,7 @@ export default function AppLayout() {
           {naoEInicio && <div className="hidden flex-1 md:block" />}
           <PaletaBusca />
 
-          <SeloTeste restante={limite.restante} />
+          <SeloTeste />
         </header>
 
         <main className="app-conteudo schematic-grid min-h-0 flex-1 overflow-y-auto">

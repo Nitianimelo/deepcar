@@ -18,13 +18,24 @@ export const MINUTOS_FREE = MINUTOS_TESTE_PADRAO
 /** Planos pagos: nao tem relogio de teste. */
 export const PAGOS = new Set(['pro', 'full'])
 
+/** Requisicao do app Android (HTTP nativo do Capacitor): navegador nenhum manda esse agente. */
+export const ehApp = (req) => /^Dalvik\//.test(String(req?.headers?.['user-agent'] ?? ''))
+
+/**
+ * Prazo de seguranca do teste no site (07/10/2026): o teste do site vale por consultas (api/_lib/consultas.js) e
+ * este prazo so corta quem nunca chega a elas. O app Android antigo nao avisa os esquemas abertos, entao la o
+ * teste continua por horas (o /admin -> Planos). `app`: conta criada pelo app ou primeiro acesso pelo app.
+ */
+export const DIAS_TESTE_SITE = 7
+
 /**
  * Comeca a contar o teste gratuito na primeira entrada (nao na criacao da conta):
  * quem cadastra hoje e so volta amanha nao perde o teste. Idempotente.
  */
-export async function abrirJanelaFree(u) {
+export async function abrirJanelaFree(u, { app = false } = {}) {
   if (!u || u.plano !== 'free' || u.free_expira_em) return u
-  const ate = new Date(Date.now() + (await minutosTeste()) * 60_000)
+  const minutos = app ? await minutosTeste() : DIAS_TESTE_SITE * 1440
+  const ate = new Date(Date.now() + minutos * 60_000)
   await sql`update usuarios set free_expira_em = ${ate} where id = ${u.id} and free_expira_em is null`
   return { ...u, free_expira_em: ate }
 }

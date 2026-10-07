@@ -7,14 +7,19 @@ import { formatarPlaca, normalizarPlaca, placaValida } from '../lib/placa'
 import { limparRecentes, useRecentes, type Recente } from '../lib/recentes'
 import { marcarTitulo } from '../lib/transicao'
 import { useAcesso } from '../lib/acesso'
-import { ConviteAssinatura } from '../components/AssineParaAcessar'
+import { ConviteAssinatura, FaixaAssinar } from '../components/AssineParaAcessar'
 
 export default function Inicio() {
   const primeiroNome = getSession()?.nome?.split(' ')[0]
+  const { testeAcabou, sessao } = useAcesso()
+  // teste encerrado: os planos são a primeira coisa da tela (a placa e a busca seguem abaixo, para a pessoa ver onde ficam)
+  const encerrado = testeAcabou && sessao?.plano === 'free'
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-10">
       <h1 className="text-[26px] font-semibold tracking-tight sm:text-3xl">{saudacao()}{primeiroNome ? `, ${primeiroNome}` : ''}.</h1>
-      <p className="mt-1 text-ink-3">Consulte pela placa ou procure um esquema.</p>
+      <p className="mt-1 text-ink-3">{encerrado ? 'Seu teste grátis terminou. Escolha um plano para continuar consultando.' : 'Consulte pela placa ou procure um esquema.'}</p>
+
+      {encerrado && <PlanosDepoisDoTeste />}
 
       {/* bancada: placa de um lado, busca do outro, no mesmo painel */}
       <div className="mt-7 grid overflow-hidden rounded-2xl border seam bg-bench-2 md:grid-cols-[1.05fr_1fr]">
@@ -22,21 +27,19 @@ export default function Inicio() {
         <BuscaTexto />
       </div>
 
-      <PlanosDepoisDoTeste />
+      <FaixaAssinar lugar="inicio" className="mt-6" />
       <UltimasConsultas />
     </div>
   )
 }
 
 /**
- * Teste vencido: a placa e a busca continuam aqui em cima (a pessoa vê onde fica cada coisa), e os planos aparecem
- * logo abaixo. Consultar a placa ou abrir um esquema leva ao mesmo convite.
+ * Teste vencido: os planos no topo da tela (a placa e a busca continuam logo abaixo). Consultar a placa ou abrir um
+ * esquema leva ao mesmo convite.
  */
 function PlanosDepoisDoTeste() {
-  const { testeAcabou, sessao } = useAcesso()
-  if (!testeAcabou || sessao?.plano !== 'free') return null
   return (
-    <div className="mt-8 flex justify-center">
+    <div className="mt-7 flex justify-center">
       <ConviteAssinatura titulo="Seu teste terminou. Escolha um plano para continuar." oQue="os esquemas e a consulta pela placa" />
     </div>
   )

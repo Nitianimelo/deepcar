@@ -5,7 +5,7 @@ import { SECTION_META, type SectionKey } from '../data/nav'
 import { adiantarCatalogo, carregarCatalogo, carregarMarcas, useCarga, type Esquema } from '../lib/acervo'
 import { filtrar, indexar } from '../lib/busca'
 import { ListaEsquemas } from '../components/ListaEsquemas'
-import { AvisoSistemaBloqueado } from '../components/AssineParaAcessar'
+import { AvisoSistemaBloqueado, FaixaAssinar } from '../components/AssineParaAcessar'
 import { LogoMarca } from '../components/LogoMarca'
 import { useTitulo } from '../lib/seo'
 
@@ -45,6 +45,7 @@ function Secao({ secao }: { secao: SectionKey }) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
       <AvisoSistemaBloqueado secao={secao} />
+      <FaixaAssinar lugar="lista" className="mb-5" />
       {/* cabeçalho */}
       {marca ? (
         <div>
