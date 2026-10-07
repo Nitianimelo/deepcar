@@ -62,10 +62,14 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Pendências e problemas conhecidos
 
-- [ ] **Cakto pós-compra:** nos 4 produtos, `upsell` + `upsellPage = https://deepcar.app.br/obrigado` (leva quem pagou de
-      volta à plataforma) e `contentDeliveries: emailAccess` + `emailAccessLink = https://deepcar.app.br/login` +
-      `sendConfirmationEmail` (e-mail da Cakto com o link de acesso). O "Redirect pós-pagamento" oficial (com
-      `{{callback}}`, para login automático em outro navegador) exige liberação do Compliance da Cakto por e-mail.
+- [ ] **Cakto pós-compra (só pelo PAINEL):** nos 4 produtos, página de upsell = `https://deepcar.app.br/obrigado` (leva
+      quem pagou de volta à plataforma), entrega "link de acesso por e-mail" = `https://deepcar.app.br/login` + e-mail de
+      confirmação, WhatsApp de suporte `+55 48 3197-4297`, e o **logo nos dois anuais** (Pro Anual e Full Anual estão sem
+      imagem no checkout; arquivo do logo = o mesmo do Pro mensal). **A API pública ignora** `upsell`, `upsellPage`,
+      `supportWhatsapp`, `contentDeliveries` e `image` (testado em 07/10 numa cópia do Pro: PUT 200, checkout seguiu
+      `upsell:false`; só `emailAccessLink` gravou; cópia apagada). Conferir depois no HTML do checkout
+      (`"upsell":true`, `"upsellPage":"https://deepcar.app.br/obrigado"`). O "Redirect pós-pagamento" oficial (com
+      `{{callback}}`, login automático em outro navegador) exige liberação do Compliance da Cakto por e-mail.
 - [ ] `README.md` desatualizado: a seção "Estado atual" ainda fala em login mock/localStorage, e a tabela da Vercel
       lista `LOGIN_USUARIO`/`LOGIN_SENHA`/`LOGIN_USUARIOS`, que as funções de `api/` não usam mais.
 - [ ] `npm run dev` não suporta o fluxo de contas do Neon (`/api/login` antigo, sem `/api/registrar`, `/api/sessao`, `/api/admin/*`).
@@ -125,8 +129,7 @@ Regras de trabalho estão em `AGENTE.md`.
   Quem libera o plano continua sendo só o webhook. `vercel.json` e `robots.txt`: `/obrigado` com noindex/Disallow.
 - **CRM (fora deste repo, iCloud `Grupo Inttus/crm-whatsapp`):** passo novo da régua "4. Pagamento confirmado":
   a sincronização (30 s) vê o plano sair do teste e manda na hora, a qualquer horário, com o link de login e o e-mail.
-- **Cakto (a fazer, ver Pendências):** apontar a página pós-compra dos 4 produtos para `https://deepcar.app.br/obrigado`
-  e ligar o e-mail de acesso.
+- **Cakto (a fazer pelo painel, ver Pendências):** a API pública ignora esses campos (testado numa cópia do produto).
 - **Banco / Variáveis:** sem mudança.
 - **Verificação:** build ok, lint 10 avisos (os mesmos); WebKit 390 e 1280 px com `/api/sessao` simulado:
   aguardando → liberado → `/app`, e sem sessão → login com o aviso.
