@@ -1,5 +1,7 @@
 // POST /api/registrar  { nome, email, whatsapp, senha }  → cria a conta (plano free) e já entra.
 // GET  /api/registrar  → { testeMinutos }: duração do teste que a página de cadastro anuncia (/admin → Planos).
+import { enviarEmail } from './_lib/email.js'
+import { emailBoasVindas } from './_lib/emails.js'
 import { sql, um } from './_lib/db.js'
 import { abrirJanelaFree, cifrarSenha, ehApp, corpo, criarSessao, porCookie, publicoCompleto } from './_lib/sessao.js'
 import { emailValido, nomeValido, normalizarWhatsapp, senhaValida, SENHA_MINIMA } from './_lib/validar.js'
@@ -81,7 +83,14 @@ export default async function handler(req, res) {
     const comJanela = await abrirJanelaFree(comPlano, { app: doApp || ehApp(req) })
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])
     porCookie(res, token, expira)
-    await meta // a funcao congela depois da resposta: o envio termina antes (no maximo 2,5 s, e nunca falha o cadastro)
+    // e-mail de boas-vindas (site e app), junto com a Meta: em paralelo, antes da resposta (a funcao congela depois)
+    const boasVindas = (async () => {
+      const m = emailBoasVindas(u)
+      if (await enviarEmail({ para: u.email, assunto: m.assunto, html: m.html, texto: m.texto, etiqueta: 'boas_vindas' })) {
+        await sql`update usuarios set email_boas_vindas_em = now() where id = ${u.id}`
+      }
+    })().catch(() => {})
+    await Promise.all([meta, boasVindas]) // no maximo ~6 s, e nunca falha o cadastro
     return res.status(201).json(await publicoCompleto(comJanela))
   } catch (err) {
     return res.status(err.status ?? 500).json({ erro: err.message ?? 'Não foi possível criar a conta.' })

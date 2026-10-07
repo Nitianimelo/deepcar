@@ -3,7 +3,6 @@ import { registrar as anotar } from '../lib/log'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AtSign, Eye, EyeOff, LockKeyhole } from 'lucide-react'
 import { login } from '../lib/auth'
-import { linkSuporte } from '../lib/plano'
 import { CircuitArt } from '../components/CircuitArt'
 import { TracePad } from '../components/TracePad'
 import { CarBlueprint } from '../components/CarBlueprint'
@@ -103,15 +102,12 @@ export default function Login() {
               <label className="block">
                 <span className="mb-1.5 flex items-center justify-between text-[13px] font-medium text-ink-2">
                   Senha
-                  <a
-                    href={linkSuporte(`Olá! Esqueci a senha da minha conta no Deepcar.${email.trim() ? ` Meu e-mail é ${email.trim()}.` : ''}`, 'Deepcar · esqueci a senha')}
-                    target="_blank"
-                    rel="noreferrer"
-                    data-tip="Fale com o suporte: a senha é redefinida pelo administrador"
+                  <Link
+                    to={`/esqueci-senha${email.trim() ? `?email=${encodeURIComponent(email.trim())}` : ''}`}
                     className="text-trace hover:text-trace-hi font-normal"
                   >
                     Esqueci a senha
-                  </a>
+                  </Link>
                 </span>
                 <span className="relative block">
                   <LockKeyhole size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" />

@@ -105,6 +105,8 @@ api/                      funções serverless da Vercel (JavaScript, Node)
   _lib/validar.js         validação de cadastro (regra que vale de verdade)
   _lib/cakto.js           webhook da Cakto: prova a origem, evento→ação, produto→plano
   _lib/assinatura.js      o que um pagamento faz com a conta (ativar, derrubar, atraso, pendente)
+  _lib/email.js           e-mail pelo Resend (cofre RESEND_API_KEY, de contato@deepcar.app.br, reply_to suporte) + modelo HTML com a logo
+  _lib/emails.js          textos: emailBoasVindas (no cadastro) e emailRedefinirSenha
   _lib/google.js          token OAuth da conta de serviço (FIREBASE_SERVICE_ACCOUNT) para FCM e Android Publisher
   _lib/push.js            notificações do app (FCM v1): enviarPush(), avisarTesteAcabou(), públicos do /admin
   _lib/play.js            assinatura pela Google Play: registrarCompraPlay() (confere + reconhece), conferirPlay() na sessão
@@ -175,7 +177,7 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
   depois do pagamento: espera o webhook liberar o plano e entra em `/app`; sem sessão manda ao login), `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
   `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`, `/privacidade` e `/excluir-conta` (públicas,
   exigidas pela Google Play para o app Android).
-- API: `POST /api/registrar` (`GET` devolve `{ testeMinutos }` para a página de cadastro), `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha), `POST /api/sessao` (`evento: 'checkout'` → InitiateCheckout na Meta; `evento: 'ativacao'` → marco de primeiros passos; `evento: 'consulta', item` → conta o esquema aberto no teste e responde `{ liberado }`; `evento: 'play', token` → assinatura feita no app; `evento: 'push', token` → aparelho para notificação; `evento: 'log'` → lote do registro de uso, aceito SEM login), `GET /api/admin/usuarios?acao=logs` (eventos + resumo), `GET|POST /api/admin/usuarios?acao=push` (avisos no app), `GET /api/admin/assinaturas?acao=cron` (cron diário 13h UTC, `CRON_SECRET`),
+- API: `POST /api/registrar` (`GET` devolve `{ testeMinutos }` para a página de cadastro), `POST /api/login` (`?acao=esqueci` { email } manda o link de nova senha; `?acao=redefinir` { token, senha } grava e derruba as sessões), `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha), `POST /api/sessao` (`evento: 'checkout'` → InitiateCheckout na Meta; `evento: 'ativacao'` → marco de primeiros passos; `evento: 'consulta', item` → conta o esquema aberto no teste e responde `{ liberado }`; `evento: 'play', token` → assinatura feita no app; `evento: 'push', token` → aparelho para notificação; `evento: 'log'` → lote do registro de uso, aceito SEM login), `GET /api/admin/usuarios?acao=logs` (eventos + resumo), `GET|POST /api/admin/usuarios?acao=push` (avisos no app), `GET /api/admin/assinaturas?acao=cron` (cron diário 13h UTC, `CRON_SECRET`),
   `GET|POST|PATCH|DELETE /api/admin/usuarios`, `GET|PUT /api/admin/planos`, `GET|PUT|DELETE /api/admin/segredos`,
   `POST /api/admin/inicializar`, `GET /api/placa/:placa`, `POST|GET /api/compartilhar`.
 - **Limite da Vercel (plano Hobby): 12 funções em `api/`** (sem contar `_lib/`), e o projeto já está com 12. Rota nova

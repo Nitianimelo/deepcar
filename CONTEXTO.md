@@ -116,6 +116,23 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-07 · E-mails: boas-vindas no cadastro e recuperação de senha
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Infra:** domínio `deepcar.app.br` verificado no Resend (região sa-east-1) por outra sessão a pedido do dono: DKIM
+  `resend._domainkey`, SPF/MX em `send.`, `_dmarc p=none`, MX da raiz em `inbound-smtp.sa-east-1.amazonaws.com`
+  (recebimento no Resend; o domínio não tinha MX). Chave (só envio) no **cofre** como `RESEND_API_KEY`. O rastreio de
+  cliques do Resend ficou ligado (reescreve links; desligar em Domains → Configuration se atrapalhar).
+- **O que mudou:** `api/_lib/email.js` (envio + modelo HTML: topo escuro com `public/brand/email-logo.png`, corpo claro,
+  botão, rodapé com WhatsApp; de "Deepcar <contato@deepcar.app.br>", resposta para o e-mail de suporte);
+  `api/_lib/emails.js` (boas-vindas com os 3 passos e o app Android; redefinir senha). `api/registrar.js` manda a
+  boas-vindas (site e app) e marca `usuarios.email_boas_vindas_em`. `api/login.js ?acao=esqueci|redefinir`: código de
+  32 bytes, só o sha-256 no banco (`redefinicoes_senha`, db/013), vale 1 h e uma vez, no máximo 3 pedidos/hora por
+  conta, mesma resposta exista ou não a conta; trocar a senha apaga todas as sessões. Telas `/esqueci-senha` e
+  `/redefinir-senha` (`src/pages/Senha.tsx`); "Esqueci a senha" do login leva para lá (antes abria o WhatsApp).
+  Política de privacidade: Resend como fornecedor. robots.txt sem as duas telas.
+- **Banco:** `013` **aplicada no Neon antes do push**.
+- **App Android:** "Esqueci a senha" do app ainda abre o WhatsApp (muda na próxima versão do app).
+
 ### 2026-10-07 · Navegador do Instagram e registro de uso (/admin → Logs)
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani, depois do levantamento de conversão (135 cadastros, 3 vendas
   pela Cakto; 66 usavam o navegador do Instagram/Facebook e nenhum pagou; só 11% voltaram depois do 1º dia).

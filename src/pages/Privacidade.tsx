@@ -104,6 +104,7 @@ export default function Privacidade() {
         <li>Cloudflare: armazenamento dos esquemas (não recebe dados pessoais).</li>
         <li>Cakto: processamento dos pagamentos feitos no site.</li>
         <li>Google (Google Play e Firebase): pagamentos feitos no aplicativo para Android e envio das notificações.</li>
+        <li>Resend: envio dos e-mails da Deepcar (boas-vindas e criação de nova senha), com o seu nome e e-mail.</li>
         <li>Falcon Data Hub: consulta dos dados do veículo a partir da placa.</li>
         <li>Meta (Facebook/Instagram): medição dos anúncios (pixel nas páginas públicas do site e aviso de cadastro e compra).</li>
       </ul>
