@@ -116,6 +116,11 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-07 · E-mails sem o compilla no "Responder para"
+- A pedido de Nitiani: `reply_to` dos e-mails passou de `nitiani@compilla.dev` para `contato@deepcar.app.br`
+  (`api/_lib/email.js`). Resposta de cliente cai na caixa de entrada do Resend (resend.com → Receiving); o rodapé tirou
+  "ou responda este e-mail" e deixa só o WhatsApp.
+
 ### 2026-10-07 · E-mails: boas-vindas no cadastro e recuperação de senha
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Infra:** domínio `deepcar.app.br` verificado no Resend (região sa-east-1) por outra sessão a pedido do dono: DKIM

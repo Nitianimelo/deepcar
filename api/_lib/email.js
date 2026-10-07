@@ -1,12 +1,13 @@
 // E-mails da Deepcar pelo Resend (07/10/2026). Remetente "Deepcar <contato@deepcar.app.br>" (domínio verificado no
-// Resend, DNS na Vercel; recebimento também no Resend). Respostas vão para o e-mail de suporte (reply_to).
+// Resend, DNS na Vercel; recebimento também no Resend). Respostas também vão para contato@ (caixa de entrada do Resend,
+// em resend.com → Receiving): por isso o rodapé manda para o WhatsApp, não para "responda este e-mail".
 // Chave no cofre: RESEND_API_KEY (só envio). Sem chave ou com erro, nunca derruba quem chamou.
 // Modelo: tabela de 600 px com estilos em linha (o que Gmail/Outlook/Apple Mail respeitam), topo escuro com a logo
 // branca (public/brand/email-logo.png), corpo claro, um botão principal e o rodapé com o WhatsApp do suporte.
 import { segredo } from './segredos.js'
 
 const DE = 'Deepcar <contato@deepcar.app.br>'
-const RESPONDER_PARA = 'nitiani@compilla.dev'
+const RESPONDER_PARA = 'contato@deepcar.app.br'
 export const SITE = 'https://deepcar.app.br'
 const WHATSAPP = '554831973217'
 const WHATSAPP_VISIVEL = '(48) 3197-3217'
@@ -38,8 +39,7 @@ export function modelo({ previa, titulo, corpo }) {
     </td></tr>
     <tr><td style="padding:22px 36px 28px;background:#f6f8fa;border-top:1px solid #e6eaef;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#5b6675">
       Dúvida ou problema? Fale com a gente no WhatsApp
-      <a href="https://wa.me/${WHATSAPP}" style="color:${AZUL};font-weight:bold;text-decoration:none">${WHATSAPP_VISIVEL}</a>
-      ou responda este e-mail.<br>
+      <a href="https://wa.me/${WHATSAPP}" style="color:${AZUL};font-weight:bold;text-decoration:none">${WHATSAPP_VISIVEL}</a>.<br>
       <span style="color:#8b98a5">Deepcar · esquemas elétricos automotivos · <a href="${SITE}" style="color:#8b98a5">deepcar.app.br</a></span>
     </td></tr>
   </table>
