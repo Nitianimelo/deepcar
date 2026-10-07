@@ -97,7 +97,7 @@ Regras de trabalho estão em `AGENTE.md`.
       servidor em `freeExpiraEm`). **Decisão do dono (2026-09-29): manter o app como está** por enquanto.
 - [ ] Conferir numa placa real se chassi e procedência aparecem (nomes dos campos não estão na documentação pública
       do Falcon; se não aparecerem, mandar a resposta bruta para ajustar `achar()` em `provedores/falcon.mjs`). Confirmar com o Falcon se o endereço
-      `beta.falcon-server.com.br/data-hub` é o definitivo. Plano grátis = 10 consultas/hora para todos os usuários juntos.
+      `beta.falcon-server.com.br/data-hub` é o definitivo. Plano **Premium** desde 07/10/2026 (R$ 49,90/mês): 1.000 req/hora e **200 placas NOVAS por dia** (placa já na base da Falcon não gasta cota).
 - [ ] Limpar variáveis antigas na Vercel que não são mais lidas ou ficam por baixo do cofre: `FALCON_TOKEN` (o valor do
       cofre tem prioridade), `CONSULTARPLACA_EMAIL` e `CONSULTARPLACA_API_KEY` (provedor removido).
 - [ ] Trocar a "página de vendas" dos 4 produtos na Cakto para `https://deepcar.app.br/` (painel). Enquanto isso, o
@@ -137,6 +137,16 @@ Regras de trabalho estão em `AGENTE.md`.
   `country` + `external_id`, com conta guarda também em/ph/fn/ln; evento do servidor montado com `fetch` interceptado:
   external_id com os 2 hashes, `country` = hash("br"), sem `test_event_code`. App Android sem mudança (campos opcionais).
 - **Pendências:** a nota do PageView/Contact sobe em até 48 h no Gerenciador de Eventos; conferir.
+
+### 2026-10-07 · "Limite do plano Falcon atingido" no app: cota diária de placas novas
+- **Sintoma:** cliente (app Android) recebia o limite; o dono, testando, não. **Causa:** o plano Iniciante (R$ 4,90) tem
+  100 req/hora mas só **20 placas novas por dia**; placas já na base da Falcon não contam (por isso o teste do dono
+  passava). Logs da Vercel: 6 respostas 503 (= 429 da Falcon) entre 11:10 e 11:28; painel "20 de 20 placas".
+- **Feito:** dono subiu para o **Premium** (1.000/hora, 200 placas novas/dia). Testado com a placa que falhou para o
+  cliente (QXT3I70): HTTP 200, `x-ratelimit-limit: 1000`. A chave (a "antiga", criada em 16/09) segue valendo até
+  21/11/2026: **criar uma chave nova no painel e regravar `FALCON_TOKEN` no cofre antes disso.**
+- **Sugerido, não feito:** trocar a mensagem crua "Limite do plano Falcon atingido" por uma que não cite o fornecedor
+  e leve à busca por marca/modelo.
 
 ### 2026-10-07 · Número de WhatsApp trocado (o antigo foi bloqueado pela Meta)
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
