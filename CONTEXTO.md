@@ -116,6 +116,13 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-07 · App 1.3.0 em revisão para produção; assinaturas da Play criadas
+- API "Google Play Android Developer" ativada no projeto `deepcar-671ea`; a conta de serviço do cofre tem acesso ao
+  Play Console. Assinaturas ativas (só BR): `deepcar_pro` R$ 56,90/mês e R$ 340,90/ano; `deepcar_full` R$ 70,90/mês e
+  R$ 431,90/ano (preço do site ÷ 0,85, para compensar os 15% da Google). App 1.3.0 enviado para produção (em revisão).
+  Testado no emulador: notificação real do servidor chegou e abriu a aba Plano; consulta contada; erro de pagamento
+  tratado. Compra real ainda não testada. Detalhes no CONTEXTO.md do app (iCloud `Grupo Inttus/deepcar-android`).
+
 ### 2026-10-07 · Servidor pronto para o app 1.3.0: assinatura pela Google Play e notificações
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Pedido:** vender dentro do app (preços +15% para compensar a Google), "teste acabou, assine um plano" por
