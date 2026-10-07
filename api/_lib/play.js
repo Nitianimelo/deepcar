@@ -6,6 +6,7 @@
 //
 // Produtos no Play Console: assinaturas `deepcar_pro` e `deepcar_full`, planos base `mensal` e `anual`.
 // Os preços do app ficam só no Play Console (com os 15% da Google compensados; ver CONTEXTO.md).
+import { createHash } from 'node:crypto'
 import { sql, um } from './db.js'
 import { chamarGoogle, ESCOPO_PLAY } from './google.js'
 
@@ -31,14 +32,18 @@ export async function consultarCompra(token) {
   }
 }
 
+/** O identificador da conta que o app manda à Google na compra (src/lib/assinatura.ts do app). */
+export const contaPlay = (email) => createHash('sha256').update(String(email ?? '').trim().toLowerCase()).digest('hex')
+
 const valendo = (c) => !!c.plano && VALE.has(c.estado) && !!c.expira && c.expira > new Date()
 
 /** Compra feita agora no app (ou "restaurar compras"). Devolve a conta atualizada. */
 export async function registrarCompraPlay(u, token) {
   if (!/^[\w.:-]{20,600}$/.test(String(token ?? ''))) throw Object.assign(new Error('Compra inválida.'), { status: 400 })
   const c = await consultarCompra(token)
-  // a compra leva o id da conta (obfuscatedAccountId, mandado pelo app): não deixa usar a compra de outra pessoa
-  if (c.conta && c.conta !== u.id) throw Object.assign(new Error('Esta compra pertence a outra conta da Deepcar.'), { status: 409 })
+  // a compra leva a conta (obfuscatedAccountId = sha-256 do e-mail em minúsculas, mandado pelo app; o app não sabe o id):
+  // não deixa usar a compra de outra pessoa
+  if (c.conta && c.conta !== contaPlay(u.email)) throw Object.assign(new Error('Esta compra pertence a outra conta da Deepcar.'), { status: 409 })
   const outra = await um(sql`select id from usuarios where play_token = ${token} and id <> ${u.id}`)
   if (outra) throw Object.assign(new Error('Esta compra já está ligada a outra conta da Deepcar.'), { status: 409 })
   if (!valendo(c)) throw Object.assign(new Error('A Google Play não confirmou esta assinatura como ativa.'), { status: 402 })
