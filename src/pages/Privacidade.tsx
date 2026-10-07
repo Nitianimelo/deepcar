@@ -38,8 +38,16 @@ export default function Privacidade() {
           não repetir a consulta. O histórico das suas últimas consultas fica guardado só no seu aparelho.
         </li>
         <li>
-          <b>Pagamentos:</b> as assinaturas são processadas pela Cakto. Recebemos dela o plano, o estado do pagamento e o
-          e-mail do comprador, para liberar o acesso. Não recebemos nem guardamos dados de cartão.
+          <b>Pagamentos:</b> as assinaturas feitas no site são processadas pela Cakto. Recebemos dela o plano, o estado do
+          pagamento e o e-mail do comprador, para liberar o acesso. As assinaturas feitas no aplicativo para Android são
+          processadas pela Google Play: recebemos o código da compra, o plano e até quando ele vale, e consultamos a Google
+          para confirmar renovações e cancelamentos. Não recebemos nem guardamos dados de cartão.
+        </li>
+        <li>
+          <b>Notificações (só no aplicativo para Android):</b> se você permitir, guardamos um código do aparelho gerado pelo
+          Firebase Cloud Messaging, ligado à sua conta, para enviar avisos como o fim do teste grátis e novidades da
+          Deepcar. Dá para desligar nas configurações do Android; o código é apagado quando o aplicativo é desinstalado ou
+          a conta é excluída.
         </li>
         <li>
           <b>Links compartilhados:</b> quando você compartilha um esquema, registramos o link, o esquema, quantas vezes
@@ -88,7 +96,8 @@ export default function Privacidade() {
         <li>Vercel: hospedagem do site e do servidor.</li>
         <li>Neon: banco de dados onde ficam as contas.</li>
         <li>Cloudflare: armazenamento dos esquemas (não recebe dados pessoais).</li>
-        <li>Cakto: processamento dos pagamentos.</li>
+        <li>Cakto: processamento dos pagamentos feitos no site.</li>
+        <li>Google (Google Play e Firebase): pagamentos feitos no aplicativo para Android e envio das notificações.</li>
         <li>Falcon Data Hub: consulta dos dados do veículo a partir da placa.</li>
         <li>Meta (Facebook/Instagram): medição dos anúncios (pixel nas páginas públicas do site e aviso de cadastro e compra).</li>
       </ul>

@@ -7,6 +7,7 @@ import { createHash, randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
 import { sql, um } from './db.js'
 import { acessoDe, MINUTOS_TESTE_PADRAO, minutosTeste } from './planos.js'
+import { conferirPlay } from './play.js'
 
 const scryptAsync = promisify(scrypt)
 const COOKIE = 'deepcar_sessao'
@@ -18,8 +19,11 @@ export const MINUTOS_FREE = MINUTOS_TESTE_PADRAO
 /** Planos pagos: nao tem relogio de teste. */
 export const PAGOS = new Set(['pro', 'full'])
 
-/** Requisicao do app Android (HTTP nativo do Capacitor): navegador nenhum manda esse agente. */
-export const ehApp = (req) => /^Dalvik\//.test(String(req?.headers?.['user-agent'] ?? ''))
+/**
+ * App Android ANTIGO (ate 1.2.0): HTTP nativo do Capacitor (agente Dalvik) sem o cabecalho X-Deepcar-App.
+ * O app 1.3.0+ manda X-Deepcar-App (versao) e avisa os esquemas abertos, entao vale o teste por consultas do site.
+ */
+export const ehApp = (req) => /^Dalvik\//.test(String(req?.headers?.['user-agent'] ?? '')) && !req?.headers?.['x-deepcar-app']
 
 /**
  * Prazo de seguranca do teste no site (07/10/2026): o teste do site vale por consultas (api/_lib/consultas.js) e
@@ -119,14 +123,15 @@ export async function usuarioDaSessao(req) {
   const linha = await um(sql`
     select u.id, u.email, u.nome, u.oficina, u.plano, u.papel, u.ativo, u.whatsapp, u.free_expira_em,
            u.assinatura_status, u.assinatura_plano, u.assinatura_renova_em, u.assinatura_em_atraso,
-           u.assinatura_ciclo, u.plano_expira_em, u.assinatura_origem
+           u.assinatura_ciclo, u.plano_expira_em, u.assinatura_origem, u.play_token, u.play_expira_em, u.play_conferido_em
       from sessoes s join usuarios u on u.id = s.usuario_id
      where s.token = ${digerir(token)} and s.expira_em > now()`)
   if (!linha || !linha.ativo) return null
   // ultimo uso do aparelho (o limite de dispositivos derruba o parado ha mais tempo); no maximo 1 escrita a cada 5 min
   await sql`update sessoes set visto_em = now()
              where token = ${digerir(token)} and (visto_em is null or visto_em < now() - interval '5 minutes')`
-  return vencerAnual(linha)
+  // assinatura da Google Play com o prazo vencido: pergunta à Google se renovou (api/_lib/play.js)
+  return conferirPlay(await vencerAnual(linha))
 }
 
 export async function encerrarSessao(req) {
@@ -179,6 +184,8 @@ export const publico = (u) => ({
         ciclo: u.assinatura_ciclo ?? null,
         // fim do anual (ISO); nulo no mensal, que vale ate o evento de cancelamento
         validoAte: u.plano_expira_em ? new Date(u.plano_expira_em).toISOString() : null,
+        // 'play' = assinada no app (gerencia/cancela na Google Play); 'cakto' ou 'manual' = pelo site/suporte
+        origem: u.assinatura_origem ?? null,
       }
     : null,
 })

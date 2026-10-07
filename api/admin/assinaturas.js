@@ -3,14 +3,18 @@
 //   GET    /api/admin/assinaturas                      pendentes + ultimos eventos
 //   POST   /api/admin/assinaturas?id=...               { usuarioId } vincula a pendencia a uma conta
 //   POST   /api/admin/assinaturas?id=...&acao=descartar marca a pendencia como cancelada
+//   GET    /api/admin/assinaturas?acao=cron            cron diario da Vercel (Authorization: Bearer CRON_SECRET):
+//          notificacao "teste acabou" para quem venceu pelo prazo nos ultimos 3 dias e tem o app (api/_lib/push.js)
 import { sql } from '../_lib/db.js'
 import { corpo, exigir } from '../_lib/sessao.js'
 import { vincularPendente } from '../_lib/assinatura.js'
+import { avisarTesteAcabou } from '../_lib/push.js'
 
 export const config = { runtime: 'nodejs' }
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store')
+  if (req.query.acao === 'cron') return cron(req, res)
   const admin = await exigir(req, res, { admin: true })
   if (!admin) return
 
@@ -55,4 +59,14 @@ export default async function handler(req, res) {
   } catch (err) {
     return res.status(err.status ?? 500).json({ erro: err.message ?? 'Falha na operação.' })
   }
+}
+
+async function cron(req, res) {
+  const segredoCron = process.env.CRON_SECRET
+  if (!segredoCron || req.headers.authorization !== `Bearer ${segredoCron}`) return res.status(401).json({ erro: 'Não autorizado.' })
+  const contas = await sql`select distinct u.id from usuarios u join aparelhos_push a on a.usuario_id = u.id
+                            where u.plano = 'free' and u.papel <> 'admin' and u.push_teste_acabou_em is null
+                              and u.free_expira_em <= now() and u.free_expira_em > now() - interval '3 days'`
+  for (const c of contas) await avisarTesteAcabou(c.id)
+  return res.status(200).json({ avisados: contas.length })
 }

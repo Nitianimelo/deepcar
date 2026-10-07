@@ -4,9 +4,13 @@
 //   POST   /api/admin/usuarios            cria { nome, email, senha, whatsapp, plano, papel, oficina }
 //   PATCH  /api/admin/usuarios?id=...     muda { plano, papel, ativo, nome, oficina, senha, whatsapp, liberarFree, encerrarSessoes }
 //   DELETE /api/admin/usuarios?id=...     remove (as sessões vão junto)
+//   GET    /api/admin/usuarios?acao=push  avisos já enviados + quantos aparelhos há por público
+//   POST   /api/admin/usuarios?acao=push  { titulo, texto, publico: todos|teste|pagos } notificação no app Android
+//          (fica aqui porque a Vercel Hobby aceita só 12 funções)
 import { sql, um } from '../_lib/db.js'
 import { cifrarSenha, corpo, exigir } from '../_lib/sessao.js'
 import { normalizarWhatsapp, SENHA_MINIMA } from '../_lib/validar.js'
+import { enviarPush, NOMES_PUBLICO, tokensDoPublico } from '../_lib/push.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -19,6 +23,7 @@ export default async function handler(req, res) {
   if (!admin) return
 
   try {
+    if (req.query.acao === 'push') return await avisos(req, res, admin)
     const id = req.query.id
     if (req.method === 'GET') {
       const termo = String(req.query.q ?? '').trim()
@@ -118,4 +123,26 @@ export default async function handler(req, res) {
   } catch (err) {
     return res.status(err.status ?? 500).json({ erro: err.message ?? 'Falha na operação.' })
   }
+}
+
+// Avisos no app (push). Título até 65 e texto até 240 caracteres (o que a notificação do Android mostra inteiro).
+async function avisos(req, res, admin) {
+  if (req.method === 'GET') {
+    const [historico, contagem] = await Promise.all([
+      sql`select n.id, n.titulo, n.texto, n.publico, n.aparelhos, n.entregues, n.enviado_em, u.nome as enviado_por
+            from notificacoes n left join usuarios u on u.id = n.enviado_por order by n.enviado_em desc limit 30`,
+      Promise.all(NOMES_PUBLICO.map(async (p) => [p, (await tokensDoPublico(p)).length])),
+    ])
+    return res.status(200).json({ historico, aparelhos: Object.fromEntries(contagem) })
+  }
+  if (req.method !== 'POST') return res.status(405).json({ erro: 'Use GET ou POST.' })
+  const d = corpo(req)
+  const titulo = String(d.titulo ?? '').trim(), texto = String(d.texto ?? '').trim(), publico = String(d.publico ?? 'todos')
+  if (!titulo || !texto) return res.status(400).json({ erro: 'Escreva o título e o texto.' })
+  if (titulo.length > 65 || texto.length > 240) return res.status(400).json({ erro: 'Título até 65 e texto até 240 caracteres.' })
+  const tokens = await tokensDoPublico(publico)
+  const entregues = await enviarPush(tokens, { titulo, texto, link: '/' })
+  await sql`insert into notificacoes (titulo, texto, publico, aparelhos, entregues, enviado_por)
+            values (${titulo}, ${texto}, ${publico}, ${tokens.length}, ${entregues}, ${admin.id})`
+  return res.status(200).json({ aparelhos: tokens.length, entregues })
 }

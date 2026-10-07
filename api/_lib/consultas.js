@@ -10,6 +10,7 @@
 //   prazo de horas continua (abrirJanelaFree com app = true).
 import { sql, um } from './db.js'
 import { freeAcabou, PAGOS } from './sessao.js'
+import { avisarTesteAcabou } from './push.js'
 
 export const CONSULTAS_TESTE = 5
 const FOLGA_MIN = 30
@@ -28,6 +29,7 @@ export async function podeConsultar(u, tipo, item) {
   const linha = await um(sql`select consultas from usuarios where id = ${u.id}`)
   if ((linha?.consultas ?? 0) < CONSULTAS_TESTE) return true
   await sql`update usuarios set free_expira_em = now() where id = ${u.id} and plano = 'free'`
+  await avisarTesteAcabou(u.id) // notificação no app (uma vez só)
   return false
 }
 

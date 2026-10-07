@@ -126,5 +126,11 @@
         }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/admin/assinaturas?acao=cron",
+      "schedule": "0 13 * * *"
+    }
   ]
 }

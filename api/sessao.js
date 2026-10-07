@@ -11,11 +11,15 @@
 // (src/lib/funil.ts). Guarda só a primeira data; aparece no /admin.
 // POST /api/sessao { evento: 'consulta', item } → esquema aberto no site (src/lib/consulta.ts): conta a consulta do
 // teste grátis e responde { liberado }. Sem liberado, o teste acabou e a tela borra (api/_lib/consultas.js).
+// POST /api/sessao { evento: 'play', token } → assinatura feita no app Android (Google Play Billing): o servidor confere
+// com a Google, reconhece a compra e libera o plano; responde a sessão completa (api/_lib/play.js). Também "restaurar".
+// POST /api/sessao { evento: 'push', token } → aparelho do app aceitou notificação (token do FCM, api/_lib/push.js).
 import { randomUUID } from 'node:crypto'
 import { sql, um } from './_lib/db.js'
 import { dadosDoNavegador, enviarEvento, visitanteValido } from './_lib/meta.js'
 import { abrirJanelaFree, conferirSenha, corpo, ehApp, limparCookie, publicoCompleto, usuarioDaSessao } from './_lib/sessao.js'
 import { registrarConsulta } from './_lib/consultas.js'
+import { registrarCompraPlay } from './_lib/play.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -29,6 +33,8 @@ export default async function handler(req, res) {
       const { evento } = corpo(req)
       if (evento === 'ativacao') return await marcarAtivacao(req, res, u)
       if (evento === 'consulta') return await consultaEsquema(req, res, u)
+      if (evento === 'play') return res.status(200).json(await publicoCompleto(await registrarCompraPlay(u, corpo(req).token)))
+      if (evento === 'push') return await registrarAparelho(req, res, u)
       return await eventoCheckout(req, res, u)
     }
     if (req.method !== 'GET') {
@@ -38,7 +44,7 @@ export default async function handler(req, res) {
     // conta criada pelo /admin, ou rebaixada para free: o relógio parte no primeiro acesso
     return res.status(200).json(await publicoCompleto(await abrirJanelaFree(u, { app: ehApp(req) })))
   } catch (err) {
-    return res.status(500).json({ erro: err.message ?? 'Falha ao ler a sessão.' })
+    return res.status(err.status ?? 500).json({ erro: err.message ?? 'Falha ao ler a sessão.' })
   }
 }
 
@@ -103,4 +109,13 @@ async function consultaEsquema(req, res, u) {
   if (!item || item.length > 240 || /\p{Cc}/u.test(item)) return res.status(400).json({ erro: 'Esquema inválido.' })
   const r = await registrarConsulta(u, 'esquema', item)
   return res.status(200).json({ liberado: r.liberado })
+}
+
+// token do Firebase do aparelho: um aparelho pertence a uma conta (outra conta no mesmo celular "toma" o token)
+async function registrarAparelho(req, res, u) {
+  const token = String(corpo(req).token ?? '').trim()
+  if (!/^[\w:.-]{20,400}$/.test(token)) return res.status(400).json({ erro: 'Aparelho inválido.' })
+  await sql`insert into aparelhos_push (token, usuario_id) values (${token}, ${u.id})
+            on conflict (token) do update set usuario_id = excluded.usuario_id, visto_em = now()`
+  return res.status(204).end()
 }

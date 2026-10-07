@@ -2,7 +2,7 @@
 // Toda a autorização é do servidor (api/admin/*): aqui a checagem só evita mostrar a tela.
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { BadgeDollarSign, Check, Copy, Eye, EyeOff, KeyRound, Layers, Link2, Loader2, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
+import { BadgeDollarSign, Bell, Check, Copy, Eye, EyeOff, KeyRound, Layers, Link2, Loader2, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
 import { useSessao } from '../lib/auth'
 import { rotuloPlano, tempoRestante } from '../lib/plano'
 import { mascararWhatsapp, SENHA_MINIMA } from '../lib/validacao'
@@ -124,7 +124,7 @@ function teste(ate: string | null) {
 
 export default function Admin() {
   const { session, conferindo } = useSessao()
-  const [aba, setAba] = useState<'usuarios' | 'planos' | 'assinaturas' | 'chaves'>('usuarios')
+  const [aba, setAba] = useState<'usuarios' | 'planos' | 'assinaturas' | 'avisos' | 'chaves'>('usuarios')
 
   if (!session) return conferindo ? <div aria-busy="true" className="min-h-screen" /> : <Navigate to="/login" replace />
   if (session.papel !== 'admin') return <Navigate to="/app" replace />
@@ -137,7 +137,7 @@ export default function Admin() {
           <span className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Administração</span>
         </div>
         <div className="flex items-center gap-1 rounded-lg border seam bg-bench-2 p-1">
-          {([['usuarios', 'Usuários', Users], ['planos', 'Planos', Layers], ['assinaturas', 'Assinaturas', BadgeDollarSign], ['chaves', 'Chaves de API', KeyRound]] as const).map(([k, rotulo, Icone]) => (
+          {([['usuarios', 'Usuários', Users], ['planos', 'Planos', Layers], ['assinaturas', 'Assinaturas', BadgeDollarSign], ['avisos', 'Avisos no app', Bell], ['chaves', 'Chaves de API', KeyRound]] as const).map(([k, rotulo, Icone]) => (
             <button
               key={k}
               type="button"
@@ -154,6 +154,7 @@ export default function Admin() {
         {aba === 'usuarios' && <AbaUsuarios meuEmail={session.email} />}
         {aba === 'planos' && <AbaPlanos />}
         {aba === 'assinaturas' && <AbaAssinaturas />}
+        {aba === 'avisos' && <AbaAvisos />}
         {aba === 'chaves' && <AbaChaves />}
       </main>
     </div>
@@ -934,6 +935,79 @@ function FormaNovoUsuario({ onPronto, onErro }: { onPronto: (u: Usuario) => void
         <button type="submit" className="btn-primary" disabled={salvando}>{salvando ? 'Criando…' : 'Criar conta'}</button>
       </div>
     </form>
+  )
+}
+
+type Aviso = { id: number; titulo: string; texto: string; publico: string; aparelhos: number; entregues: number; enviado_em: string; enviado_por: string | null }
+const PUBLICOS_AVISO = [['todos', 'Todos com o app'], ['teste', 'Só quem está no teste'], ['pagos', 'Só assinantes']] as const
+
+/** Notificação no celular de quem tem o app Android e aceitou (api/admin/usuarios ?acao=push). Novidades, funções novas. */
+function AbaAvisos() {
+  const [historico, setHistorico] = useState<Aviso[]>([])
+  const [aparelhos, setAparelhos] = useState<Record<string, number>>({})
+  const [titulo, setTitulo] = useState('')
+  const [texto, setTexto] = useState('')
+  const [publico, setPublico] = useState<string>('todos')
+  const [enviando, setEnviando] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null)
+
+  const carregar = useCallback(async () => {
+    try {
+      const r = (await api('/api/admin/usuarios?acao=push')) as { historico: Aviso[]; aparelhos: Record<string, number> }
+      setHistorico(r.historico ?? []); setAparelhos(r.aparelhos ?? {})
+    } catch (e) { setMsg({ ok: false, texto: e instanceof Error ? e.message : 'Falha ao carregar.' }) }
+  }, [])
+  useEffect(() => { const t = setTimeout(() => void carregar(), 0); return () => clearTimeout(t) }, [carregar])
+
+  async function enviar(e: FormEvent) {
+    e.preventDefault()
+    const n = aparelhos[publico] ?? 0
+    if (!confirm(`Mandar "${titulo}" para ${n} ${n === 1 ? 'aparelho' : 'aparelhos'}? Não dá para desfazer.`)) return
+    setEnviando(true); setMsg(null)
+    try {
+      const r = (await api('/api/admin/usuarios?acao=push', { method: 'POST', body: JSON.stringify({ titulo, texto, publico }) })) as { aparelhos: number; entregues: number }
+      setMsg({ ok: true, texto: `Enviado: ${r.entregues} de ${r.aparelhos} aparelhos receberam.` })
+      setTitulo(''); setTexto(''); await carregar()
+    } catch (e2) { setMsg({ ok: false, texto: e2 instanceof Error ? e2.message : 'Não foi possível enviar.' }) }
+    finally { setEnviando(false) }
+  }
+
+  return (
+    <>
+      <h1 className="text-[26px] font-semibold tracking-tight">Avisos no app</h1>
+      <p className="mt-1 text-ink-3">Notificação no celular de quem tem o app Android e aceitou receber. Use para novidades e funções novas.
+        O aviso de &quot;teste acabou&quot; sai sozinho.</p>
+      <form onSubmit={enviar} className="mt-6 max-w-2xl space-y-4 rounded-xl border seam bg-bench-2 p-5">
+        <label className="block text-[13px] text-ink-3">Título <span className="text-ink-4">({titulo.length}/65)</span>
+          <input className="field mt-1.5 h-11" maxLength={65} value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Novidade na Deepcar" required />
+        </label>
+        <label className="block text-[13px] text-ink-3">Texto <span className="text-ink-4">({texto.length}/240)</span>
+          <textarea className="field mt-1.5 min-h-24 py-2.5" maxLength={240} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Agora dá para buscar os esquemas de câmbio diesel pela placa." required />
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {PUBLICOS_AVISO.map(([k, rotulo]) => (
+            <button key={k} type="button" onClick={() => setPublico(k)} className={`rounded-lg border px-3 py-2 text-[13px] ${publico === k ? 'border-trace/50 bg-trace/15 text-ink-1' : 'seam text-ink-3 hover:text-ink-1'}`}>
+              {rotulo} <span className="text-ink-4">· {aparelhos[k] ?? 0}</span>
+            </button>
+          ))}
+        </div>
+        <button type="submit" disabled={enviando || !titulo.trim() || !texto.trim()} className="btn-primary inline-flex !h-11 items-center gap-2 px-5">
+          {enviando ? <Loader2 size={16} className="animate-spin" /> : <Bell size={16} />} Mandar aviso
+        </button>
+        {msg && <p role="status" className={`text-sm ${msg.ok ? 'text-ok' : 'text-fault'}`}>{msg.texto}</p>}
+      </form>
+      <h2 className="mt-8 code text-[11px] uppercase tracking-[0.2em] text-ink-4">Já enviados</h2>
+      <ul className="mt-3 max-w-2xl space-y-2">
+        {historico.length === 0 && <li className="text-sm text-ink-4">Nenhum aviso enviado ainda.</li>}
+        {historico.map((a) => (
+          <li key={a.id} className="rounded-lg border seam bg-bench-2 px-4 py-3 text-[13.5px]">
+            <p className="font-medium text-ink-1">{a.titulo}</p>
+            <p className="mt-0.5 text-ink-2">{a.texto}</p>
+            <p className="mt-1.5 text-[12px] text-ink-4">{new Date(a.enviado_em).toLocaleString('pt-BR')} · {PUBLICOS_AVISO.find(([k]) => k === a.publico)?.[1] ?? a.publico} · {a.entregues} de {a.aparelhos} aparelhos{a.enviado_por ? ` · ${a.enviado_por}` : ''}</p>
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }
 

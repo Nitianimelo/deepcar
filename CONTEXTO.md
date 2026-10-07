@@ -116,6 +116,31 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-07 · Servidor pronto para o app 1.3.0: assinatura pela Google Play e notificações
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Pedido:** vender dentro do app (preços +15% para compensar a Google), "teste acabou, assine um plano" por
+  notificação, avisos manuais do dono, 5 consultas também no app.
+- **O que mudou:**
+  - `db/011_app_play_e_push.sql`: colunas `play_*` e `push_teste_acabou_em` em `usuarios`; tabelas `aparelhos_push` e
+    `notificacoes`.
+  - `api/_lib/google.js` (token OAuth da conta de serviço do cofre), `api/_lib/push.js` (FCM v1; apaga aparelho
+    UNREGISTERED), `api/_lib/play.js` (purchases.subscriptionsv2 + acknowledge; produtos `deepcar_pro`/`deepcar_full`,
+    planos base `mensal`/`anual`; a compra leva o id da conta em `obfuscatedAccountId`; token único por conta).
+  - `api/sessao.js`: eventos `play` e `push`; erros com o status certo. `api/_lib/sessao.js`: `conferirPlay()` ao conferir
+    a sessão (prazo vencido → pergunta à Google: renova ou volta ao teste encerrado); `ehApp()` = Dalvik SEM
+    `X-Deepcar-App` (só o app antigo fica com o teste em horas); `publico().assinatura.origem`.
+  - `api/_lib/consultas.js`: ao encerrar o teste pela 6ª consulta, `avisarTesteAcabou()`.
+  - `api/admin/usuarios.js ?acao=push` + aba **"Avisos no app"** no /admin (título 65, texto 240, públicos todos/teste/
+    pagos, histórico). `api/admin/assinaturas.js ?acao=cron` + `vercel.json` crons (13:00 UTC = 10h): "teste acabou"
+    para quem venceu pelo prazo nos últimos 3 dias e tem o app.
+  - `Privacidade.tsx`: pagamentos pela Google Play e notificações (token do Firebase).
+- **Banco:** `011` **aplicada no Neon antes do push**. **Variáveis:** `CRON_SECRET` (Production) criado.
+- **Verificação:** build ok, lint 10 avisos; contra o banco com conta descartável (apagada): app com `X-Deepcar-App`
+  recebe 7 dias; registrar aparelho 204 e inválido 400; compra Play inválida 400; 6ª consulta encerra e marca o aviso;
+  cron 401 sem segredo e 200 com. Ainda NÃO testado com compra real (depende das assinaturas no Play Console).
+- **Pendências:** ativar a "Google Play Android Developer API" no Google Cloud (projeto deepcar-671ea; o dono precisa
+  aceitar os termos do Cloud) e convidar a conta de serviço no Play Console; cadastrar as assinaturas; app 1.3.0.
+
 ### 2026-10-07 · Firebase para notificações push do app (configuração, sem código ainda)
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **Feito:** projeto Firebase **"Deepcar" (`deepcar-671ea`, nº 522361338790, plano Spark gratuito)**, criado pelo dono.
