@@ -62,14 +62,9 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Pendências e problemas conhecidos
 
-- [ ] **Cakto pós-compra (só pelo PAINEL):** nos 4 produtos, página de upsell = `https://deepcar.app.br/obrigado` (leva
-      quem pagou de volta à plataforma), entrega "link de acesso por e-mail" = `https://deepcar.app.br/login` + e-mail de
-      confirmação, WhatsApp de suporte `+55 48 3197-4297`, e o **logo nos dois anuais** (Pro Anual e Full Anual estão sem
-      imagem no checkout; arquivo do logo = o mesmo do Pro mensal). **A API pública ignora** `upsell`, `upsellPage`,
-      `supportWhatsapp`, `contentDeliveries` e `image` (testado em 07/10 numa cópia do Pro: PUT 200, checkout seguiu
-      `upsell:false`; só `emailAccessLink` gravou; cópia apagada). Conferir depois no HTML do checkout
-      (`"upsell":true`, `"upsellPage":"https://deepcar.app.br/obrigado"`). O "Redirect pós-pagamento" oficial (com
-      `{{callback}}`, login automático em outro navegador) exige liberação do Compliance da Cakto por e-mail.
+- [ ] Login automático de quem paga em OUTRO navegador (ex.: Pix pago no celular): exige o "Redirect pós-pagamento"
+      oficial da Cakto (`{{callback}}`), liberado pelo Compliance por e-mail. Hoje quem compra de dentro da plataforma
+      já volta logado (mesmo navegador).
 - [ ] `README.md` desatualizado: a seção "Estado atual" ainda fala em login mock/localStorage, e a tabela da Vercel
       lista `LOGIN_USUARIO`/`LOGIN_SENHA`/`LOGIN_USUARIOS`, que as funções de `api/` não usam mais.
 - [ ] `npm run dev` não suporta o fluxo de contas do Neon (`/api/login` antigo, sem `/api/registrar`, `/api/sessao`, `/api/admin/*`).
@@ -114,6 +109,20 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-10-07 · Cakto: página pós-compra, WhatsApp de suporte e logo nos 4 produtos
+- **Quem:** Claude Code (Opus 5.5), pelo Safari do dono (painel app.cakto.com.br logado), a pedido de Nitiani
+- **O que mudou na Cakto (os 4 produtos):** `upsell: true` + `upsellPage: https://deepcar.app.br/obrigado` (quem paga
+  volta para a plataforma), `supportWhatsapp: +554831974297` (aparece no checkout), `sendConfirmationEmail` confirmado
+  ligado (já estava; o e-mail da Cakto sai na hora do pagamento) e **logo da Deepcar** no Pro Anual e no Full Anual
+  (estavam sem imagem). Preços conferidos iguais (47,90 / 59,90 / 289,49 / 366,95).
+- **Como foi feito (a API pública ignora esses campos):** pela API INTERNA do painel (`api.cakto.com.br/api/product/<id>/`,
+  cookie da sessão + `X-CSRFToken` de `/api/get-csrf-token/`), rodando JavaScript na aba do painel via AppleScript.
+  O PUT leva os mesmos campos que o próprio painel manda ao salvar (sem `image`). Imagem: `PUT /api/product/<id>/image/`
+  multipart, campo `image`.
+- **Incidente:** o 1º salvamento pela TELA (aba Upsell e Downsell) disparou também `DELETE /api/product/<id>/image/` e
+  tirou o logo do Pro do checkout por alguns minutos; o logo foi reenviado. **Ao salvar pelo painel, conferir a imagem.**
+- **Conferido no HTML público dos 4 checkouts:** `"upsell":true`, `upsellPage` = /obrigado, `sellerWhatsapp`, imagem.
 
 ### 2026-10-07 · Depois da compra: página /obrigado e WhatsApp de pagamento confirmado
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
