@@ -5,10 +5,16 @@
 //   POST   /api/admin/assinaturas?id=...&acao=descartar marca a pendencia como cancelada
 //   GET    /api/admin/assinaturas?acao=cron            cron diario da Vercel (Authorization: Bearer CRON_SECRET):
 //          notificacao "teste acabou" para quem venceu pelo prazo nos ultimos 3 dias e tem o app (api/_lib/push.js)
+//          e o e-mail "teste acabou" para quem venceu pelo prazo (api/_lib/emails.js)
 import { sql } from '../_lib/db.js'
 import { corpo, exigir } from '../_lib/sessao.js'
 import { vincularPendente } from '../_lib/assinatura.js'
 import { avisarTesteAcabou } from '../_lib/push.js'
+import { avisarTesteAcabouEmail } from '../_lib/emails.js'
+
+// e-mail automatico so para testes que acabam depois de ele existir: os 96 vencidos antes (regra antiga de 10 h)
+// ficam para um envio separado, aprovado pelo dono
+const EMAIL_DESDE = '2026-10-07T23:44:00Z'
 
 export const config = { runtime: 'nodejs' }
 
@@ -68,7 +74,11 @@ async function cron(req, res) {
                             where u.plano = 'free' and u.papel <> 'admin' and u.push_teste_acabou_em is null
                               and u.free_expira_em <= now() and u.free_expira_em > now() - interval '3 days'`
   for (const c of contas) await avisarTesteAcabou(c.id)
+  const porEmail = await sql`select id from usuarios
+                              where plano = 'free' and papel <> 'admin' and ativo and email_teste_acabou_em is null
+                                and free_expira_em <= now() and free_expira_em > greatest(now() - interval '3 days', ${EMAIL_DESDE}::timestamptz)`
+  for (const c of porEmail) await avisarTesteAcabouEmail(c.id)
   // registro de uso: guarda 120 dias (o /admin → Logs olha no máximo 90)
   const limpos = await sql`delete from eventos_uso where em < now() - interval '120 days' returning 1`
-  return res.status(200).json({ avisados: contas.length, eventosApagados: limpos.length })
+  return res.status(200).json({ avisados: contas.length, emails: porEmail.length, eventosApagados: limpos.length })
 }

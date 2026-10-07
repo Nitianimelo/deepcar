@@ -1,4 +1,5 @@
 // Textos dos e-mails da Deepcar (o envio e a casca estão em email.js). Nada de prometer número de consultas do teste.
+import { sql, um } from './db.js'
 import { AZUL, botao, enviarEmail, esc, modelo, SITE } from './email.js'
 
 const PLAY = 'https://play.google.com/store/apps/details?id=deepcar.app.android'
@@ -126,5 +127,92 @@ export async function avisarCompra(antes, depois) {
     await enviarEmail({ para: depois.email, assunto: m.assunto, html: m.html, texto: m.texto, etiqueta: 'compra' })
   } catch (err) {
     console.error('[email] compra:', err.message)
+  }
+}
+
+// Checkout da Cakto (os mesmos de VITE_CAKTO_CHECKOUT_* na Vercel; mudou lá, mude aqui). Vai com e-mail/nome/telefone
+// preenchidos, como linkCheckout() do site: o webhook acha a conta pelo e-mail.
+const CHECKOUT = {
+  mensal: { pro: 'https://pay.cakto.com.br/3c9ck5a_1126774', full: 'https://pay.cakto.com.br/vxd8vpe_1117560' },
+  anual: { pro: 'https://pay.cakto.com.br/6ccodaw', full: 'https://pay.cakto.com.br/uigfpmf' },
+}
+const PRECO = { pro: { mensal: '47,90', anual: '29,90' }, full: { mensal: '59,90', anual: '37,90' } }
+function checkout(plano, ciclo, u) {
+  const q = new URLSearchParams({ email: u.email ?? '', name: u.nome ?? '', utm_source: 'email', utm_medium: 'teste_acabou', utm_campaign: `${plano}_${ciclo}` })
+  if (u.whatsapp) q.set('phone', u.whatsapp)
+  return `${CHECKOUT[ciclo][plano]}?${q}`
+}
+
+function cartaoPlano(id, u, destaque) {
+  const p = PLANOS[id]
+  const borda = destaque ? `2px solid ${AZUL}` : '1px solid #dfe5ec'
+  const itens = p.itens.slice(0, 5).map((i) => `<div style="padding:3px 0;font-size:14.5px;color:#2b3440"><span style="color:#16865a;font-weight:bold">&#10003;</span>&nbsp; ${i}</div>`).join('')
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;border:${borda};border-radius:16px;background:#ffffff">
+  <tr><td style="padding:22px 22px 20px;font-family:Arial,Helvetica,sans-serif">
+    ${destaque ? `<div style="display:inline-block;margin-bottom:10px;padding:4px 10px;border-radius:999px;background:${AZUL};color:#ffffff;font-size:11px;font-weight:bold;letter-spacing:1.2px;text-transform:uppercase">Mais completo</div>` : ''}
+    <div style="font-size:20px;font-weight:bold;color:#0f1419">Plano ${p.nome}</div>
+    <div style="margin-top:2px;font-size:14px;color:#5b6675">${p.chamada[0].toUpperCase() + p.chamada.slice(1)} · até ${p.aparelhos} aparelhos</div>
+    <div style="margin-top:14px"><span style="font-size:30px;font-weight:bold;color:#0f1419">R$&nbsp;${PRECO[id].anual}</span><span style="font-size:15px;color:#5b6675">/mês no plano anual</span></div>
+    <div style="margin-top:2px;font-size:13.5px;color:#5b6675">ou R$ ${PRECO[id].mensal}/mês no mensal, sem fidelidade</div>
+    <div style="margin:14px 0 4px">${itens}</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px"><tr><td style="border-radius:12px;background:${destaque ? AZUL : '#151b24'}">
+      <a href="${esc(checkout(id, 'anual', u))}" style="display:inline-block;padding:14px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:12px">Assinar o ${p.nome} anual</a>
+    </td></tr></table>
+    <div style="margin-top:10px;font-size:14px"><a href="${esc(checkout(id, 'mensal', u))}" style="color:${AZUL};font-weight:bold;text-decoration:none">Prefiro o ${p.nome} mensal (R$ ${PRECO[id].mensal}) &rarr;</a></div>
+  </td></tr>
+</table>`
+}
+
+/** Teste grátis encerrado: o que a pessoa perde, os dois planos com checkout preenchido e o WhatsApp para tirar dúvidas. */
+export function emailTesteAcabou(u) {
+  const zap = `https://wa.me/554831973217?text=${encodeURIComponent(`Olá! Meu teste na Deepcar acabou e quero saber qual plano é melhor para a minha oficina. Minha conta é ${u.email}.`)}`
+  const usou = Number(u.consultas ?? 0) > 0
+  const motivo = (t, d) => `<tr>
+    <td valign="top" style="padding:0 12px 14px 0;width:26px;font-size:18px;line-height:24px">${t}</td>
+    <td valign="top" style="padding:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#2b3440">${d}</td></tr>`
+  const corpo = `
+${p_(`Olá, <b>${esc(primeiro(u.nome))}</b>. ${usou ? 'Você já viu na prática como é abrir o esquema certo pela placa, em segundos.' : 'Você criou sua conta, mas não chegou a aproveitar o teste.'} Para continuar consultando, é só escolher um plano.`)}
+${p_('Sua conta continua lá, com tudo do jeito que você deixou. Assinando agora, o acesso volta <b>na hora</b>, no celular e no computador.')}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 8px;padding:20px 20px 6px;background:#f3f7fd;border:1px solid #dbe7f8;border-radius:14px">
+  <tr><td colspan="2" style="padding:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:${AZUL}">Por que vale a pena</td></tr>
+  ${motivo('&#9201;', '<b>Menos tempo procurando.</b> Placa digitada, esquema na tela: sem folhear PDF nem pedir em grupo de WhatsApp.')}
+  ${motivo('&#128295;', '<b>Diagnóstico mais certeiro.</b> Injeção, ABS, elétrica e câmbio de mais de 15 mil modelos, do leve ao diesel.')}
+  ${motivo('&#128176;', '<b>Menos de R$ 1 por dia</b> no Pro anual. Um carro a mais por mês já paga o ano inteiro.')}
+</table>
+<div style="margin:26px 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:${AZUL}">Escolha o seu plano</div>
+${cartaoPlano('full', u, true)}
+${cartaoPlano('pro', u, false)}
+<p style="margin:4px 0 0;font-size:13.5px;line-height:1.6;color:#5b6675">
+  Pagamento por cartão (até 12x no anual) ou Pix, com compra protegida: você tem 7 dias para desistir e receber o dinheiro de volta.
+  Usa o app Android? Também dá para assinar por lá, pela Google Play.
+</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0 0;background:#f6f8fa;border:1px solid #e6eaef;border-radius:14px">
+  <tr><td style="padding:20px 22px;font-family:Arial,Helvetica,sans-serif">
+    <div style="font-size:16px;font-weight:bold;color:#0f1419">Ficou em dúvida sobre qual plano escolher?</div>
+    <div style="margin-top:4px;font-size:14.5px;line-height:1.55;color:#5b6675">Conta pra gente o que a sua oficina atende que a gente indica o plano certo. Resposta rápida, sem compromisso.</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px"><tr><td style="border-radius:12px;background:#25d366">
+      <a href="${esc(zap)}" style="display:inline-block;padding:13px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#0b2e1a;text-decoration:none;border-radius:12px">Falar no WhatsApp</a>
+    </td></tr></table>
+  </td></tr>
+</table>`
+  return {
+    assunto: `${primeiro(u.nome)}, seu teste grátis na Deepcar acabou`,
+    html: modelo({ previa: 'Sua conta continua lá. Assine e o acesso volta na hora, a partir de R$ 29,90/mês.', titulo: 'Seu teste grátis acabou. Bora continuar?', corpo }),
+    texto: `Olá, ${primeiro(u.nome)}. Seu teste grátis na Deepcar terminou. Assine e o acesso volta na hora.\n\nFull (leve e diesel, 4 aparelhos): R$ 37,90/mês no anual ou R$ 59,90 no mensal\n  anual: ${checkout('full', 'anual', u)}\n  mensal: ${checkout('full', 'mensal', u)}\nPro (leves, 2 aparelhos): R$ 29,90/mês no anual ou R$ 47,90 no mensal\n  anual: ${checkout('pro', 'anual', u)}\n  mensal: ${checkout('pro', 'mensal', u)}\n\nDúvida? WhatsApp (48) 3197-3217: ${zap}`,
+  }
+}
+
+/** "Seu teste acabou" por e-mail, uma vez por conta. Nunca derruba quem chamou. */
+export async function avisarTesteAcabouEmail(usuarioId) {
+  try {
+    const u = await um(sql`update usuarios set email_teste_acabou_em = now()
+                            where id = ${usuarioId} and email_teste_acabou_em is null and plano = 'free' and papel <> 'admin' and ativo
+                            returning id, nome, email, whatsapp, consultas`)
+    if (!u) return
+    const m = emailTesteAcabou(u)
+    await enviarEmail({ para: u.email, assunto: m.assunto, html: m.html, texto: m.texto, etiqueta: 'teste_acabou' })
+  } catch (err) {
+    console.error('[email] teste acabou:', err.message)
   }
 }

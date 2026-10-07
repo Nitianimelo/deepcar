@@ -116,6 +116,19 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-07 · E-mail "Seu teste grátis acabou"
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **O que mudou:** `emailTesteAcabou()` em `api/_lib/emails.js`: conta continua lá e o acesso volta na hora; "Por que
+  vale a pena" (tempo, diagnóstico, menos de R$ 1/dia no Pro anual); cartões Full (destaque) e Pro com preço anual por
+  mês e o mensal, botão "Assinar o X anual" e link do mensal, direto para o **checkout da Cakto com e-mail/nome/telefone
+  preenchidos** e UTM `utm_source=email&utm_medium=teste_acabou` (links fixos em `CHECKOUT`, iguais a
+  `VITE_CAKTO_CHECKOUT_*`: mudou um, mude o outro); pagamento/7 dias de arrependimento; bloco "Ficou em dúvida?" com
+  WhatsApp e mensagem pronta. `avisarTesteAcabouEmail()` marca `usuarios.email_teste_acabou_em` (db/014) e manda uma vez.
+  Gatilhos: 6ª consulta nova (`api/_lib/consultas.js`, junto do push) e cron diário (`api/admin/assinaturas.js`) para
+  quem venceu pelo prazo nos últimos 3 dias **e depois de `EMAIL_DESDE` (07/10 23:44 UTC)**: os 96 testes vencidos antes
+  (79 nos últimos 3 dias, regra antiga de 10 h) NÃO recebem automático; ficam para um envio aprovado pelo dono.
+- **Banco:** `014` **aplicada no Neon antes do push**. **Variáveis:** sem mudança.
+
 ### 2026-10-07 · E-mail "Bem-vindo ao plano" depois da compra
 - **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
 - **O que mudou:** `emailCompra()` em `api/_lib/emails.js`: selo verde "Plano X ativo" no topo, boas-vindas, quadro da
