@@ -62,6 +62,10 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Pendências e problemas conhecidos
 
+- [ ] **Cakto pós-compra:** nos 4 produtos, `upsell` + `upsellPage = https://deepcar.app.br/obrigado` (leva quem pagou de
+      volta à plataforma) e `contentDeliveries: emailAccess` + `emailAccessLink = https://deepcar.app.br/login` +
+      `sendConfirmationEmail` (e-mail da Cakto com o link de acesso). O "Redirect pós-pagamento" oficial (com
+      `{{callback}}`, para login automático em outro navegador) exige liberação do Compliance da Cakto por e-mail.
 - [ ] `README.md` desatualizado: a seção "Estado atual" ainda fala em login mock/localStorage, e a tabela da Vercel
       lista `LOGIN_USUARIO`/`LOGIN_SENHA`/`LOGIN_USUARIOS`, que as funções de `api/` não usam mais.
 - [ ] `npm run dev` não suporta o fluxo de contas do Neon (`/api/login` antigo, sem `/api/registrar`, `/api/sessao`, `/api/admin/*`).
@@ -106,6 +110,26 @@ Regras de trabalho estão em `AGENTE.md`.
 ---
 
 ## Histórico (mais recente primeiro)
+
+### 2026-10-07 · Depois da compra: página /obrigado e WhatsApp de pagamento confirmado
+- **Quem:** Claude Code (Opus 5.5), a pedido de Nitiani
+- **Caso que motivou:** Thiago Marques (thiaggom07@yahoo.com) se cadastrou às 20:52 de 06/10 (anúncio, criativo 2) e
+  pagou o Pro mensal por Pix às 21:14. O webhook liberou o Pro em 7 s, mas ele **não foi avisado de nada**:
+  (1) a régua do CRM só envia das 8h às 20h, então a boas-vindas ficou para o dia seguinte; (2) a régua para quando a
+  pessoa assina, então ela nunca sairia; (3) não existia mensagem de compra; (4) os produtos da Cakto estão com
+  `contentDeliveries: disabled` e sem `emailAccessLink`, então a Cakto também não manda e-mail de acesso; e a Deepcar
+  não tem envio de e-mail.
+- **O que mudou aqui:** `src/pages/Obrigado.tsx` (rota `/obrigado`, lazy): confere a sessão a cada 3 s; com o plano
+  pago mostra "Plano Pro liberado!" e entra em `/app` em 4 s; logado mas ainda free depois de 90 s, explica e deixa
+  entrar; sem sessão, leva ao login (com aviso) ou ao cadastro com o mesmo e-mail da compra (a pendência libera o plano).
+  Quem libera o plano continua sendo só o webhook. `vercel.json` e `robots.txt`: `/obrigado` com noindex/Disallow.
+- **CRM (fora deste repo, iCloud `Grupo Inttus/crm-whatsapp`):** passo novo da régua "4. Pagamento confirmado":
+  a sincronização (30 s) vê o plano sair do teste e manda na hora, a qualquer horário, com o link de login e o e-mail.
+- **Cakto (a fazer, ver Pendências):** apontar a página pós-compra dos 4 produtos para `https://deepcar.app.br/obrigado`
+  e ligar o e-mail de acesso.
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** build ok, lint 10 avisos (os mesmos); WebKit 390 e 1280 px com `/api/sessao` simulado:
+  aguardando → liberado → `/app`, e sem sessão → login com o aviso.
 
 ### 2026-10-06 · Cadastro pelo app Android marcado com origem "app"
 - `api/registrar.js`: o app 1.2.0 manda `origem: { entrada: 'app' }`; sem eventID (não vai para a Meta), o servidor

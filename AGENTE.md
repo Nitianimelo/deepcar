@@ -127,7 +127,8 @@ src/
   App.tsx                 rotas (lazy por página)
   pages/                  Landing, Login, Cadastro, Admin, Inicio (/app), Busca, SectionPage, EsquemaPage, VeiculoPage, Conta,
                           Compartilhado (/c/:token, esquema recebido por link, sem conta, em tela cheia),
-                          Privacidade (/privacidade) e ExcluirConta (/excluir-conta), com a casca components/PaginaSimples.tsx
+                          Privacidade (/privacidade) e ExcluirConta (/excluir-conta), com a casca components/PaginaSimples.tsx,
+                          Obrigado (/obrigado, para onde a Cakto manda quem pagou; noindex)
   layouts/AppLayout.tsx   casca do /app (sidebar, barra, selo do teste)
   components/             ListaEsquemas (lista da seção e da busca), DetalhesEsquema, EsquemaViewer, CompartilharEsquema, Sidebar, LimiteFree, LogoMarca, Tooltips…
   components/SeletorComponente.tsx  lista com busca dos componentes do esquema (tecla /), dentro do EsquemaViewer
@@ -163,7 +164,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 ```
 
 ### Rotas
-- Front: `/`, `/login`, `/cadastro`, `/admin`, `/c/:token` (link compartilhado, público), `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
+- Front: `/`, `/login`, `/cadastro`, `/admin`, `/c/:token` (link compartilhado, público), `/obrigado` (retorno da Cakto
+  depois do pagamento: espera o webhook liberar o plano e entra em `/app`; sem sessão manda ao login), `/app` (início), `/app/busca?q=`, `/app/injecao/leve|diesel`, `/app/abs`, `/app/eletrica`,
   `/app/cambio`, `/app/esquema/*`, `/app/veiculo/:placa`, `/app/conta`, `/privacidade` e `/excluir-conta` (públicas,
   exigidas pela Google Play para o app Android).
 - API: `POST /api/registrar` (`GET` devolve `{ testeMinutos }` para a página de cadastro), `POST /api/login`, `POST /api/sair`, `GET /api/sessao`, `DELETE /api/sessao` (exclui a própria conta, pede a senha), `POST /api/sessao` (`evento: 'checkout'` → InitiateCheckout na Meta; `evento: 'ativacao'` → marco de primeiros passos),

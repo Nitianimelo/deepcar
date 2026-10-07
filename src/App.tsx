@@ -25,6 +25,7 @@ const VeiculoPage = lazy(() => import('./pages/VeiculoPage'))
 const Compartilhado = lazy(() => import('./pages/Compartilhado'))
 const Privacidade = lazy(() => import('./pages/Privacidade'))
 const ExcluirConta = lazy(() => import('./pages/ExcluirConta'))
+const Obrigado = lazy(() => import('./pages/Obrigado'))
 
 /** PageView do pixel da Meta a cada troca de página (o filtro das rotas privadas fica em lib/pixel). */
 function PixelMeta() {
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="/c/:token" element={<Compartilhado />} />
         <Route path="/privacidade" element={<Privacidade />} />
         <Route path="/excluir-conta" element={<ExcluirConta />} />
+        <Route path="/obrigado" element={<Obrigado />} />
         <Route path="/app" element={<AppLayout />}>
           <Route index element={<Inicio />} />
           <Route path="busca" element={<Busca />} />

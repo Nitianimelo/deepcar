@@ -6,5 +6,6 @@ Disallow: /app
 Disallow: /admin
 Disallow: /api/
 Disallow: /c/
+Disallow: /obrigado
 
 Sitemap: https://deepcar.app.br/sitemap.xml
