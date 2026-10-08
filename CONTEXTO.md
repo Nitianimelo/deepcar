@@ -116,6 +116,12 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Botão flutuante do WhatsApp também dentro da plataforma
+- Pedido do dono. `AppLayout.tsx` mostra o `BotaoWhatsapp` (agora com `mensagem` e `aoClicar`) em todo o `/app`, menos no
+  esquema (o canto é do visualizador); mensagem "Estou usando a Deepcar e preciso de ajuda. Minha conta é <e-mail>".
+  O clique vai para o registro de uso (`whatsapp`), não para o pixel (que não roda no /app). `main` com `pb-24` fora do
+  esquema. Verificado no WebKit 390 e 1366 px (com `VITE_SUPORTE_WHATSAPP` no build local: sem ele o botão some).
+
 ### 2026-10-08 · Aviso do navegador do Instagram só depois do cadastro
 - **Pedido do dono:** o aviso aparecia na página de vendas e atrapalhava a conversão. Agora: nada na landing, no
   cadastro e no login; só dentro da plataforma (`/app` com sessão), depois do cadastro, e pode fechar e navegar.

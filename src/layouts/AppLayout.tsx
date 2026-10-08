@@ -1,3 +1,5 @@
+import { BotaoWhatsapp } from '../components/landing/BotaoWhatsapp'
+import { registrar as anotar } from '../lib/log'
 import { useEffect, useState } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Menu } from 'lucide-react'
@@ -72,12 +74,20 @@ export default function AppLayout() {
           <SeloTeste />
         </header>
 
-        <main className="app-conteudo schematic-grid min-h-0 flex-1 overflow-y-auto">
+        {/* folga no fim: o botão flutuante do WhatsApp não cobre o último item da lista */}
+        <main className={`app-conteudo schematic-grid min-h-0 flex-1 overflow-y-auto ${loc.pathname.startsWith('/app/esquema') ? '' : 'pb-24'}`}>
           <Outlet />
         </main>
         {/* teste gratuito: boas-vindas na primeira entrada e convite depois de achar valor (components/Funil.tsx) */}
         <BoasVindas />
         <ConviteMomento />
+        {/* fora do esquema: lá o canto de baixo é do visualizador (minimapa e zoom) */}
+        {!loc.pathname.startsWith('/app/esquema') && (
+          <BotaoWhatsapp
+            mensagem={`Olá! Estou usando a Deepcar e preciso de ajuda. Minha conta é ${atual.email}.`}
+            aoClicar={() => anotar('whatsapp', { onde: loc.pathname })}
+          />
+        )}
       </div>
     </div>
     </TesteAcabou.Provider>

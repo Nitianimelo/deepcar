@@ -4,9 +4,13 @@ import { contato } from '../../lib/pixel'
 
 const MENSAGEM = 'Olá! Vim pelo site do Deepcar e quero saber mais sobre a plataforma.'
 
-/** Botão flutuante do WhatsApp na landing. Some quando VITE_SUPORTE_WHATSAPP não está configurado. */
-export function BotaoWhatsapp() {
-  const href = linkWhatsapp(MENSAGEM)
+/**
+ * Botão flutuante do WhatsApp na landing e, desde 08/10/2026, dentro da plataforma (AppLayout). Some quando
+ * VITE_SUPORTE_WHATSAPP não está configurado. `aoClicar` troca o Contact do pixel (só páginas públicas: no /app o
+ * pixel não roda, ver AGENTE.md §9) pelo registro de uso.
+ */
+export function BotaoWhatsapp({ mensagem = MENSAGEM, aoClicar = () => contato('whatsapp-flutuante') }: { mensagem?: string; aoClicar?: () => void } = {}) {
+  const href = linkWhatsapp(mensagem)
   if (!href) return null
   return (
     <a
@@ -14,7 +18,7 @@ export function BotaoWhatsapp() {
       target="_blank"
       rel="noreferrer"
       aria-label="Falar com o Deepcar no WhatsApp"
-      onClick={() => contato('whatsapp-flutuante')}
+      onClick={aoClicar}
       className="group fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-2 rounded-full bg-whatsapp p-3.5 text-white shadow-lg shadow-black/40 transition hover:bg-whatsapp-hi focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-6 sm:bottom-6"
     >
       <IconeWhatsapp size={28} />
