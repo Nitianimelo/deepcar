@@ -24,7 +24,7 @@ neste repositório. Leia este arquivo inteiro antes de mudar qualquer coisa.
 
 Deepcar é uma plataforma web para mecânicos consultarem **esquemas elétricos automotivos**
 (injeção leve e diesel, ABS, elétrica e câmbio), com consulta por placa, contas de usuário,
-plano de teste (no site: **5 consultas** diferentes, sem número na tela; no app Android antigo: horas do /admin) e painel administrativo.
+plano de teste (no site: **N consultas** diferentes, N no /admin → Planos (padrão 5), sem prazo em dias e sem número na tela; no app Android antigo: horas do /admin) e painel administrativo.
 
 Stack: **React 19 + Vite 8 + TypeScript 6 + Tailwind CSS 4 + React Router 7**, funções serverless
 Node na Vercel (`api/`) e Postgres no **Neon**.
@@ -112,7 +112,7 @@ api/                      funções serverless da Vercel (JavaScript, Node)
   _lib/google.js          token OAuth da conta de serviço (FIREBASE_SERVICE_ACCOUNT) para FCM e Android Publisher
   _lib/push.js            notificações do app (FCM v1): enviarPush(), avisarTesteAcabou(), públicos do /admin
   _lib/play.js            assinatura pela Google Play: registrarCompraPlay() (confere + reconhece), conferirPlay() na sessão
-  _lib/consultas.js       teste grátis por consultas: podeConsultar()/registrarConsulta() (CONSULTAS_TESTE = 5), encerra o teste no banco
+  _lib/consultas.js       teste grátis por consultas: podeConsultar()/registrarConsulta() (N = consultasTeste() do /admin, padrão 5), encerra o teste no banco
   _lib/planos.js          o que cada plano libera (sistemas, placa, aparelhos), duração do teste (minutosTeste()), acessoDe(), limitarDispositivos()
   admin/planos.js         GET/PUT das regras por plano (aba Planos do /admin)
   compartilhar.js         link de esquema que abre 2 vezes: POST cria (sessão + sistema no plano), GET abre/expira
@@ -201,10 +201,13 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - **App 1.3.0 (Google Play e push, db/011):** `usuarios.play_*` (token, produto, expira, estado), `aparelhos_push`, `notificacoes`,
   `usuarios.push_teste_acabou_em`. Conta paga no app tem `assinatura_origem = 'play'` (a Cakto não mexe nela).
   O app novo manda `X-Deepcar-App: <versão>`: com ele, mesmo com agente Dalvik, vale o teste por consultas do site.
-- **Teste grátis por consultas (desde 07/10/2026):** no site o teste vale 5 consultas diferentes (`api/_lib/consultas.js`);
-  repetir o mesmo esquema/placa não gasta; a 5ª ganha 30 min de folga e a 6ª nova encerra o teste (`free_expira_em = now()`),
-  e daí tudo que já existia para teste vencido vale (402, borrado, planos no início). Prazo de segurança no site: 7 dias
-  (`DIAS_TESTE_SITE`). Conta criada pelo app ou primeiro acesso pelo app (`User-Agent` `Dalvik/`, `ehApp()`) fica com o
+- **Teste grátis por consultas (desde 07/10/2026):** no site o teste vale N consultas diferentes (`api/_lib/consultas.js`;
+  N = `planos_acesso.consultas_teste`, /admin → Planos "Esquemas no teste", db/015, padrão 5);
+  repetir o mesmo esquema/placa não gasta; a última ganha 30 min de folga e a seguinte nova encerra o teste (`free_expira_em = now()`),
+  e daí tudo que já existia para teste vencido vale (borrado, planos no início). **Sem prazo em dias** desde 08/10
+  (`DIAS_TESTE_SITE` = 3650: free_expira_em nasce 10 anos à frente). **Placa depois do teste:** `api/placa` responde a ficha
+  com `bloqueado: true` (os esquemas abrem borrados), até 10 placas novas/dia por conta (`placas_teste_vencido`); o app
+  antigo (Dalvik sem X-Deepcar-App) segue com 402. Conta criada pelo app ou primeiro acesso pelo app (`User-Agent` `Dalvik/`, `ehApp()`) fica com o
   prazo de horas do /admin, porque o app antigo não avisa os esquemas abertos; a placa conta no app também (servidor).
 - **Acesso por plano:** tabela `planos_acesso` (plano → `secoes[]`, `placa`, `dispositivos`; na linha `free`, `minutos_teste` =
   duração do teste, db/009), editável no /admin → Planos. Sistema fora do plano **não some**: a lista abre e o esquema abre
@@ -246,8 +249,8 @@ vercel.json               build, rewrite SPA (tudo que não é /api → index.ht
 - Código, nomes e comentários em **português** (`usuario`, `sessao`, `exigir`, `conferirSessao`).
 - Comentários explicam o **porquê**, não o quê. Em `api/` os comentários estão sem acento; siga o arquivo.
 - Regras duplicadas navegador/servidor **precisam mudar juntas**:
-  - teste por consultas: `CONSULTAS_TESTE` (api/_lib/consultas.js) só existe no servidor; a tela nunca mostra o número
-  - duração do teste (só app Android antigo; o site usa `DIAS_TESTE_SITE`): vale o /admin → Planos (`planos_acesso.minutos_teste`); `MINUTOS_TESTE_PADRAO` (api/_lib/planos.js) ↔
+  - teste por consultas: o número (`consultasTeste()`, /admin) só existe no servidor; a tela nunca mostra o número
+  - duração do teste (só app Android antigo; saiu da tela do /admin em 08/10, o valor gravado continua valendo: `planos_acesso.minutos_teste`); `MINUTOS_TESTE_PADRAO` (api/_lib/planos.js) ↔
     `MINUTOS_FREE` (src/lib/plano.ts) é só o padrão quando o admin não definiu
   - validação de cadastro: `api/_lib/validar.js` ↔ `src/lib/validacao.ts`
   - chaves das seções: `src/data/nav.ts` ↔ `api/_lib/planos.js` (`SECOES`) ↔ `db/005` (valores iniciais)

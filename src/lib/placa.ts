@@ -40,6 +40,6 @@ export async function consultarPlaca(placa: string): Promise<Veiculo> {
   const body = await res.json().catch(() => ({}))
   // 402: o teste grátis acabou (inclusive nesta consulta): o layout reconfere a sessão e a tela vira o convite
   if (res.status === 402) avisarSessaoMudou()
-  if (!res.ok) throw new Error(body?.erro ?? `Falha na consulta (HTTP ${res.status}).`)
+  if (!res.ok) throw Object.assign(new Error(body?.erro ?? `Falha na consulta (HTTP ${res.status}).`), { status: res.status })
   return body as Veiculo
 }

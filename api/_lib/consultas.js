@@ -1,4 +1,5 @@
-// Teste gratis por consultas (07/10/2026, decisao do dono): no site o teste vale CONSULTAS_TESTE consultas
+// Teste gratis por consultas (07/10/2026, decisao do dono): no site o teste vale N consultas (/admin -> Planos,
+// "Esquemas no teste", desde 08/10; padrao CONSULTAS_TESTE_PADRAO = 5)
 // diferentes (esquema aberto ou placa encontrada), em vez de horas corridas. A pessoa nao ve o numero: quando
 // acaba, o servidor encerra o teste (free_expira_em) e todo o resto ja existente cuida do bloqueio (402, esquema
 // borrado, planos no inicio) no site E no app Android antigo, que so entende o prazo.
@@ -10,10 +11,10 @@
 //   prazo de horas continua (abrirJanelaFree com app = true).
 import { sql, um } from './db.js'
 import { freeAcabou, PAGOS } from './sessao.js'
+import { consultasTeste } from './planos.js'
 import { avisarTesteAcabou } from './push.js'
 import { avisarTesteAcabouEmail } from './emails.js'
 
-export const CONSULTAS_TESTE = 5
 const FOLGA_MIN = 30
 
 const chaveDe = (tipo, item) => `${tipo}:${String(item).replace(/\p{Cc}/gu, '').slice(0, 240)}`
@@ -28,7 +29,7 @@ export async function podeConsultar(u, tipo, item) {
   if (freeAcabou(u)) return false
   if (await um(sql`select 1 as ok from consultas where usuario_id = ${u.id} and item = ${chaveDe(tipo, item)}`)) return true
   const linha = await um(sql`select consultas from usuarios where id = ${u.id}`)
-  if ((linha?.consultas ?? 0) < CONSULTAS_TESTE) return true
+  if ((linha?.consultas ?? 0) < (await consultasTeste())) return true
   await sql`update usuarios set free_expira_em = now() where id = ${u.id} and plano = 'free'`
   await Promise.all([avisarTesteAcabou(u.id), avisarTesteAcabouEmail(u.id)]) // notificação no app e e-mail (uma vez só cada)
   return false
@@ -47,7 +48,7 @@ export async function registrarConsulta(u, tipo, item) {
     on conflict do nothing returning 1 as ok`)
   if (!nova) return { liberado: true } // duas abas abrindo o mesmo esquema juntas
   const total = await um(sql`update usuarios set consultas = consultas + 1 where id = ${u.id} returning consultas`)
-  if (!livre && total.consultas >= CONSULTAS_TESTE) {
+  if (!livre && total.consultas >= (await consultasTeste())) {
     // a ultima ainda abre; o prazo encurta para a folga (nunca estica um teste que ja acabaria antes)
     await sql`
       update usuarios set free_expira_em = least(coalesce(free_expira_em, 'infinity'), now() + ${`${FOLGA_MIN} minutes`}::interval)

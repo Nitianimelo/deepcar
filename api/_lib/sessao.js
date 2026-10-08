@@ -26,11 +26,12 @@ export const PAGOS = new Set(['pro', 'full'])
 export const ehApp = (req) => /^Dalvik\//.test(String(req?.headers?.['user-agent'] ?? '')) && !req?.headers?.['x-deepcar-app']
 
 /**
- * Prazo de seguranca do teste no site (07/10/2026): o teste do site vale por consultas (api/_lib/consultas.js) e
- * este prazo so corta quem nunca chega a elas. O app Android antigo nao avisa os esquemas abertos, entao la o
- * teste continua por horas (o /admin -> Planos). `app`: conta criada pelo app ou primeiro acesso pelo app.
+ * O teste do site vale SO por consultas (api/_lib/consultas.js): desde 08/10/2026 o dono tirou o prazo em dias.
+ * free_expira_em continua sendo o "fim do teste" para o resto do codigo, entao no site ele nasce bem longe (10 anos)
+ * e e encurtado quando as consultas acabam. O app Android antigo nao avisa os esquemas abertos, entao la o teste
+ * continua por horas (minutos_teste, fora da tela do /admin). `app`: conta criada ou primeiro acesso pelo app antigo.
  */
-export const DIAS_TESTE_SITE = 7
+export const DIAS_TESTE_SITE = 3650
 
 /**
  * Comeca a contar o teste gratuito na primeira entrada (nao na criacao da conta):

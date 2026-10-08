@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { registrar as anotar } from '../lib/log'
 import { Link, useParams } from 'react-router-dom'
-import { AlertTriangle, ChevronRight, FlaskConical } from 'lucide-react'
+import { AlertTriangle, ArrowRight, ChevronRight, FlaskConical, Lock } from 'lucide-react'
 import { consultarPlaca, formatarPlaca, normalizarPlaca, type Veiculo } from '../lib/placa'
 import { carregarTudo, useCarga, type Esquema } from '../lib/acervo'
 import { marcaCanonica, sistemasDisponiveis } from '../lib/compatibilidade'
@@ -18,12 +18,13 @@ import { useAcesso } from '../lib/acesso'
 import { getSession } from '../lib/auth'
 import { momentoDeValor } from '../lib/funil'
 
-type Estado = { fase: 'carregando' } | { fase: 'ok'; veiculo: Veiculo } | { fase: 'erro'; msg: string }
+type Estado = { fase: 'carregando' } | { fase: 'ok'; veiculo: Veiculo } | { fase: 'erro'; msg: string } | { fase: 'convite' }
 
 export default function VeiculoPage() {
-  const { podePlaca, testeAcabou } = useAcesso()
-  // fora do plano (403 no servidor) ou teste vencido (402): nem gasta a consulta, mostra direto o convite
-  if (!podePlaca || testeAcabou) return <PlacaComConvite foraDoPlano={!podePlaca} />
+  const { podePlaca } = useAcesso()
+  // fora do plano (403 no servidor): nem gasta a consulta, mostra direto o convite. Teste encerrado (08/10/2026) consulta
+  // normalmente: vê a ficha e os sistemas, e os esquemas abrem borrados (EsquemaPage)
+  if (!podePlaca) return <PlacaComConvite foraDoPlano />
   return <ConsultaVeiculo />
 }
 
@@ -69,7 +70,11 @@ function ConsultaVeiculo() {
         if (email) momentoDeValor(email, 'placa')
         registrarRecente({ tipo: 'placa', placa: v.placa, titulo: tituloVeiculo(v), detalhe: detalheVeiculo(v), veiculo: v })
       })
-      .catch((e: Error) => { anotar('placa_erro', { placa: normalizarPlaca(placa), erro: e.message.slice(0, 160) }); if (vivo) setEstado({ fase: 'erro', msg: e.message }) })
+      .catch((e: Error & { status?: number }) => {
+        anotar('placa_erro', { placa: normalizarPlaca(placa), erro: e.message.slice(0, 160) })
+        // 402: teste encerrado e já passou das placas do dia para quem não assinou: convite em vez de erro
+        if (vivo) setEstado(e.status === 402 ? { fase: 'convite' } : { fase: 'erro', msg: e.message })
+      })
     return () => { vivo = false }
   }, [placa])
 
@@ -80,7 +85,29 @@ function ConsultaVeiculo() {
 
       {estado.fase === 'carregando' && <Carregando />}
       {estado.fase === 'erro' && <Erro msg={estado.msg} />}
-      {estado.fase === 'ok' && <Resultado v={estado.veiculo} />}
+      {estado.fase === 'ok' && <><AvisoPlacaTeste /><Resultado v={estado.veiculo} /></>}
+      {estado.fase === 'convite' && (
+        <div className="mt-6 flex justify-center">
+          <ConviteAssinatura titulo="Assine um plano para continuar consultando pela placa." oQue="a ficha deste veículo e os esquemas compatíveis" />
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Teste encerrado: a ficha e os sistemas aparecem, os esquemas abrem borrados. Deixa isso claro, com o botão de assinar. */
+function AvisoPlacaTeste() {
+  const { testeAcabou } = useAcesso()
+  if (!testeAcabou) return null
+  return (
+    <div className="mt-5 flex flex-col gap-3 rounded-xl border border-trace/30 bg-bench-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="flex items-start gap-2.5 text-[14.5px] text-ink-2">
+        <Lock size={17} className="mt-0.5 flex-none text-trace-hi" aria-hidden="true" />
+        <span><b className="font-semibold text-ink-1">Seu teste gratuito terminou.</b> Você vê a ficha e os sistemas deste veículo; os esquemas abrem borrados até você assinar.</span>
+      </p>
+      <Link to="/app/conta?aba=plano" onClick={() => anotar('viu_planos', { onde: 'placa_teste' })} className="btn-primary inline-flex !h-11 flex-none items-center justify-center gap-2 px-5 text-[14.5px]">
+        Assinar um plano <ArrowRight size={16} />
+      </Link>
     </div>
   )
 }

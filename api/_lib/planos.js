@@ -9,11 +9,14 @@ import { sql } from './db.js'
 export const SECOES = ['injecao-leve', 'injecao-diesel', 'abs', 'eletrica', 'eletrica-diesel', 'cambio', 'cambio-diesel']
 export const PLANOS = ['free', 'pro', 'full']
 
-/** Duração padrão do teste gratuito (10 h), quando o /admin não definiu outra. */
+/** Duração padrão do teste gratuito (10 h), quando o /admin não definiu outra. Só vale para o app Android ANTIGO. */
 export const MINUTOS_TESTE_PADRAO = 600
 
+/** Consultas (esquemas/placas diferentes) do teste grátis, quando o /admin não definiu outra quantidade. */
+export const CONSULTAS_TESTE_PADRAO = 5
+
 export const PADRAO = {
-  free: { secoes: SECOES, placa: true, dispositivos: 2, minutos_teste: MINUTOS_TESTE_PADRAO },
+  free: { secoes: SECOES, placa: true, dispositivos: 2, minutos_teste: MINUTOS_TESTE_PADRAO, consultas_teste: CONSULTAS_TESTE_PADRAO },
   pro: { secoes: ['injecao-leve', 'abs', 'eletrica', 'cambio'], placa: true, dispositivos: 2 },
   full: { secoes: SECOES, placa: true, dispositivos: 4 },
 }
@@ -30,9 +33,12 @@ export async function regras() {
   if (cache && Date.now() - lidoEm < VALIDADE_MS) return cache
   const todas = { ...PADRAO }
   try {
-    for (const l of await sql`select plano, secoes, placa, dispositivos, minutos_teste from planos_acesso`) {
+    for (const l of await sql`select plano, secoes, placa, dispositivos, minutos_teste, consultas_teste from planos_acesso`) {
       todas[l.plano] = { secoes: (l.secoes ?? []).filter((s) => SECOES.includes(s)), placa: !!l.placa, dispositivos: l.dispositivos ?? null }
-      if (l.plano === 'free') todas.free.minutos_teste = l.minutos_teste ?? MINUTOS_TESTE_PADRAO
+      if (l.plano === 'free') {
+        todas.free.minutos_teste = l.minutos_teste ?? MINUTOS_TESTE_PADRAO
+        todas.free.consultas_teste = l.consultas_teste ?? CONSULTAS_TESTE_PADRAO
+      }
     }
   } catch {
     // tabela ainda nao criada (migracao pendente): vale o padrao
@@ -46,6 +52,9 @@ export const esquecerRegras = () => { cache = null }
 
 /** Minutos do teste gratuito que vale agora (/admin → Planos, linha Teste). */
 export const minutosTeste = async () => (await regras()).free?.minutos_teste ?? MINUTOS_TESTE_PADRAO
+
+/** Consultas do teste grátis que valem agora (/admin → Planos, linha "Esquemas no teste"). */
+export const consultasTeste = async () => (await regras()).free?.consultas_teste ?? CONSULTAS_TESTE_PADRAO
 
 /** Regras que valem para esta conta. */
 export async function acessoDe(u) {

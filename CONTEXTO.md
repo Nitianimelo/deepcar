@@ -116,6 +116,26 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Esquemas do teste no /admin, sem prazo em dias, placa depois do teste
+- **Pedido do dono:** em /admin → Planos, a quantidade de esquemas que o teste permite, e tirar o prazo; acabou a cota =
+  "assine um plano" em todo lugar, mas a pessoa continua consultando, até pela placa, com o esquema borrado.
+- **O que mudou:**
+  - `db/015`: `planos_acesso.consultas_teste` e tabela `placas_teste_vencido`. `api/_lib/planos.js`:
+    `CONSULTAS_TESTE_PADRAO` = 5 e `consultasTeste()`; `api/_lib/consultas.js` usa o valor do /admin (saiu a constante).
+    `api/admin/planos.js` aceita `consultas_teste` (1 a 500). /admin → Planos: linha "Esquemas no teste" no lugar de
+    "Duração do teste" (o `minutos_teste` gravado, 600, continua valendo só para o app Android antigo).
+  - Sem prazo: `DIAS_TESTE_SITE` 7 → 3650. Os 20 testes em andamento com prazo de 7 dias foram estendidos no banco
+    (os 6 de prazo curto, app antigo ou folga da última consulta, ficaram).
+  - `api/placa/[placa].js`: teste encerrado consulta a placa (até 10 placas novas por dia por conta, repetir não conta)
+    e recebe a ficha com `bloqueado: true`; o app antigo segue com 402. `VeiculoPage.tsx`: não barra mais o teste
+    encerrado; mostra o aviso "Seu teste gratuito terminou… os esquemas abrem borrados" com "Assinar um plano" e a lista;
+    passou do limite do dia → convite. `lib/placa.ts`: o erro leva o status HTTP.
+- **Banco:** `015` **aplicada no Neon antes do push**; update dos 20 prazos.
+- **Verificação:** build ok, lint 10; contra o banco com conta descartável (apagada): prazo 3650 dias, 5 esquemas
+  liberados (5º "última"), 6º recusado e teste encerrado; placa depois do teste 200 com `bloqueado` e a ficha real
+  (1 consulta da Falcon); app antigo 402. WebKit 390 px com o acervo real: aviso + 12 esquemas listados, o esquema abre
+  borrado com o convite.
+
 ### 2026-10-08 · Botão flutuante do WhatsApp também dentro da plataforma
 - Pedido do dono. `AppLayout.tsx` mostra o `BotaoWhatsapp` (agora com `mensagem` e `aoClicar`) em todo o `/app`, menos no
   esquema (o canto é do visualizador); mensagem "Estou usando a Deepcar e preciso de ajuda. Minha conta é <e-mail>".
