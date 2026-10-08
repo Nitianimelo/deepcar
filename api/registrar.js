@@ -84,7 +84,9 @@ export default async function handler(req, res) {
     // pagou antes de ter conta: o plano entra agora, sem passar pelo bloqueio do free
     const comPlano = await consumirPendente(u)
     // a conta nasce free: o relógio do teste começa aqui, porque o cadastro já entra no app
-    const comJanela = await abrirJanelaFree(comPlano, { app: doApp || ehApp(req) })
+    // teste em horas só para o app ANTIGO (Dalvik sem X-Deepcar-App). O app 1.3+ manda X-Deepcar-App e conta consultas
+    // como o site: antes ficava `doApp || ehApp(req)` e todo cadastro pelo app novo ganhava 10 h (bug achado em 08/10)
+    const comJanela = await abrirJanelaFree(comPlano, { app: ehApp(req) })
     const { token, expira } = await criarSessao(u.id, req.headers['user-agent'])
     porCookie(res, token, expira)
     // e-mail de boas-vindas (site e app), junto com a Meta: em paralelo, antes da resposta (a funcao congela depois)

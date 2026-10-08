@@ -123,6 +123,14 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Correção: cadastro pelo app novo ganhava o teste de 10 h
+- **Bug (achado no registro de uso):** `api/registrar.js` abria o teste com `app: doApp || ehApp(req)`; `doApp` é
+  `origem.entrada === 'app'`, que o app 1.3.x também manda. Todo cadastro pelo app novo ganhava o prazo de 10 h
+  (`minutos_teste`) em vez do teste por consultas sem prazo: Lucas Silva acabou com 3 consultas, outros com 0–2.
+- **Correção:** só `ehApp(req)` (app ANTIGO: Dalvik sem `X-Deepcar-App`). Banco: 9 contas do app novo (desde 07/10 19h,
+  menos de 5 consultas, prazo vencendo em até 1 dia) voltaram para o teste sem prazo (`free_expira_em` +3650 dias) e
+  tiveram os avisos "teste acabou" (e-mail/push) zerados para valer de novo quando acabar de verdade.
+
 ### 2026-10-08 · Quanto a pessoa lê a página de vendas (rolagem e tempo, por aparelho)
 - **Por quê:** no iPhone, 25 de 30 visitantes do Instagram abriam a página e saíam sem tocar em nada (Android: 44%
   chegam ao cadastro). Banco confirma (desde 07/10 18h: 21 cadastros Android, 1 iPhone). Simulação do Instagram no
