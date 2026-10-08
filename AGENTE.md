@@ -41,7 +41,7 @@ Node na Vercel (`api/`) e Postgres no **Neon**.
 | Banco | Neon (Postgres), ligado à Vercel pela integração | schema em `db/*.sql`, **não** é aplicado pelo deploy |
 | Acervo (catálogo, esquemas, imagens) | Cloudflare R2 | **não** está no git nem na Vercel; front lê de `VITE_ACERVO_URL` |
 | Segredos de infraestrutura | Variáveis de ambiente da Vercel | `DATABASE_URL`, `SESSAO_SEGREDO`, `SEGREDOS_CHAVE` |
-| Chaves de API de terceiros | Cofre no banco (tabela `segredos`), editável em `/admin` | `FALCON_TOKEN`, `CAKTO_WEBHOOK_SECRET`, `CAKTO_PRODUTO_PRO/FULL`, `CAKTO_PRODUTO_PRO_ANUAL/FULL_ANUAL`, `META_CAPI_TOKEN` (`META_TEST_EVENT_CODE` só para testar), `FIREBASE_SERVICE_ACCOUNT` (JSON da conta de serviço, push do app) |
+| Chaves de API de terceiros | Cofre no banco (tabela `segredos`), editável em `/admin` | `FALCON_TOKEN`, `CAKTO_WEBHOOK_SECRET`, `CAKTO_PRODUTO_PRO/FULL`, `CAKTO_PRODUTO_PRO_ANUAL/FULL_ANUAL`, `META_CAPI_TOKEN` (`META_TEST_EVENT_CODE` só para testar), `RESEND_API_KEY`, `AVISO_VENDAS_EMAIL` (quem recebe "Nova venda"), `FIREBASE_SERVICE_ACCOUNT` (JSON da conta de serviço, push do app) |
 | Pagamento | Cakto: Pro e Full **mensais** (assinatura) e **anuais** (compra única de 12 meses, até 12x); webhook em `/api/webhooks/cakto` | troca o plano sozinha; MCP `cakto` no escopo de usuário |
 
 Branch `main` não tem proteção: qualquer push publica. Por isso as regras da seção 0.

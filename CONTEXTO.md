@@ -116,6 +116,16 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Saber quem assinou pela Google Play: origem no /admin e e-mail "Nova venda"
+- **Pedido:** "quem assinar pela Google Play, como eu sei?". Antes só aparecia o plano no /admin e "Assinou" no CRM.
+- **O que mudou:** /admin → Usuários mostra a origem na linha da assinatura ("ativa · Google Play", "· Cakto",
+  "· manual"). `avisarCompra` também manda ao dono o e-mail "Nova venda: Full mensal · Nome · Google Play" (plano,
+  por onde pagou, e-mail, WhatsApp clicável, data do cadastro, botão para o /admin), para o endereço do cofre
+  `AVISO_VENDAS_EMAIL` (gravado; fica no cofre porque o repositório é público). Vale para Cakto, Google Play, pagamento
+  antes do cadastro e vincular no /admin; renovação não avisa.
+- **Verificação:** compra Play simulada com conta descartável (apagada): e-mail do cliente e aviso ao dono enviados.
+- **Na Google Play:** a venda também aparece no Play Console → Monetizar → Pedidos (com o valor líquido).
+
 ### 2026-10-08 · "Teste acabou" mandado para os testes já vencidos
 - **Pedido do dono:** mandar o e-mail para todo mundo que já tinha encerrado o teste (cruzado com o CRM: 96 contas,
   82 em "Cadastrou, não falou", 13 que já conversaram, 1 fora do CRM; nenhuma com `sem_disparo`; 7 pagantes fora).

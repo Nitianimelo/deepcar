@@ -517,11 +517,14 @@ const ESTADOS: Record<string, { rotulo: string; cor: string }> = {
   expirada: { rotulo: 'anual vencido', cor: 'text-fault' },
 }
 
+const ORIGENS: Record<string, string> = { play: 'Google Play', cakto: 'Cakto', manual: 'manual' }
+
 function EstadoAssinatura({ u }: { u: Usuario }) {
   const e = ESTADOS[u.assinatura_status ?? ''] ?? { rotulo: u.assinatura_status ?? '', cor: 'text-ink-4' }
   return (
     <span className={`mt-1.5 block text-[11.5px] ${e.cor}`}>
       {e.rotulo}
+      {u.assinatura_origem && ` · ${ORIGENS[u.assinatura_origem] ?? u.assinatura_origem}`}
       {u.assinatura_ciclo === 'anual' && u.assinatura_status !== 'expirada' && ' · anual'}
       {u.assinatura_ciclo === 'anual' && u.plano_expira_em
         ? ` · até ${data(u.plano_expira_em)}`

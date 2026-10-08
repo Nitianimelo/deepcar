@@ -1,6 +1,7 @@
 // Textos dos e-mails da Deepcar (o envio e a casca estão em email.js). Nada de prometer número de consultas do teste.
 import { sql, um } from './db.js'
 import { AZUL, botao, enviarEmail, esc, modelo, SITE } from './email.js'
+import { segredo } from './segredos.js'
 
 const PLAY = 'https://play.google.com/store/apps/details?id=deepcar.app.android'
 const primeiro = (nome) => String(nome ?? '').trim().split(/\s+/)[0] || 'mecânico'
@@ -124,7 +125,10 @@ export async function avisarCompra(antes, depois) {
     if (!depois || !['pro', 'full'].includes(depois.plano) || depois.papel === 'admin') return
     if (antes && antes.plano === depois.plano && antes.assinatura_ciclo === depois.assinatura_ciclo) return
     const m = emailCompra(depois)
-    await enviarEmail({ para: depois.email, assunto: m.assunto, html: m.html, texto: m.texto, etiqueta: 'compra' })
+    await Promise.all([
+      enviarEmail({ para: depois.email, assunto: m.assunto, html: m.html, texto: m.texto, etiqueta: 'compra' }),
+      avisarDono(antes, depois),
+    ])
   } catch (err) {
     console.error('[email] compra:', err.message)
   }
@@ -215,4 +219,34 @@ export async function avisarTesteAcabouEmail(usuarioId) {
   } catch (err) {
     console.error('[email] teste acabou:', err.message)
   }
+}
+
+const ORIGEM = { play: 'Google Play (app Android)', cakto: 'Cakto (site)', manual: 'vinculado no /admin' }
+
+/** "Nova venda" para o dono (cofre AVISO_VENDAS_EMAIL; sem ele, não manda). O repositório é público: o e-mail fica no cofre. */
+async function avisarDono(antes, u) {
+  const para = await segredo('AVISO_VENDAS_EMAIL')
+  if (!para) return
+  const p = PLANOS[u.plano] ?? PLANOS.pro
+  const anual = u.assinatura_ciclo === 'anual'
+  const troca = antes && ['pro', 'full'].includes(antes.plano) ? ` (antes: ${PLANOS[antes.plano]?.nome} ${antes.assinatura_ciclo ?? ''})` : ''
+  const zap = u.whatsapp ? `https://wa.me/${u.whatsapp}` : null
+  const corpo = `
+${p_(`<b>${esc(u.nome)}</b> assinou o <b>${p.nome} ${anual ? 'anual' : 'mensal'}</b>${esc(troca)}.`)}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0 6px;background:#f6f8fa;border:1px solid #e6eaef;border-radius:14px">
+  <tr><td style="padding:14px 22px 8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    ${linhaResumo('Plano', `${p.nome} ${anual ? 'anual' : 'mensal'}`)}
+    ${linhaResumo('Pagou por', ORIGEM[u.assinatura_origem] ?? esc(u.assinatura_origem ?? '-'))}
+    ${linhaResumo('E-mail', esc(u.email))}
+    ${linhaResumo('WhatsApp', u.whatsapp ? `<a href="${zap}" style="color:${AZUL};text-decoration:none">${esc(u.whatsapp)}</a>` : '-')}
+    ${linhaResumo('Cadastro', data(u.criado_em) ?? '-')}
+  </table></td></tr>
+</table>
+${botao('Ver no /admin', `${SITE}/admin`)}`
+  await enviarEmail({
+    para, etiqueta: 'aviso_venda',
+    assunto: `Nova venda: ${p.nome} ${anual ? 'anual' : 'mensal'} · ${u.nome} · ${u.assinatura_origem === 'play' ? 'Google Play' : u.assinatura_origem === 'cakto' ? 'Cakto' : 'manual'}`,
+    html: modelo({ previa: `${u.nome} assinou o ${p.nome}.`, titulo: 'Nova venda na Deepcar', corpo, selo: 'Nova venda' }),
+    texto: `${u.nome} (${u.email}, ${u.whatsapp ?? 'sem WhatsApp'}) assinou o ${p.nome} ${anual ? 'anual' : 'mensal'} por ${ORIGEM[u.assinatura_origem] ?? u.assinatura_origem}${troca}.`,
+  })
 }
