@@ -7,6 +7,7 @@ import { ehApp, exigir, freeAcabou } from '../_lib/sessao.js'
 import { acessoDe } from '../_lib/planos.js'
 import { podeConsultar, registrarConsulta } from '../_lib/consultas.js'
 import { normalizarPlaca } from '../../server/placa/veiculo.mjs'
+import { ativacaoMeta } from '../_lib/meta.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -59,6 +60,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'private, no-store')
     // ativacao: primeira placa que deu certo (aparece no /admin); so escreve uma vez
     await sql`update usuarios set primeira_placa_em = now() where id = ${u.id} and primeira_placa_em is null`
+    await ativacaoMeta(u.id, req) // StartTrial para a Meta, uma vez por conta (só cadastro do site)
     return res.status(200).json(veiculo)
   } catch (err) {
     res.setHeader('Cache-Control', 'no-store')

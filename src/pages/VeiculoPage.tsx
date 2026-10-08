@@ -14,6 +14,7 @@ import { DetalhesEsquema } from '../components/DetalhesEsquema'
 import MARCAS from '../data/marcas.json'
 import { PLANOS_VENDA, textoSomente } from '../data/planos'
 import { ConviteAssinatura, FaixaAssinar } from '../components/AssineParaAcessar'
+import { PerguntarCarro } from '../components/PerguntarCarro'
 import { useAcesso } from '../lib/acesso'
 import { getSession } from '../lib/auth'
 import { momentoDeValor } from '../lib/funil'
@@ -84,7 +85,7 @@ function ConsultaVeiculo() {
       <h1 className="code mt-1.5 text-[26px] font-semibold tracking-[0.08em] sm:text-3xl">{formatarPlaca(placa)}</h1>
 
       {estado.fase === 'carregando' && <Carregando />}
-      {estado.fase === 'erro' && <Erro msg={estado.msg} />}
+      {estado.fase === 'erro' && <Erro msg={estado.msg} placa={placa} />}
       {estado.fase === 'ok' && <><AvisoPlacaTeste /><Resultado v={estado.veiculo} /></>}
       {estado.fase === 'convite' && (
         <div className="mt-6 flex justify-center">
@@ -141,13 +142,14 @@ function Carregando() {
   )
 }
 
-function Erro({ msg }: { msg: string }) {
+function Erro({ msg, placa }: { msg: string; placa?: string }) {
   return (
     <div role="alert" className="mt-6 flex items-start gap-3 rounded-xl border border-warn/30 bg-warn/8 p-5 text-[14px]">
       <AlertTriangle size={18} className="mt-0.5 flex-none text-warn" />
       <div>
         <p className="text-ink-1">Não foi possível identificar o veículo.</p>
         <p className="mt-1 text-ink-3">{msg}</p>
+        <PerguntarCarro carro={placa ? `placa ${formatarPlaca(placa)}` : undefined} onde="placa_erro" className="mt-4" />
       </div>
     </div>
   )
@@ -210,7 +212,8 @@ function Resultado({ v }: { v: Veiculo }) {
         ) : sistemas.length === 0 ? (
           <div className="mt-4 rounded-xl border seam bg-bench-2 p-6 text-[14px]">
             <p className="text-ink-1">Ainda não há esquemas cadastrados para este veículo.</p>
-            <p className="mt-1 text-ink-3">Navegue pelos sistemas no menu lateral para procurar por modelo semelhante.</p>
+            <p className="mt-1 text-ink-3">Navegue pelos sistemas no menu lateral para procurar por modelo semelhante, ou pergunte pra gente: muitas vezes o esquema serve com outro nome.</p>
+            <PerguntarCarro carro={[v.marca, v.modelo, anoDe(v)].filter(Boolean).join(' ')} onde="placa_sem_esquema" className="mt-4" />
           </div>
         ) : (
           <div className="mt-4 grid gap-3 sm:grid-cols-2">

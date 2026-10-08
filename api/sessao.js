@@ -18,7 +18,7 @@
 // (src/lib/log.ts), também SEM login (visitante anônimo); gravado em eventos_uso, visto no /admin → Logs.
 import { randomUUID } from 'node:crypto'
 import { sql, um } from './_lib/db.js'
-import { dadosDoNavegador, enviarEvento, visitanteValido } from './_lib/meta.js'
+import { ativacaoMeta, dadosDoNavegador, enviarEvento, visitanteValido } from './_lib/meta.js'
 import { abrirJanelaFree, conferirSenha, corpo, ehApp, limparCookie, publicoCompleto, usuarioDaSessao } from './_lib/sessao.js'
 import { registrarConsulta } from './_lib/consultas.js'
 import { registrarCompraPlay } from './_lib/play.js'
@@ -101,8 +101,10 @@ async function eventoCheckout(req, res, u) {
 async function marcarAtivacao(req, res, u) {
   const { marco } = corpo(req)
   if (marco === 'boas_vindas') await sql`update usuarios set boas_vindas_em = coalesce(boas_vindas_em, now()) where id = ${u.id}`
-  else if (marco === 'esquema') await sql`update usuarios set primeiro_esquema_em = coalesce(primeiro_esquema_em, now()) where id = ${u.id}`
-  else return res.status(400).json({ erro: 'Marco inválido.' })
+  else if (marco === 'esquema') {
+    await sql`update usuarios set primeiro_esquema_em = coalesce(primeiro_esquema_em, now()) where id = ${u.id}`
+    await ativacaoMeta(u.id, req) // StartTrial para a Meta, uma vez por conta
+  } else return res.status(400).json({ erro: 'Marco inválido.' })
   return res.status(204).end()
 }
 

@@ -17,6 +17,7 @@ import { PLANOS_VENDA, planosQueLiberam, textoSomente, type Ciclo, type PlanoVen
 import type { SectionKey } from '../data/nav'
 import { CartaoPlanoClaro, ChaveCiclo } from './landing/PlanosLanding'
 import { classeBotaoClaro } from './landing/estiloPlanos'
+import { PerguntarCarro } from './PerguntarCarro'
 
 type Motivo = { tipo: 'teste' } | { tipo: 'plano'; secao: SectionKey | string }
 
@@ -48,6 +49,7 @@ export function EsquemaEmbacado({ d, motivo = { tipo: 'teste' } }: { d: EsquemaD
           <ConviteAssinatura
             titulo="Assine um plano para acessar o sistema."
             oQue={`o esquema completo do ${d.marca} ${d.modelo} e todos os outros`}
+            carro={`${d.marca} ${d.modelo}`}
           />
         )}
       </div>
@@ -63,13 +65,15 @@ type PropsConvite = {
   planos?: PlanoVenda[]
   /** linha pequena acima do título; sem ela, conforme o motivo (teste ou anual encerrado) */
   etiqueta?: string
+  /** o carro/esquema em questão, para a mensagem do "Perguntar se tem o meu carro" */
+  carro?: string
 }
 
 /**
  * O cartão do convite: por que parou, os planos e o checkout já preenchido. Mesmo padrão claro da página de vendas
  * e da aba Plano (CartaoPlanoClaro). Serve o esquema embaçado, a consulta por placa e o início depois do teste.
  */
-export function ConviteAssinatura({ titulo, oQue, planos, etiqueta }: PropsConvite) {
+export function ConviteAssinatura({ titulo, oQue, planos, etiqueta, carro }: PropsConvite) {
   const { sessao } = useAcesso()
   // registro de uso: quem chegou a ver os planos, e por qual motivo (teste acabou, sistema fora do plano...)
   useEffect(() => { anotar('viu_planos', { onde: etiqueta ?? titulo.slice(0, 60) }) }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -138,6 +142,16 @@ export function ConviteAssinatura({ titulo, oQue, planos, etiqueta }: PropsConvi
           )
         })}
       </div>
+
+      {/* quem compra quer saber se tem o carro dele: a conversa vende (diagnóstico de 08/10/2026) */}
+      {!pago && (
+        <div className="mt-6 flex flex-col items-start gap-3 rounded-xl border border-papel-linha bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[14.5px] leading-snug text-tinta-2">
+            <b className="font-semibold text-tinta-1">Na dúvida se tem o seu carro?</b> Fale com a gente: conferimos na hora e te mandamos o plano certo.
+          </p>
+          <PerguntarCarro carro={carro} onde={`convite: ${etiqueta ?? titulo.slice(0, 40)}`} className="w-full flex-none sm:w-auto" />
+        </div>
+      )}
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-papel-linha pt-4 text-[13.5px]">
         <p className="text-tinta-3">Já assinou? O acesso libera sozinho, sem recarregar.</p>

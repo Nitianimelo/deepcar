@@ -9,6 +9,7 @@
 //
 // E-mail, telefone, nome e id vao como sha-256 (exigencia da Meta); IP, navegador e os cookies _fbp/_fbc vao como estao.
 // Nunca derruba quem chamou: falha vira log. Mudou o que e enviado? Atualize src/pages/Privacidade.tsx junto.
+import { sql, um } from './db.js'
 import { createHash } from 'node:crypto'
 import { segredo } from './segredos.js'
 
@@ -127,5 +128,29 @@ export async function enviarEvento({ nome, id, url, pessoa = {}, navegador = {},
   } catch (err) {
     console.error('[meta] falha ao enviar', nome, err?.message)
     return { enviado: false, motivo: err?.message }
+  }
+}
+
+/**
+ * Ativacao (08/10/2026): o conjunto de anuncios otimizava por cadastro e trazia muito curioso (um criativo deu 72
+ * cadastros e nenhuma venda). StartTrial = a pessoa USOU o teste (1a placa encontrada ou 1o esquema aberto): sai uma
+ * vez por conta, so para quem se cadastrou pelo site (tem rastreio_meta; o app Android nao vai para a Meta), com o
+ * navegador de agora ou, sem ele, o do cadastro. Para otimizar: conjunto novo com o evento "Iniciar avaliacao gratuita".
+ */
+export async function ativacaoMeta(usuarioId, req) {
+  try {
+    const u = await um(sql`update usuarios set meta_ativacao_em = now()
+                            where id = ${usuarioId} and meta_ativacao_em is null and rastreio_meta is not null and papel <> 'admin'
+                            returning id, email, whatsapp, nome, rastreio_meta`)
+    if (!u) return
+    const agora = req ? dadosDoNavegador(req) : {}
+    const navegador = agora.client_user_agent ? { ...agora, fbc: agora.fbc ?? u.rastreio_meta?.fbc, fbp: agora.fbp ?? u.rastreio_meta?.fbp } : navegadorGuardado(u.rastreio_meta)
+    await enviarEvento({
+      nome: 'StartTrial', id: `ativ-${u.id}`, url: 'https://deepcar.app.br/app',
+      pessoa: { email: u.email, whatsapp: u.whatsapp, nome: u.nome, idExterno: u.id, visitante: u.rastreio_meta?.visitante },
+      navegador, dados: { value: 0, currency: 'BRL' },
+    })
+  } catch (err) {
+    console.error('[meta] ativacao:', err?.message)
   }
 }
