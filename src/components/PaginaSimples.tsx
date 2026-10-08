@@ -23,6 +23,7 @@ export function PaginaSimples({ rotulo, titulo, children }: { rotulo: string; ti
           <span className="code">© {new Date().getFullYear()} Deepcar</span>
           <Link to="/privacidade" className="hover:text-ink-2">Privacidade</Link>
           <Link to="/excluir-conta" className="hover:text-ink-2">Excluir conta</Link>
+          <span className="basis-full">Deepcar é um produto da Inttus Soluções Tecnológicas Ltda · CNPJ 50.256.051/0001-57</span>
         </div>
       </footer>
     </div>

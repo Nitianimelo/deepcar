@@ -116,6 +116,14 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Razão social e CNPJ no site (verificação da empresa na Meta)
+- Para a API oficial do WhatsApp em coexistência a Meta exige a empresa verificada (e Provedor de Tecnologia); a
+  verificação confere o site. Rodapé da landing, rodapé das páginas simples (`PaginaSimples.tsx`) e "Quem somos" da
+  política de privacidade: "Deepcar é um produto da Inttus Soluções Tecnológicas Ltda · CNPJ 50.256.051/0001-57".
+- Contexto: app da Meta "Deepcar Mensagens" (1636132364524736, empresa Sigtrack rastreadores), página de conexão no CRM
+  (`/conectar-meta`); a Meta respondeu "Sigtrack rastreadores não pode integrar clientes no momento" (empresa não
+  verificada). Detalhes no CONTEXTO.md do CRM.
+
 ### 2026-10-08 · Cakto com Pix primeiro e conjunto de anúncios otimizando por StartTrial
 - **Cakto:** o "Plataforma Deepcar - Plano Full" (mensal, `0916d47f…`) abria no cartão; pela API interna do painel
   (`api.cakto.com.br/api/product/<id>/`, sessão do Safari) `defaultPaymentMethod = pix` e `paymentsOrder = [pix,

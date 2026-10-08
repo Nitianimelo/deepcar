@@ -280,7 +280,7 @@ function Numero({ valor, rotulo }: { valor: string; rotulo: string }) {
 function Footer() {
   return (
     <footer className="border-t seam">
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-6 px-5 py-10 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-8">
         <div className="flex items-center gap-4">
           <img src="/brand/logo-h-light.png" alt="Deepcar" className="h-6 opacity-80" draggable={false} />
           <span className="code text-[12px] text-ink-4">© {new Date().getFullYear()} Deepcar</span>
@@ -290,6 +290,8 @@ function Footer() {
           <AppStoreBadge />
           <PlayStoreBadge />
         </div>
+        {/* razão social e CNPJ: a verificação da empresa na Meta (WhatsApp oficial) confere o site */}
+        <p className="code basis-full text-[11.5px] text-ink-4">Deepcar é um produto da Inttus Soluções Tecnológicas Ltda · CNPJ 50.256.051/0001-57</p>
       </div>
     </footer>
   )

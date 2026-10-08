@@ -16,7 +16,7 @@ export default function Privacidade() {
       <h2>Quem somos</h2>
       <p>
         O Deepcar é uma plataforma de consulta de esquemas elétricos e informações técnicas automotivas para oficinas
-        mecânicas. Somos o controlador dos dados pessoais descritos aqui, nos termos da Lei Geral de Proteção de Dados
+        mecânicas, da Inttus Soluções Tecnológicas Ltda (CNPJ 50.256.051/0001-57). Somos o controlador dos dados pessoais descritos aqui, nos termos da Lei Geral de Proteção de Dados
         (Lei 13.709/2018). Fale com a gente pelo e-mail <a href={`mailto:${EMAIL}`}>{EMAIL}</a>.
       </p>
 
