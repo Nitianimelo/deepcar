@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { linkSuporte } from '../lib/plano'
 import { registrar as anotar } from '../lib/log'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { AtSign, Eye, EyeOff, LockKeyhole } from 'lucide-react'
@@ -18,6 +19,8 @@ export default function Login() {
   const [mostrar, setMostrar] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(false)
+  // 2 erros seguidos: mostra o caminho de recuperar a senha e o WhatsApp (registro de uso, 08/10/2026)
+  const [erros, setErros] = useState(0)
   // o app manda para cá quem teve a sessão encerrada (limite de aparelhos do plano, admin, senha nova)
   const aviso = (loc.state as { aviso?: string } | null)?.aviso
     ?? (new URLSearchParams(loc.search).get('conta') === 'criada' ? 'Sua conta já está criada. Entre com a senha que você acabou de cadastrar.' : undefined)
@@ -25,14 +28,21 @@ export default function Login() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setErro(null)
+    // preenchimento automático (navegador do Instagram/Facebook) às vezes não avisa o React: lê também do campo
+    const form = e.currentTarget as HTMLFormElement
+    const emailCampo = email || (form.querySelector('input[type=email]') as HTMLInputElement | null)?.value || ''
+    const senhaCampo = senha || (form.querySelector('input[autocomplete=current-password], input[type=password]') as HTMLInputElement | null)?.value || ''
+    if (emailCampo !== email) setEmail(emailCampo)
+    if (senhaCampo !== senha) setSenha(senhaCampo)
     setCarregando(true)
     try {
-      await login(email, senha)
+      await login(emailCampo, senhaCampo)
       anotar('login')
       const dest = (loc.state as { from?: string } | null)?.from ?? '/app'
       nav(dest, { replace: true })
     } catch (err) {
       anotar('login_erro', { erro: err instanceof Error ? err.message.slice(0, 160) : 'desconhecido' })
+      setErros((n) => n + 1)
       setErro(err instanceof Error ? err.message : 'Não foi possível entrar.')
     } finally {
       setCarregando(false)
@@ -146,6 +156,16 @@ export default function Login() {
                 {carregando ? 'Entrando…' : 'Entrar'}
               </button>
             </form>
+            {erros >= 2 && (
+              <div className="mt-5 rounded-xl border border-warn/30 bg-warn/10 p-4 text-[14px] text-ink-1">
+                <p className="font-semibold">Não está conseguindo entrar?</p>
+                <p className="mt-1 text-ink-2">Crie uma senha nova pelo e-mail, ou chame a gente no WhatsApp que a gente resolve na hora.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link to={`/esqueci-senha${email.trim() ? `?email=${encodeURIComponent(email.trim())}` : ''}`} className="btn-primary inline-flex !h-10 items-center px-4 text-[14px]">Criar nova senha</Link>
+                  <a href={linkSuporte(`Olá! Não estou conseguindo entrar na Deepcar.${email.trim() ? ` Meu e-mail é ${email.trim()}.` : ''}`, 'Deepcar · não consigo entrar')} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center rounded-xl border seam bg-bench-3 px-4 text-[14px] text-ink-1">Falar no WhatsApp</a>
+                </div>
+              </div>
+            )}
           </div>
 
           <p className="mt-6 text-center text-sm text-ink-3">

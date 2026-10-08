@@ -256,6 +256,17 @@ export default function Cadastro() {
                 </p>
               </div>
 
+              {/* e-mail que já tem conta: leva para entrar ou criar senha nova, em vez de parar no erro (registro de uso, 08/10) */}
+              {erroServidor.email?.startsWith('Já existe') && (
+                <div className="rounded-lg border border-trace/30 bg-trace/10 px-3.5 py-3 text-sm text-ink-1">
+                  <p>Você já tem conta com <b>{d.email.trim()}</b>.</p>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    <Link to={`/login?email=${encodeURIComponent(d.email.trim())}`} className="btn-primary inline-flex !h-9 items-center px-3.5 text-[13.5px]">Entrar com este e-mail</Link>
+                    <Link to={`/esqueci-senha?email=${encodeURIComponent(d.email.trim())}`} className="inline-flex h-9 items-center rounded-lg border seam bg-bench-3 px-3.5 text-[13.5px] text-ink-1">Esqueci a senha</Link>
+                  </div>
+                </div>
+              )}
+
               {erroGeral && (
                 <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-fault/30 bg-fault/10 px-3.5 py-2.5 text-sm text-fault">
                   <CircleAlert size={16} className="mt-[2px] flex-none" /> {erroGeral}

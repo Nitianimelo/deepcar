@@ -1026,7 +1026,7 @@ type ResumoLogs = {
 }
 
 const NOMES_EVENTO: Record<string, string> = {
-  whatsapp: 'Chamou no WhatsApp',
+  whatsapp: 'Chamou no WhatsApp', app_aberto: 'Abriu o app Android', compra_play: 'Assinou pela Google Play',
   pagina: 'Página', busca: 'Busca', placa: 'Placa encontrada', placa_erro: 'Placa com erro', esquema: 'Esquema',
   viu_planos: 'Viu os planos', clicou_assinar: 'Clicou em assinar', cadastro: 'Cadastrou', cadastro_erro: 'Erro no cadastro',
   login: 'Entrou', login_erro: 'Erro ao entrar', compartilhou: 'Compartilhou', navegador_interno: 'Navegador do Instagram/Facebook',

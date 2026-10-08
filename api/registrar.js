@@ -2,6 +2,7 @@
 // GET  /api/registrar  → { testeMinutos }: duração do teste que a página de cadastro anuncia (/admin → Planos).
 import { enviarEmail } from './_lib/email.js'
 import { emailBoasVindas } from './_lib/emails.js'
+import { anotarApp } from './_lib/uso.js'
 import { sql, um } from './_lib/db.js'
 import { abrirJanelaFree, cifrarSenha, ehApp, corpo, criarSessao, porCookie, publicoCompleto } from './_lib/sessao.js'
 import { emailValido, nomeValido, normalizarWhatsapp, senhaValida, SENHA_MINIMA } from './_lib/validar.js'
@@ -60,7 +61,10 @@ export default async function handler(req, res) {
     }
 
     const existe = await um(sql`select 1 from usuarios where lower(email) = ${email}`)
-    if (existe) return res.status(409).json({ erro: 'Já existe uma conta com este e-mail.', campo: 'email' })
+    if (existe) {
+      await anotarApp(req, null, 'cadastro_erro', { erro: 'Já existe uma conta com este e-mail.', email })
+      return res.status(409).json({ erro: 'Já existe uma conta com este e-mail.', campo: 'email' })
+    }
 
     const u = await um(sql`
       insert into usuarios (email, senha, nome, oficina, whatsapp, origem, rastreio_meta)
@@ -90,7 +94,7 @@ export default async function handler(req, res) {
         await sql`update usuarios set email_boas_vindas_em = now() where id = ${u.id}`
       }
     })().catch(() => {})
-    await Promise.all([meta, boasVindas]) // no maximo ~6 s, e nunca falha o cadastro
+    await Promise.all([meta, boasVindas, anotarApp(req, u.id, 'cadastro')]) // no maximo ~6 s, e nunca falha o cadastro
     return res.status(201).json(await publicoCompleto(comJanela))
   } catch (err) {
     return res.status(err.status ?? 500).json({ erro: err.message ?? 'Não foi possível criar a conta.' })

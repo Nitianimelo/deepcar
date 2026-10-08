@@ -21,6 +21,26 @@ function Badge({ href, topo, nome, icone }: { href: string; topo: string; nome: 
 }
 
 export function AppStoreBadge({ href = '#' }: { href?: string }) {
+  // No iPhone o selo sem link fazia a pessoa procurar o app e ir embora (registro de uso, 08/10/2026: 25 visitas de
+  // iPhone pelo Instagram, 1 cadastro). Lá ele vira o convite para usar no navegador, que é o que existe.
+  if (href === '#' && typeof navigator !== 'undefined' && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+    return (
+      <a
+        href="/cadastro"
+        className="inline-flex h-[52px] items-center gap-2.5 rounded-[10px] border border-white/15 bg-[#0b0e13] pl-3 pr-4 text-left transition-colors hover:border-white/30 hover:bg-[#12161d]"
+      >
+        <span className="grid h-7 w-7 place-items-center text-ink-1">
+          <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden="true">
+            <path d="M16.365 12.77c-.026-2.633 2.15-3.897 2.247-3.958-1.225-1.79-3.13-2.035-3.807-2.063-1.622-.164-3.165.955-3.988.955-.82 0-2.09-.932-3.437-.906-1.768.026-3.4 1.028-4.31 2.612-1.838 3.187-.47 7.907 1.32 10.494.876 1.266 1.92 2.688 3.29 2.637 1.32-.053 1.82-.855 3.416-.855 1.596 0 2.045.855 3.44.83 1.42-.027 2.32-1.29 3.19-2.56 1.003-1.47 1.417-2.893 1.44-2.966-.03-.013-2.766-1.06-2.8-4.22zM13.75 5.04c.728-.882 1.218-2.108 1.084-3.33-1.048.042-2.316.698-3.068 1.578-.673.78-1.263 2.03-1.104 3.226 1.168.09 2.36-.594 3.088-1.474z" />
+          </svg>
+        </span>
+        <span className="leading-none">
+          <span className="block text-[10px] text-ink-3">No iPhone, sem instalar nada</span>
+          <span className="mt-1 block text-[15px] font-semibold tracking-tight text-ink-1">Use no navegador</span>
+        </span>
+      </a>
+    )
+  }
   return (
     <Badge
       href={href}

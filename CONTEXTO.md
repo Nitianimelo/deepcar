@@ -123,6 +123,26 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Registro de uso do app Android pelo servidor + iPhone, login e e-mail repetido
+- **Pedido:** revisão do registro de uso da noite (130 pessoas, 79 pelo navegador do Instagram/Facebook; Android: 16 de 24
+  tocaram em "Baixar o app"; iPhone: 25 visitas pelo Instagram e 1 cadastro; 3 pessoas erraram o login 9 vezes, 4 delas
+  com campos vazios; 1 tentou cadastrar e-mail que já tinha conta) e "logs do Android" sem esperar versão nova.
+- **O que mudou:**
+  - `api/_lib/uso.js` (novo): o servidor grava em `eventos_uso` o que o app Android faz (o app não manda registro):
+    `login`/`login_erro` (`api/login.js`), `cadastro`/`cadastro_erro` (`api/registrar.js`), `placa`/`placa_erro`
+    (`api/placa`), `esquema` (evento consulta), `app_aberto` (GET /api/sessao, 1 a cada 30 min), `compra_play`. Só para
+    requisição do app (agente Dalvik ou `X-Deepcar-App`); aparelho "Android · app <versão>" ou "app antigo". /admin → Logs
+    com os nomes novos.
+  - `StoreBadges.tsx`: no iPhone o selo da App Store (sem link, não há app) vira "No iPhone, sem instalar nada · Use no
+    navegador" → /cadastro.
+  - `Login.tsx`: lê e-mail/senha do próprio campo quando o preenchimento automático não avisa o React; depois de 2 erros,
+    caixa "Não está conseguindo entrar?" com "Criar nova senha" e WhatsApp.
+  - `Cadastro.tsx`: e-mail que já tem conta → "Entrar com este e-mail" e "Esqueci a senha" (com o e-mail).
+- **Uso do app desde 07/10 (reconstruído de `sessoes`/`consultas`):** 33 contas usaram o app; 14 já registraram
+  notificação (app 1.3.0 no ar desde ~20h de 07/10); 17 placas e 19 esquemas; 18 com o teste encerrado (as do app antigo
+  pelo prazo de horas). Vários se cadastram no site e passam para o app (efeito do aviso do navegador do Instagram).
+- **Verificação:** build ok, lint 10; WebKit: selo do iPhone, ajuda após 2 erros de login, botões do e-mail repetido.
+
 ### 2026-10-08 · Razão social e CNPJ no site (verificação da empresa na Meta)
 - Para a API oficial do WhatsApp em coexistência a Meta exige a empresa verificada (e Provedor de Tecnologia); a
   verificação confere o site. Rodapé da landing, rodapé das páginas simples (`PaginaSimples.tsx`) e "Quem somos" da

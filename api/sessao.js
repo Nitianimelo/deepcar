@@ -22,6 +22,7 @@ import { ativacaoMeta, dadosDoNavegador, enviarEvento, visitanteValido } from '.
 import { abrirJanelaFree, conferirSenha, corpo, ehApp, limparCookie, publicoCompleto, usuarioDaSessao } from './_lib/sessao.js'
 import { registrarConsulta } from './_lib/consultas.js'
 import { registrarCompraPlay } from './_lib/play.js'
+import { anotarAberturaApp, anotarApp } from './_lib/uso.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -36,7 +37,11 @@ export default async function handler(req, res) {
       const { evento } = corpo(req)
       if (evento === 'ativacao') return await marcarAtivacao(req, res, u)
       if (evento === 'consulta') return await consultaEsquema(req, res, u)
-      if (evento === 'play') return res.status(200).json(await publicoCompleto(await registrarCompraPlay(u, corpo(req).token)))
+      if (evento === 'play') {
+        const pago = await registrarCompraPlay(u, corpo(req).token)
+        await anotarApp(req, u.id, 'compra_play', { plano: pago?.plano, ciclo: pago?.assinatura_ciclo })
+        return res.status(200).json(await publicoCompleto(pago))
+      }
       if (evento === 'push') return await registrarAparelho(req, res, u)
       return await eventoCheckout(req, res, u)
     }
@@ -44,6 +49,7 @@ export default async function handler(req, res) {
       res.setHeader('Allow', 'GET, POST, DELETE')
       return res.status(405).json({ erro: 'Use GET, POST ou DELETE.' })
     }
+    await anotarAberturaApp(req, u.id) // app Android: "abriu o app" (no máximo 1 a cada 30 min)
     // conta criada pelo /admin, ou rebaixada para free: o relógio parte no primeiro acesso
     return res.status(200).json(await publicoCompleto(await abrirJanelaFree(u, { app: ehApp(req) })))
   } catch (err) {
@@ -113,6 +119,7 @@ async function consultaEsquema(req, res, u) {
   const item = String(corpo(req).item ?? '').trim()
   if (!item || item.length > 240 || /\p{Cc}/u.test(item)) return res.status(400).json({ erro: 'Esquema inválido.' })
   const r = await registrarConsulta(u, 'esquema', item)
+  await anotarApp(req, u.id, 'esquema', { id: item, estado: r.liberado ? 'liberado' : 'teste_encerrado' })
   return res.status(200).json({ liberado: r.liberado })
 }
 

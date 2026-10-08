@@ -8,6 +8,7 @@ import { acessoDe } from '../_lib/planos.js'
 import { podeConsultar, registrarConsulta } from '../_lib/consultas.js'
 import { normalizarPlaca } from '../../server/placa/veiculo.mjs'
 import { ativacaoMeta } from '../_lib/meta.js'
+import { anotarApp } from '../_lib/uso.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -61,9 +62,11 @@ export default async function handler(req, res) {
     // ativacao: primeira placa que deu certo (aparece no /admin); so escreve uma vez
     await sql`update usuarios set primeira_placa_em = now() where id = ${u.id} and primeira_placa_em is null`
     await ativacaoMeta(u.id, req) // StartTrial para a Meta, uma vez por conta (só cadastro do site)
+    await anotarApp(req, u.id, 'placa', { placa: veiculo.placa, marca: veiculo.marca, modelo: veiculo.modelo, ano: veiculo.anoModelo ?? veiculo.anoFabricacao ?? null })
     return res.status(200).json(veiculo)
   } catch (err) {
     res.setHeader('Cache-Control', 'no-store')
+    await anotarApp(req, u.id, 'placa_erro', { placa, erro: String(err.message ?? '').slice(0, 160) })
     return res.status(err.status ?? 500).json({ erro: err.message ?? 'Falha na consulta.' })
   }
 }

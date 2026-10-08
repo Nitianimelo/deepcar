@@ -105,6 +105,8 @@ api/                      funções serverless da Vercel (JavaScript, Node)
   _lib/validar.js         validação de cadastro (regra que vale de verdade)
   _lib/cakto.js           webhook da Cakto: prova a origem, evento→ação, produto→plano
   _lib/assinatura.js      o que um pagamento faz com a conta (ativar, derrubar, atraso, pendente)
+  _lib/uso.js            registro de uso do app Android pelo SERVIDOR (anotarApp/anotarAberturaApp): login, cadastro, placa,
+                          esquema, app_aberto (1/30 min), compra_play → eventos_uso, aparelho "Android · app <versão>"; só para o app
   _lib/email.js           e-mail pelo Resend (cofre RESEND_API_KEY, de e reply_to contato@deepcar.app.br; respostas caem no Receiving do Resend) + modelo HTML com a logo
   _lib/emails.js          textos: emailBoasVindas (no cadastro), emailRedefinirSenha, emailCompra e emailTesteAcabou (planos com checkout da Cakto preenchido +
                           WhatsApp; avisarTesteAcabouEmail, uma vez por conta em usuarios.email_teste_acabou_em); avisarCompra(antes, depois) sai de

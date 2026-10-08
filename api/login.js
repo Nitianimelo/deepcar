@@ -7,6 +7,7 @@ import { sql, um } from './_lib/db.js'
 import { enviarEmail, SITE } from './_lib/email.js'
 import { emailRedefinirSenha } from './_lib/emails.js'
 import { SENHA_MINIMA } from './_lib/validar.js'
+import { anotarApp } from './_lib/uso.js'
 import { abrirJanelaFree, cifrarSenha, conferirSenha, ehApp, corpo, criarSessao, porCookie, publicoCompleto, vencerAnual } from './_lib/sessao.js'
 import { limitarDispositivos } from './_lib/planos.js'
 import { consumirPendente } from './_lib/assinatura.js'
@@ -26,6 +27,7 @@ export default async function handler(req, res) {
     const u = await um(sql`select * from usuarios where lower(email) = lower(${String(email ?? '').trim()})`)
     // mesma resposta para e-mail inexistente e senha errada: não conta quem tem conta
     if (!u || !u.ativo || !(await conferirSenha(String(senha ?? ''), u.senha))) {
+      await anotarApp(req, u?.id ?? null, 'login_erro', { erro: 'E-mail ou senha incorretos.', email: String(email ?? '').trim().slice(0, 120) })
       return res.status(401).json({ erro: 'E-mail ou senha incorretos.' })
     }
     // pagamento que chegou enquanto a pessoa estava fora (ou vinculado no /admin)
@@ -37,6 +39,7 @@ export default async function handler(req, res) {
     await limitarDispositivos(comJanela)
     await sql`update usuarios set visto_em = now() where id = ${u.id}`
     porCookie(res, token, expira)
+    await anotarApp(req, u.id, 'login')
     return res.status(200).json(await publicoCompleto(comJanela))
   } catch (err) {
     return res.status(err.status ?? 500).json({ erro: err.message ?? 'Falha no login.' })
