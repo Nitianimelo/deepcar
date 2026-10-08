@@ -1023,10 +1023,11 @@ type ResumoLogs = {
   placasErro: { erro: string; n: number }[]
   assinar: { id: string; nome: string; email: string; plano: Plano; cliques: number; ultimo: string }[]
   navegador: { so: string; acao: string; n: number }[]
+  leitura?: { so: string; visitantes: number; rolou_metade: number; segundos_mediana: number | null; abriu_cadastro: number; cadastrou: number }[]
 }
 
 const NOMES_EVENTO: Record<string, string> = {
-  whatsapp: 'Chamou no WhatsApp', app_aberto: 'Abriu o app Android', compra_play: 'Assinou pela Google Play',
+  whatsapp: 'Chamou no WhatsApp', rolou: 'Rolou a página de vendas', saiu_landing: 'Saiu da página de vendas', app_aberto: 'Abriu o app Android', compra_play: 'Assinou pela Google Play',
   pagina: 'Página', busca: 'Busca', placa: 'Placa encontrada', placa_erro: 'Placa com erro', esquema: 'Esquema',
   viu_planos: 'Viu os planos', clicou_assinar: 'Clicou em assinar', cadastro: 'Cadastrou', cadastro_erro: 'Erro no cadastro',
   login: 'Entrou', login_erro: 'Erro ao entrar', compartilhou: 'Compartilhou', navegador_interno: 'Navegador do Instagram/Facebook',
@@ -1044,6 +1045,8 @@ function resumoEvento(e: EventoUso) {
     case 'viu_planos': return String(d.onde ?? '')
     case 'clicou_assinar': return `${d.plano} ${d.ciclo}`
     case 'navegador_interno': return `${d.app} · ${d.so} · ${d.acao}`
+    case 'rolou': return `${d.pct}% da página`
+    case 'saiu_landing': return `${d.segundos} s · rolou ${d.rolou}%`
     default: return d.erro ? String(d.erro) : e.rota ?? ''
   }
 }
@@ -1135,6 +1138,25 @@ function AbaLogs() {
               {!r.placasErro.length && <li className="text-ink-4">Nenhuma.</li>}
             </ul>
           </section>
+          {!!r.leitura?.length && (
+            <section className={`${cartao} md:col-span-2 xl:col-span-3`}>
+              <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Página de vendas por aparelho</h2>
+              <table className="mt-2 w-full text-left text-[13.5px]">
+                <thead className="text-ink-4"><tr><th className="py-1 font-medium">Aparelho</th><th className="font-medium">Visitas</th><th className="font-medium">Rolou metade</th><th className="font-medium">Tempo (mediana)</th><th className="font-medium">Abriu o cadastro</th><th className="font-medium">Cadastrou</th></tr></thead>
+                <tbody>
+                  {r.leitura.map((l) => (
+                    <tr key={l.so} className="border-t seam-soft">
+                      <td className="py-1.5 text-ink-1">{l.so}</td><td>{l.visitantes}</td>
+                      <td>{l.rolou_metade} <span className="text-ink-4">({l.visitantes ? Math.round((100 * l.rolou_metade) / l.visitantes) : 0}%)</span></td>
+                      <td>{l.segundos_mediana ?? '—'}{l.segundos_mediana != null && ' s'}</td>
+                      <td>{l.abriu_cadastro} <span className="text-ink-4">({l.visitantes ? Math.round((100 * l.abriu_cadastro) / l.visitantes) : 0}%)</span></td>
+                      <td>{l.cadastrou}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          )}
           <section className={cartao}>
             <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Navegador do Instagram/Facebook</h2>
             <ul className="mt-2 space-y-1 text-[13.5px]">

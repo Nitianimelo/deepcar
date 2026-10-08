@@ -156,7 +156,7 @@ async function logs(req, res) {
   const tipo = String(req.query.tipo ?? '').trim()
   const usuario = /^[0-9a-f-]{36}$/.test(String(req.query.usuario ?? '')) ? String(req.query.usuario) : null
   const busca = q ? `%${q}%` : null
-  const [eventos, porTipo, semResultado, placasErro, assinar, navegador] = await Promise.all([
+  const [eventos, porTipo, semResultado, placasErro, assinar, navegador, leitura] = await Promise.all([
     sql`select e.id, e.tipo, e.detalhe, e.rota, e.aparelho, e.em, e.visitante, u.id as usuario_id, u.nome, u.email, u.plano
           from eventos_uso e left join usuarios u on u.id = e.usuario_id
          where e.em > now() - make_interval(days => ${dias})
@@ -177,6 +177,19 @@ async function logs(req, res) {
          group by 1,2,3,4 order by max(e.em) desc limit 30`,
     sql`select detalhe->>'so' so, detalhe->>'acao' acao, count(*)::int n from eventos_uso
          where tipo = 'navegador_interno' and em > now() - make_interval(days => ${dias}) group by 1,2 order by 1,3 desc`,
+    // página de vendas por aparelho: quem chegou, quem rolou metade, tempo mediano e quem abriu o cadastro
+    sql`with e as (select coalesce(usuario_id::text, visitante) quem, tipo, rota, detalhe,
+                          case when aparelho like 'iPhone%' then 'iPhone' when aparelho like 'Android%' then 'Android'
+                               when aparelho like 'Windows%' or aparelho like 'Mac%' then 'Computador' else 'Outro' end so
+                     from eventos_uso where em > now() - make_interval(days => ${dias})),
+             vis as (select distinct quem, so from e where tipo = 'pagina' and (rota = '/' or rota like '/?%'))
+        select v.so, count(*)::int visitantes,
+               count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'rolou' and (e.detalhe->>'pct')::int >= 50))::int rolou_metade,
+               (select percentile_cont(0.5) within group (order by (detalhe->>'segundos')::int)::int from e
+                 where e.so = v.so and e.tipo = 'saiu_landing' and e.quem in (select quem from vis where vis.so = v.so)) segundos_mediana,
+               count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'pagina' and e.rota like '/cadastro%'))::int abriu_cadastro,
+               count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'cadastro'))::int cadastrou
+          from vis v group by v.so order by 2 desc`,
   ])
-  return res.status(200).json({ dias, eventos, resumo: { porTipo, semResultado, placasErro, assinar, navegador } })
+  return res.status(200).json({ dias, eventos, resumo: { porTipo, semResultado, placasErro, assinar, navegador, leitura } })
 }

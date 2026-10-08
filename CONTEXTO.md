@@ -123,6 +123,18 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Quanto a pessoa lê a página de vendas (rolagem e tempo, por aparelho)
+- **Por quê:** no iPhone, 25 de 30 visitantes do Instagram abriam a página e saíam sem tocar em nada (Android: 44%
+  chegam ao cadastro). Banco confirma (desde 07/10 18h: 21 cadastros Android, 1 iPhone). Simulação do Instagram no
+  iPhone (WebKit): carrega em 1,4 s, sem erro, botão visível e o toque leva ao cadastro. Dono preferiu manter o anúncio
+  para todos (conjunto em aprendizado) e medir.
+- **O que mudou:** `Landing.tsx` → `useLeitura()`: `rolou` {pct 25/50/75/100} uma vez cada e `saiu_landing`
+  {segundos, rolou} ao sair (outra página, aba escondida ou fechar; registrado antes do envio em lote).
+  `api/admin/usuarios.js ?acao=logs` → `resumo.leitura` por aparelho (iPhone/Android/Computador/Outro): visitas, rolou
+  metade, tempo mediano, abriu o cadastro, cadastrou. /admin → Logs: cartão "Página de vendas por aparelho".
+- **Verificação:** build ok, lint 10; WebKit 390 px com o envio por sendBeacon capturado: pagina /, rolou 25…100,
+  saiu_landing {4 s, 100%}, pagina /cadastro; consulta do resumo rodada no banco.
+
 ### 2026-10-08 · Registro de uso do app Android pelo servidor + iPhone, login e e-mail repetido
 - **Pedido:** revisão do registro de uso da noite (130 pessoas, 79 pelo navegador do Instagram/Facebook; Android: 16 de 24
   tocaram em "Baixar o app"; iPhone: 25 visitas pelo Instagram e 1 cadastro; 3 pessoas erraram o login 9 vezes, 4 delas

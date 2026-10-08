@@ -10,8 +10,10 @@ import { GridBeam } from '../components/landing/GridBeam'
 import { Reveal } from '../components/landing/Reveal'
 import { BotaoWhatsapp } from '../components/landing/BotaoWhatsapp'
 import { PlanosLanding } from '../components/landing/PlanosLanding'
+import { registrar as anotar } from '../lib/log'
 
 export default function Landing() {
+  useLeitura()
   return (
     <div className="landing min-h-full bg-pit pb-24 text-ink-1">{/* pb: o botão flutuante do WhatsApp não cobre os selos do rodapé */}
       <Header />
@@ -23,6 +25,47 @@ export default function Landing() {
       <BotaoWhatsapp />
     </div>
   )
+}
+
+/**
+ * Quanto a pessoa lê a página de vendas (08/10/2026): no iPhone quase todo mundo abria e saía sem tocar em nada.
+ * Registra 'rolou' ao passar de 25/50/75/100% da página (uma vez cada) e, ao sair (outra página do site, aba escondida
+ * ou fechar), 'saiu_landing' com os segundos e o máximo rolado. /admin → Logs resume por aparelho.
+ */
+function useLeitura() {
+  useEffect(() => {
+    const inicio = Date.now()
+    let max = 0
+    const marcos = new Set<number>()
+    let saiu = false
+    let raf = 0
+    const medir = () => {
+      raf = 0
+      const doc = document.documentElement
+      const total = doc.scrollHeight - window.innerHeight
+      const pct = total > 0 ? Math.min(100, Math.round((window.scrollY / total) * 100)) : 100
+      if (pct > max) max = pct
+      for (const m of [25, 50, 75, 100]) if (max >= m && !marcos.has(m)) { marcos.add(m); anotar('rolou', { pct: m }) }
+    }
+    const rolar = () => { if (!raf) raf = requestAnimationFrame(medir) }
+    const sair = () => {
+      if (saiu) return
+      saiu = true
+      anotar('saiu_landing', { segundos: Math.round((Date.now() - inicio) / 1000), rolou: max })
+    }
+    const esconder = () => { if (document.visibilityState === 'hidden') sair() }
+    window.addEventListener('scroll', rolar, { passive: true })
+    // antes do envio em lote do log.ts (que também ouve a aba sumir): anota primeiro, o lote leva junto
+    document.addEventListener('visibilitychange', esconder, { capture: true })
+    window.addEventListener('pagehide', sair, { capture: true })
+    return () => {
+      window.removeEventListener('scroll', rolar)
+      document.removeEventListener('visibilitychange', esconder, { capture: true })
+      window.removeEventListener('pagehide', sair, { capture: true })
+      if (raf) cancelAnimationFrame(raf)
+      sair() // foi para outra página do site (ex.: cadastro)
+    }
+  }, [])
 }
 
 /* ── Cabeçalho ─────────────────────────────────────────────────────── */
