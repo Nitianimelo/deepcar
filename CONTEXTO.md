@@ -116,6 +116,15 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Aviso do navegador do Instagram só depois do cadastro
+- **Pedido do dono:** o aviso aparecia na página de vendas e atrapalhava a conversão. Agora: nada na landing, no
+  cadastro e no login; só dentro da plataforma (`/app` com sessão), depois do cadastro, e pode fechar e navegar.
+- **O que mudou:** `NavegadorInterno.tsx`: título "Conta criada! Agora abra no Safari" / "…use no app ou no Chrome";
+  Safari/Chrome abrem `/login?conta=criada&email=…` (o outro navegador não tem a sessão do Instagram).
+  `Login.tsx`: lê `email` e `conta=criada` da URL (e-mail preenchido + aviso "Sua conta já está criada…").
+- **Verificação:** build ok, lint 10; WebKit 390 px com agente do Instagram (iPhone e Android): landing e cadastro sem
+  aviso, `/app` logado com aviso e links certos; login com e-mail e aviso.
+
 ### 2026-10-08 · Saber quem assinou pela Google Play: origem no /admin e e-mail "Nova venda"
 - **Pedido:** "quem assinar pela Google Play, como eu sei?". Antes só aparecia o plano no /admin e "Assinou" no CRM.
 - **O que mudou:** /admin → Usuários mostra a origem na linha da assinatura ("ativa · Google Play", "· Cakto",

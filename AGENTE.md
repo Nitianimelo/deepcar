@@ -148,7 +148,8 @@ src/
   components/Folha.tsx    folha que sobe de baixo (+ Destaque): sem desfoque, voltar do Android fecha (estado no histórico)
   components/Funil.tsx    BoasVindas (3 passos no início), ConviteMomento (após 1ª placa / 3º esquema), DicaEsquema
   lib/log.ts              registro de uso: registrar(tipo, detalhe) em fila, lote de até 40 a cada 30 s ou ao esconder a aba (sendBeacon) → POST /api/sessao { evento: 'log' } → eventos_uso; /admin → Logs
-  components/NavegadorInterno.tsx  navegador do Instagram/Facebook/TikTok: iPhone → Safari (x-safari-https) no /cadastro; Android → Play Store ou Chrome (intent://); com a query da campanha
+  components/NavegadorInterno.tsx  navegador do Instagram/Facebook/TikTok, SÓ depois do cadastro (/app com sessão; nunca na landing/cadastro):
+                          iPhone → Safari (x-safari-https), Android → Play Store ou Chrome (intent://), para /login?conta=criada&email=
   lib/consulta.ts         liberarEsquema() (POST /api/sessao evento consulta) e o sinal para o layout reconferir a sessão
   lib/funil.ts            regras do funil no navegador (por conta e aparelho) e marcos de ativação → POST /api/sessao
   lib/seo.ts              useTitulo(): título da aba ao navegar (páginas públicas já saem certas do build)

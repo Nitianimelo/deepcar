@@ -12,13 +12,15 @@ export default function Login() {
   useTitulo('Entrar · Deepcar')
   const nav = useNavigate()
   const loc = useLocation()
-  const [email, setEmail] = useState('')
+  // vindo do aviso do navegador do Instagram (NavegadorInterno): e-mail preenchido e "conta criada"
+  const [email, setEmail] = useState(() => new URLSearchParams(location.search).get('email') ?? '')
   const [senha, setSenha] = useState('')
   const [mostrar, setMostrar] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(false)
   // o app manda para cá quem teve a sessão encerrada (limite de aparelhos do plano, admin, senha nova)
   const aviso = (loc.state as { aviso?: string } | null)?.aviso
+    ?? (new URLSearchParams(loc.search).get('conta') === 'criada' ? 'Sua conta já está criada. Entre com a senha que você acabou de cadastrar.' : undefined)
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()

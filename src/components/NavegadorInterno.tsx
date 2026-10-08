@@ -1,17 +1,20 @@
 // Navegador de dentro do Instagram/Facebook (07/10/2026). Metade dos cadastros vinha de anúncio e ficava nesse navegador:
-// o login se perde quando a pessoa fecha, o checkout é ruim e ninguém pagou por ali. Então, na chegada:
-//  - iPhone: "Abrir no Safari" (esquema x-safari-https do iOS 17+), já no cadastro; se o Instagram bloquear,
-//    a instrução de abrir pelo menu "···" e o botão de copiar o link;
+// o login se perde quando a pessoa fecha, o checkout é ruim e ninguém pagou por ali.
+// Decisão do dono (08/10): NADA na página de vendas nem no cadastro (perde conversão). O aviso aparece só DEPOIS do
+// cadastro, dentro da plataforma (/app com sessão), e a pessoa pode fechar e seguir navegando:
+//  - iPhone: "Abrir no Safari" (esquema x-safari-https do iOS 17+); se o Instagram bloquear, a instrução do menu "···"
+//    e o botão de copiar o link;
 //  - Android: "Baixar o app" (Play Store) ou "Abrir no Chrome" (intent:// com o Chrome, e a própria página de reserva).
-// O endereço vai com a query de campanha (utm/fbclid), para a origem do cadastro não se perder. Uma vez por visita.
+// O Safari/Chrome não levam a sessão do Instagram: o link vai para /login com o e-mail preenchido e o aviso de conta
+// criada. Uma vez por visita.
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Check, Copy, Download, ExternalLink, X } from 'lucide-react'
 import { registrar } from '../lib/log'
+import { getSession } from '../lib/auth'
 
 const PLAY = 'https://play.google.com/store/apps/details?id=deepcar.app.android'
 const CHAVE = 'deepcar.iab.dispensado'
-const ROTAS_NAO = ['/admin', '/c/', '/obrigado', '/privacidade', '/excluir-conta']
 
 function detectarInterno(ua = navigator.userAgent) {
   const app = /Instagram/i.test(ua) ? 'Instagram' : /FBAN|FBAV|FB_IAB|FBIOS|FB4A/.test(ua) ? 'Facebook' : /musical_ly|TikTok|BytedanceWebview/i.test(ua) ? 'TikTok' : null
@@ -20,19 +23,21 @@ function detectarInterno(ua = navigator.userAgent) {
   return { app, so } as const
 }
 
-/** Para onde mandar: da landing, direto ao cadastro; das outras páginas, a mesma. Sempre com a query da campanha. */
-function destino(pathname: string, search: string) {
-  const caminho = pathname === '/' ? '/cadastro' : pathname
-  return { host: location.host, caminho: caminho + search, url: `${location.protocol}//${location.host}${caminho}${search}` }
+/** Para onde mandar: a tela de entrar, com o e-mail da conta recém-criada (o outro navegador não tem a sessão). */
+function destino(email: string) {
+  const caminho = `/login?conta=criada&email=${encodeURIComponent(email)}`
+  return { host: location.host, caminho, url: `${location.protocol}//${location.host}${caminho}` }
 }
 
 export function NavegadorInterno() {
-  const { pathname, search } = useLocation()
+  const { pathname } = useLocation()
   const [info] = useState(() => (typeof navigator === 'undefined' ? null : detectarInterno()))
   const [aberto, setAberto] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
-  const permitido = !!info && !ROTAS_NAO.some((r) => pathname.startsWith(r))
+  // só dentro da plataforma, já cadastrado (nunca na página de vendas, no cadastro ou no login)
+  const sessao = pathname.startsWith('/app') ? getSession() : null
+  const permitido = !!info && !!sessao
   useEffect(() => {
     if (!permitido) return
     let ja = false
@@ -43,7 +48,7 @@ export function NavegadorInterno() {
   }, [permitido]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!aberto || !info) return null
-  const d = destino(pathname, search)
+  const d = destino(sessao?.email ?? '')
   const anotar = (acao: string) => registrar('navegador_interno', { app: info.app, so: info.so, acao })
   const fechar = (acao = 'continuou_aqui') => {
     anotar(acao)
@@ -62,19 +67,19 @@ export function NavegadorInterno() {
       <div className="w-full max-w-md rounded-t-2xl border seam bg-bench-2 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl">
         <div className="flex items-start justify-between gap-3">
           <h2 id="iab-titulo" className="text-[19px] font-semibold leading-snug tracking-tight text-ink-1">
-            {info.so === 'ios' ? 'Abra a Deepcar no Safari' : 'Use a Deepcar no app ou no Chrome'}
+            {info.so === 'ios' ? 'Conta criada! Agora abra no Safari' : 'Conta criada! Agora use no app ou no Chrome'}
           </h2>
           <button type="button" onClick={() => fechar()} aria-label="Fechar" className="-mr-1 -mt-1 grid h-10 w-10 flex-none place-items-center rounded-lg text-ink-3"><X size={18} /></button>
         </div>
         <p className="mt-2 text-[14.5px] leading-relaxed text-ink-2">
-          Você está no navegador do {info.app}. Aqui o login se perde quando você fecha, e o teste grátis fica pela metade.
-          {info.so === 'ios' ? ' No Safari você cria a conta e ela continua salva.' : ' No app ou no Chrome a sua conta fica salva.'}
+          Você está no navegador do {info.app}: quando ele fecha, você sai da conta.
+          {info.so === 'ios' ? ' No Safari ela fica salva' : ' No app ou no Chrome ela fica salva'}: é só entrar com o seu e-mail e a senha que acabou de criar.
         </p>
 
         {info.so === 'ios' ? (
           <>
             <a href={safari} onClick={() => anotar('abrir_safari')} className="btn-primary mt-4 inline-flex !h-12 w-full items-center justify-center gap-2 text-[15.5px]">
-              <ExternalLink size={17} /> Abrir no Safari e me cadastrar
+              <ExternalLink size={17} /> Abrir no Safari
             </a>
             <p className="mt-3 text-[13px] leading-relaxed text-ink-3">
               Se não abrir: toque nos <b className="font-semibold text-ink-1">···</b> no canto de cima e escolha
