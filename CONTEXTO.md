@@ -116,6 +116,19 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Diagnóstico do funil aplicado: ativação para a Meta e "Perguntar se tem o meu carro"
+- **Origem:** diagnóstico de outra sessão (cadastra muito, fala pouco, compra pouco; 1 venda em 84 cadastros de
+  anúncio; as vendas tiveram conversa antes; Pix 3/3 pago, cartão 1/5). Dono mandou aplicar tudo menos devolver testes.
+- **O que mudou:**
+  - `ativacaoMeta()` (`api/_lib/meta.js`): **StartTrial** pela API de Conversões na 1ª placa encontrada
+    (`api/placa`) ou no 1º esquema aberto (`POST /api/sessao` marco `esquema`), uma vez por conta
+    (`usuarios.meta_ativacao_em`, db/016), só para cadastro do site (`rastreio_meta` não nulo), event_id `ativ-<id>`.
+    Para o anúncio otimizar por quem USA o teste em vez de quem só cadastra.
+  - `components/PerguntarCarro.tsx`: botão verde "Perguntar se tem o meu carro" (WhatsApp com o carro e o e-mail) no
+    convite para assinar (esquema borrado, placa, início; não aparece para quem já paga), na placa não encontrada e no
+    veículo sem esquemas. Clique vai para o registro de uso (`whatsapp`, com `onde`).
+- **Banco:** `016` **aplicada no Neon antes do push** (commit anterior; esta entrada foi no commit seguinte).
+
 ### 2026-10-08 · Esquemas do teste no /admin, sem prazo em dias, placa depois do teste
 - **Pedido do dono:** em /admin → Planos, a quantidade de esquemas que o teste permite, e tirar o prazo; acabou a cota =
   "assine um plano" em todo lugar, mas a pessoa continua consultando, até pela placa, com o esquema borrado.
