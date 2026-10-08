@@ -116,6 +116,20 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Cakto com Pix primeiro e conjunto de anúncios otimizando por StartTrial
+- **Cakto:** o "Plataforma Deepcar - Plano Full" (mensal, `0916d47f…`) abria no cartão; pela API interna do painel
+  (`api.cakto.com.br/api/product/<id>/`, sessão do Safari) `defaultPaymentMethod = pix` e `paymentsOrder = [pix,
+  credit_card, pix_auto]` (o campo `paymentMethods` sozinho não muda a ordem). Os 4 checkouts conferidos: todos abrem
+  no PIX; preço e logo iguais. A API pública (`products_update`) recusou com 400 sem detalhe.
+- **Meta (Gerenciador, pela sessão do Safari via `adsmanager-graph.facebook.com` com o token da página):** conjunto
+  novo **"Publico teste 1 · ativação (StartTrial)"** (`120253643407490019`) na campanha "Deepcar teste criativos", mesmo
+  público/orçamento (R$ 43/dia)/lance do "Publico teste 1", `promoted_object` START_TRIAL, com os criativos 2, 2 — Cópia,
+  3 e 4 (em análise). **Criado PAUSADO:** ligar é decisão do dono. A Meta não deixa trocar o evento de um conjunto
+  copiado de um publicado (erro 3260011): por isso foi criado do zero.
+- **Números da Meta (desde o início):** "Publico teste 1" R$ 267,53, 573 cliques, 95 cadastros (R$ 2,82 cada), 3
+  compras no pixel (uma é o evento de teste de 03/10); criativo 4 R$ 12,79 / 2 cadastros; WhatsApp R$ 6,33 / 1 conversa.
+- **ads_read do usuário de sistema:** não foi pedido; a leitura dos números funciona pela sessão do Safari.
+
 ### 2026-10-08 · Diagnóstico do funil aplicado: ativação para a Meta e "Perguntar se tem o meu carro"
 - **Origem:** diagnóstico de outra sessão (cadastra muito, fala pouco, compra pouco; 1 venda em 84 cadastros de
   anúncio; as vendas tiveram conversa antes; Pix 3/3 pago, cartão 1/5). Dono mandou aplicar tudo menos devolver testes.
