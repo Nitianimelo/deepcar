@@ -64,6 +64,13 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Pendências e problemas conhecidos
 
+- [ ] **API oficial do WhatsApp em coexistência (parado em 08/10/2026):** falta verificar a empresa Sigtrack na Meta
+      (cartão CNPJ etc.) e registrá-la como Provedor de Tecnologia; depois o dono lê o QR em
+      `crm.deepcar.app.br/conectar-meta`. Passo a passo completo no CONTEXTO.md do CRM (iCloud `Grupo Inttus/crm-whatsapp`,
+      seção "API oficial do WhatsApp").
+- [ ] Conjunto de anúncios "Publico teste 1 · ativação (StartTrial)" criado PAUSADO: ligar quando chegarem StartTrial
+      reais (conferir `usuarios.meta_ativacao_em`).
+
 - [ ] Login automático de quem paga em OUTRO navegador (ex.: Pix pago no celular): exige o "Redirect pós-pagamento"
       oficial da Cakto (`{{callback}}`), liberado pelo Compliance por e-mail. Hoje quem compra de dentro da plataforma
       já volta logado (mesmo navegador).
