@@ -124,7 +124,7 @@ Regras de trabalho estão em `AGENTE.md`.
 ## Histórico (mais recente primeiro)
 
 ### 2026-10-09 · Seção "Por que assinar em vez de comprar um manual em PDF"
-- Pedido do dono: seção simples, comparativo animado Deepcar × PDF. `src/components/landing/PorQueDeepcar.tsx`
+- Pedido do dono: seção simples, comparativo animado Deepcar × PDF. Redesenhada no mesmo dia ("parecia IA"): tabela única, linhas finas, coluna da Deepcar em faixa, ícones discretos, entrada sutil. `src/components/landing/PorQueDeepcar.tsx`
   (#por-que, entre "cobertura" e os planos): 7 linhas (achar o veículo pela placa, 20 mil sistemas/98% da frota,
   atualizações mensais sem custo, achar a peça, sistemas leve e diesel, celular, suporte especializado) em duas colunas;
   animação em index.css (`.comparativo`: linhas entram em sequência, ✓ salta, PDF apaga; respeita menos movimento).

@@ -444,15 +444,7 @@ html:has(.landing) { scroll-behavior: smooth; }
 @keyframes faixa-pulso { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { .faixa-oferta::after, .faixa-oferta span:last-child { animation: none; } }
 
-/* comparativo Deepcar × PDF (landing/PorQueDeepcar): linhas entram uma a uma; o ✓ salta e o PDF apaga um pouco */
-.comparativo .comparativo-linha { opacity: 0; transform: translateY(14px); transition: opacity .5s ease, transform .5s ease; transition-delay: calc(var(--i) * 110ms); }
+/* comparativo Deepcar × PDF (landing/PorQueDeepcar): as linhas aparecem em sequência, só opacidade e um leve deslize */
+.comparativo .comparativo-linha { opacity: 0; transform: translateY(6px); transition: opacity .45s ease, transform .45s ease; transition-delay: calc(var(--i) * 70ms); }
 .comparativo.is-in .comparativo-linha { opacity: 1; transform: none; }
-.comparativo .comparativo-sim { transform: scale(0); }
-.comparativo.is-in .comparativo-sim { animation: comparativo-salto .45s cubic-bezier(.34,1.56,.64,1) forwards; animation-delay: calc(var(--i) * 110ms + 250ms); }
-.comparativo .comparativo-pdf { transition: opacity .6s ease, filter .6s ease; transition-delay: calc(var(--i) * 110ms + 400ms); }
-.comparativo.is-in .comparativo-pdf { opacity: .72; filter: saturate(.6); }
-@keyframes comparativo-salto { from { transform: scale(0) } to { transform: scale(1) } }
-@media (prefers-reduced-motion: reduce) {
-  .comparativo .comparativo-linha, .comparativo .comparativo-pdf { opacity: 1; transform: none; transition: none; }
-  .comparativo .comparativo-sim { transform: none; animation: none; }
-}
+@media (prefers-reduced-motion: reduce) { .comparativo .comparativo-linha { opacity: 1; transform: none; transition: none; } }
