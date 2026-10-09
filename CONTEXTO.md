@@ -123,6 +123,13 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Seção "Por que assinar em vez de comprar um manual em PDF"
+- Pedido do dono: seção simples, comparativo animado Deepcar × PDF. `src/components/landing/PorQueDeepcar.tsx`
+  (#por-que, entre "cobertura" e os planos): 7 linhas (achar o veículo pela placa, 20 mil sistemas/98% da frota,
+  atualizações mensais sem custo, achar a peça, sistemas leve e diesel, celular, suporte especializado) em duas colunas;
+  animação em index.css (`.comparativo`: linhas entram em sequência, ✓ salta, PDF apaga; respeita menos movimento).
+  Botão "Começar por R$ 19,90". `viu_secao` inclui `por-que`.
+
 ### 2026-10-09 · Oferta também no painel de quem já tem conta (site)
 - Pedido do dono: levar a oferta (1º mês R$ 19,90 / 40% OFF no anual) para quem já se cadastrou e não assinou.
 - O painel já usava os mesmos cartões da página (CartaoPlanoClaro → preço "de/por", linha do tempo) e o

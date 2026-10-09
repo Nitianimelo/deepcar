@@ -14,6 +14,7 @@ import { FaqLanding } from '../components/landing/FaqLanding'
 import { OFERTA, PLANOS_VENDA, economiaAnual, precoPrimeiroMes } from '../data/planos'
 import { TourPlataforma } from '../components/landing/TourPlataforma'
 import { BuscaCarro } from '../components/landing/BuscaCarro'
+import { PorQueDeepcar } from '../components/landing/PorQueDeepcar'
 import { registrar as anotar } from '../lib/log'
 import { eventoLeitura } from '../lib/pixel'
 
@@ -27,6 +28,7 @@ export default function Landing() {
       <TourPlataforma />
       <BuscaCarro />
       <Cobertura />
+      <PorQueDeepcar />
       <PlanosLanding />
       <FaqLanding />
       <Footer />
@@ -41,7 +43,7 @@ export default function Landing() {
  * ou fechar), 'saiu_landing' com os segundos e o máximo rolado. /admin → Logs resume por aparelho.
  */
 /** Seções da página, na ordem (ids dos <section>): o funil por seção do /admin → Logs usa os mesmos nomes. */
-const SECOES_LANDING = ['topo', 'como-funciona', 'seu-carro', 'cobertura', 'planos', 'faq']
+const SECOES_LANDING = ['topo', 'como-funciona', 'seu-carro', 'cobertura', 'por-que', 'planos', 'faq']
 
 function useLeitura() {
   useEffect(() => {
