@@ -114,6 +114,7 @@ api/                      funções serverless da Vercel (JavaScript, Node)
   _lib/google.js          token OAuth da conta de serviço (FIREBASE_SERVICE_ACCOUNT) para FCM e Android Publisher
   _lib/push.js            notificações do app (FCM v1): enviarPush(), avisarTesteAcabou(), públicos do /admin
   _lib/play.js            assinatura pela Google Play: registrarCompraPlay() (confere + reconhece), conferirPlay() na sessão
+  _lib/consultas.js       teste por consultas: limite = consultas_teste (/admin) + usuarios.consultas_extra (db/019, liberadas pelo dono)
   _lib/apple.js           assinatura pela App Store (app iPhone): lerJws() confere a cadeia até a Apple Root CA G3, registrarCompraApple(),
                           notificacaoApple() (POST /api/webhooks/cakto?origem=apple), conferirApple() na sessão; db/017 colunas apple_*
   _lib/apns.js            notificações do iPhone direto pelo APNs (HTTP/2, cofre APNS_P8 + APNS_KEY_ID; produção, cai p/ sandbox)

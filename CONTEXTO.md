@@ -123,6 +123,14 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Consultas extras no teste (db/019)
+- Pedido do dono: mandar pelo WhatsApp "+5 consultas grátis" para quem gastou o teste, tem o app Android e fez 3+
+  consultas. Para a promessa valer: `usuarios.consultas_extra` (int, padrão 0) e o limite do teste da conta vira
+  `consultas_teste + consultas_extra` (`api/_lib/consultas.js`, podeConsultar/registrarConsulta). Reabrir o teste =
+  `consultas_extra += 5`, `free_expira_em = now()+3650 dias`, `push/email_teste_acabou_em = null` (avisam de novo no fim).
+- Aplicado hoje a 9 contas (lista no CRM, disparo "+5 consultas · app Android"). O CRM mostra "3 de 8" e a tag "Ganhou +5".
+- Sem tela no /admin ainda: liberar extras é por SQL/CRM.
+
 ### 2026-10-09 · CRM lê o uso de cada pessoa (db/018)
 - Pedido do dono: mais dados de quem se cadastra no CRM (app instalado ou não etc.) para trabalhar as conversas.
 - `db/018_crm_uso.sql`: `grant select` ao `crm_leitura` em `eventos_uso` (usuario_id, tipo, detalhe, rota, aparelho, em),

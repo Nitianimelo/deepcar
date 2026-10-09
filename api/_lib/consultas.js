@@ -28,8 +28,9 @@ export async function podeConsultar(u, tipo, item) {
   if (livreDe(u)) return true
   if (freeAcabou(u)) return false
   if (await um(sql`select 1 as ok from consultas where usuario_id = ${u.id} and item = ${chaveDe(tipo, item)}`)) return true
-  const linha = await um(sql`select consultas from usuarios where id = ${u.id}`)
-  if ((linha?.consultas ?? 0) < (await consultasTeste())) return true
+  // limite da conta = consultas do teste (/admin) + extras liberadas pelo dono (db/019, ex.: "+5 pelo WhatsApp")
+  const linha = await um(sql`select consultas, consultas_extra from usuarios where id = ${u.id}`)
+  if ((linha?.consultas ?? 0) < (await consultasTeste()) + (linha?.consultas_extra ?? 0)) return true
   await sql`update usuarios set free_expira_em = now() where id = ${u.id} and plano = 'free'`
   await Promise.all([avisarTesteAcabou(u.id), avisarTesteAcabouEmail(u.id)]) // notificação no app e e-mail (uma vez só cada)
   return false
@@ -47,8 +48,8 @@ export async function registrarConsulta(u, tipo, item) {
     insert into consultas (usuario_id, item, tipo) values (${u.id}, ${chave}, ${tipo})
     on conflict do nothing returning 1 as ok`)
   if (!nova) return { liberado: true } // duas abas abrindo o mesmo esquema juntas
-  const total = await um(sql`update usuarios set consultas = consultas + 1 where id = ${u.id} returning consultas`)
-  if (!livre && total.consultas >= (await consultasTeste())) {
+  const total = await um(sql`update usuarios set consultas = consultas + 1 where id = ${u.id} returning consultas, consultas_extra`)
+  if (!livre && total.consultas >= (await consultasTeste()) + (total.consultas_extra ?? 0)) {
     // a ultima ainda abre; o prazo encurta para a folga (nunca estica um teste que ja acabaria antes)
     await sql`
       update usuarios set free_expira_em = least(coalesce(free_expira_em, 'infinity'), now() + ${`${FOLGA_MIN} minutes`}::interval)
