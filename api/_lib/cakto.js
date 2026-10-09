@@ -125,6 +125,13 @@ const data = (v) => {
 }
 
 /** So os campos que o resto do sistema usa, num formato estavel. */
+/** Id do clique em "Assinar" que abriu este checkout: `sck` direto ou dentro do checkoutUrl. */
+function idDoCheckout(sck, url) {
+  let v = texto(sck)
+  if (!v && url) { try { v = new URL(String(url)).searchParams.get('sck') } catch { /* url estranha */ } }
+  return /^[\w-]{8,64}$/.test(String(v ?? '')) ? String(v) : null
+}
+
 export function normalizar(corpo) {
   const d = corpo?.data ?? {}
   const assinatura = d.subscription ?? null
@@ -139,5 +146,8 @@ export function normalizar(corpo) {
     produtoId: texto(d.product?.id),
     valor: Number.isFinite(Number(d.amount)) ? Number(d.amount) : null,
     renovaEm: data(assinatura?.next_payment_date ?? assinatura?.nextPaymentDate),
+    // rastreio (09/10/2026): o link do checkout volta inteiro; o `sck` dele é o id do clique em "Assinar" (db/020)
+    checkout: idDoCheckout(d.sck, d.checkoutUrl),
+    fbc: texto(d.fbc), fbp: texto(d.fbp),
   }
 }

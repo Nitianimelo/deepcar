@@ -123,6 +123,21 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Rastreio do funil página → checkout (db/020), para a campanha nova
+- **Decisão do dono:** ticket baixo não comporta venda consultiva; pausou todas as campanhas. Nova: Meta → página de
+  vendas → checkout da Cakto (com ou sem conta), suporte no WhatsApp só para dúvida. Passo 1 = eventos.
+- **Diagnóstico:** pixel recebia PageView, CompleteRegistration, Lead, Contact, StartTrial; InitiateCheckout só pelo
+  servidor e só para quem tinha conta (clique dentro do /app); compra de quem não tinha conta ia à Meta como
+  `system_generated`, sem navegador (atribuição fraca). Checkout da Cakto: nenhum pixel configurado nos 4 produtos (sem
+  Purchase em dobro). Cakto devolve no webhook `checkoutUrl` inteiro, `sck`, `utm_*`, `fbc`, `fbp`.
+- **Agora:** cada clique em "Assinar" (qualquer página, com ou sem conta) gera um id: pixel `InitiateCheckout`
+  (eventID `checkout-<id>`, onde o pixel roda) + API de Conversões com o mesmo id (`POST /api/sessao {evento:'checkout'}`
+  aceita sem sessão); grava `checkouts` (db/020: navegador fbp/fbc/ip/UA, visitante, origem UTM, plano/ciclo/valor);
+  o link da Cakto leva `sck=<id>` + UTMs (`linkCheckout`/`abrirCheckout` em src/lib/plano.ts). No webhook,
+  `normalizar` lê o id (`sck` ou dentro de `checkoutUrl`) e o Purchase sai com o navegador do clique (action_source
+  website + fbc), marcando `checkouts.pago_em`. Seção de planos da landing manda `ViewContent` ao aparecer (uma vez).
+- **Campanha:** otimizar por InitiateCheckout até ~15–20 compras/semana; depois Purchase.
+
 ### 2026-10-09 · Consultas extras no teste (db/019)
 - Pedido do dono: mandar pelo WhatsApp "+5 consultas grátis" para quem gastou o teste, tem o app Android e fez 3+
   consultas. Para a promessa valer: `usuarios.consultas_extra` (int, padrão 0) e o limite do teste da conta vira

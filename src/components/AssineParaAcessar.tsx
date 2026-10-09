@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react'
 import { registrar as anotar } from '../lib/log'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Lock, MessageCircle, Sparkles } from 'lucide-react'
-import { avisarCheckout, linkCheckout, linkSuporte, temWhatsappSuporte } from '../lib/plano'
+import { abrirCheckout, linkCheckout, linkSuporte, temWhatsappSuporte } from '../lib/plano'
 import { useAcesso } from '../lib/acesso'
 import { urlImagem, type EsquemaDetalhe } from '../lib/acervo'
 import { PLANOS_VENDA, planosQueLiberam, textoSomente, type Ciclo, type PlanoVenda } from '../data/planos'
@@ -129,7 +129,7 @@ export function ConviteAssinatura({ titulo, oQue, planos, etiqueta, carro }: Pro
               ) : (
                 <a
                   href={linkCheckout(p.id, sessao, ciclo)}
-                  onClick={() => avisarCheckout(p.id, ciclo)}
+                  onClick={(e) => abrirCheckout(e, p.id, ciclo, sessao)}
                   target="_blank"
                   rel="noreferrer"
                   className={classeBotaoClaro(p.destaque)}

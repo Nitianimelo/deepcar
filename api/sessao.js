@@ -32,6 +32,8 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'POST' && corpo(req).evento === 'log') return await registrarLog(req, res)
     const u = await usuarioDaSessao(req)
+    // clique em "Assinar" vale também SEM conta (página de vendas → checkout da Cakto, desde 09/10/2026)
+    if (req.method === 'POST' && corpo(req).evento === 'checkout') return await eventoCheckout(req, res, u)
     if (!u) return res.status(401).json({ erro: 'Sem sessão.' })
     if (req.method === 'DELETE') return await excluirConta(req, res, u)
     if (req.method === 'POST') {
@@ -85,27 +87,38 @@ async function excluirConta(req, res, u) {
   return res.status(200).json({ ok: true })
 }
 
+/** "fb.1.<ms>.<fbclid>" vindo do navegador (origem guardada): só o formato do cookie, nada além. */
+const fbcValido = (v) => (/^fb\.\d\.\d{10,14}\.[\w-]{10,500}$/.test(String(v ?? '')) ? String(v) : undefined)
+
 const PLANOS = new Set(['pro', 'full'])
 const CICLOS = new Set(['mensal', 'anual'])
 
-// Clique em "assinar": InitiateCheckout com os dados da conta. A URL vai fixa (/app/conta), nunca a pagina de onde
-// veio o clique (pode ter placa). Administrador nao conta.
+// Clique em "assinar" (no /app ou na página de vendas, com ou sem conta): InitiateCheckout pela API de Conversões
+// com o MESMO id que o pixel mandou do navegador, e o checkout guardado (db/020) para a compra achar o navegador
+// depois (webhook da Cakto). A URL vai fixa: /app/conta para quem está logado (nunca a página com placa), a home
+// para quem não tem conta. Administrador não conta.
 async function eventoCheckout(req, res, u) {
   const d = corpo(req)
   if (d.evento !== 'checkout' || !PLANOS.has(d.plano) || !CICLOS.has(d.ciclo)) {
     return res.status(400).json({ erro: 'Evento inválido.' })
   }
-  if (u.papel !== 'admin') {
+  if (u?.papel !== 'admin') {
     const id = /^[\w-]{8,64}$/.test(String(d.id ?? '')) ? String(d.id) : randomUUID()
     const valor = Number(d.valor)
     const navegador = dadosDoNavegador(req)
-    const conta = await um(sql`select rastreio_meta from usuarios where id = ${u.id}`)
-    if (!navegador.fbc) navegador.fbc = conta?.rastreio_meta?.fbc
+    const conta = u ? await um(sql`select rastreio_meta from usuarios where id = ${u.id}`) : null
+    // fbc: o cookie de agora; sem ele, o do clique no anúncio guardado no navegador (origem) ou no cadastro
+    if (!navegador.fbc) navegador.fbc = fbcValido(d.fbc) ?? conta?.rastreio_meta?.fbc
     // o do navegador de agora; sem ele, o do cadastro (liga o clique em assinar as visitas anonimas)
     const visitante = visitanteValido(d.visitante) ?? conta?.rastreio_meta?.visitante
+    await sql`insert into checkouts (id, usuario_id, visitante, plano, ciclo, valor, navegador, origem, rota)
+              values (${id}, ${u?.id ?? null}, ${visitante ?? null}, ${d.plano}, ${d.ciclo}, ${valor > 0 && valor < 5000 ? valor : null},
+                      ${JSON.stringify(navegador)}, ${d.origem && typeof d.origem === 'object' ? JSON.stringify(d.origem).slice(0, 2000) : null},
+                      ${String(d.rota ?? '').replace(/\/app\/.*/, '/app').slice(0, 120) || null})
+              on conflict (id) do nothing`
     await enviarEvento({
-      nome: 'InitiateCheckout', id: `checkout-${id}`, url: 'https://deepcar.app.br/app/conta',
-      pessoa: { email: u.email, whatsapp: u.whatsapp, nome: u.nome, idExterno: u.id, visitante }, navegador,
+      nome: 'InitiateCheckout', id: `checkout-${id}`, url: u ? 'https://deepcar.app.br/app/conta' : 'https://deepcar.app.br/',
+      pessoa: u ? { email: u.email, whatsapp: u.whatsapp, nome: u.nome, idExterno: u.id, visitante } : { visitante }, navegador,
       dados: {
         value: valor > 0 && valor < 5000 ? valor : undefined, currency: 'BRL',
         content_name: `${d.plano} ${d.ciclo}`, content_ids: [`${d.plano}-${d.ciclo}`], content_type: 'product',

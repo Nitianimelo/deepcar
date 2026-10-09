@@ -2,7 +2,7 @@
 // (mensal no cartão ou Pix; anual em até 12x no cartão ou à vista no Pix). Sem as cores do chicote:
 // aqui a pessoa decide o que comprar, então tudo é lista simples. `CartaoPlanoClaro` e `ChaveCiclo` também servem
 // a aba Plano da conta (src/pages/Conta.tsx), dentro de um painel claro; o convite do fim do teste segue com o CardPlano.
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, CreditCard, Minus, QrCode } from 'lucide-react'
 import { NAV } from '../../data/nav'
@@ -11,6 +11,7 @@ import { Reveal } from './Reveal'
 import { BotaoEquipe } from './BotaoWhatsapp'
 import { classeBotaoClaro } from './estiloPlanos'
 import { IconeGooglePlay, LINK_GOOGLE_PLAY, PlayStoreBadge } from '../StoreBadges'
+import { viuPlanos } from '../../lib/pixel'
 
 const reais = (v: string) => Number(v.replace('.', '').replace(',', '.'))
 const brl = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -179,8 +180,19 @@ const PASSOS = [
 
 export function PlanosLanding() {
   const [ciclo, setCiclo] = useState<Ciclo>('anual')
+  const secao = useRef<HTMLElement>(null)
+  // ViewContent quando os planos aparecem na tela (uma vez por visita à página): sinal de interesse para a Meta
+  useEffect(() => {
+    const el = secao.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const obs = new IntersectionObserver((itens) => {
+      if (itens.some((i) => i.isIntersecting)) { viuPlanos(); obs.disconnect() }
+    }, { threshold: 0.25 })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
   return (
-    <section id="planos" className="secao-clara bg-papel text-tinta-1">
+    <section ref={secao} id="planos" className="secao-clara bg-papel text-tinta-1">
       <div className="mx-auto max-w-[1100px] px-5 py-20 sm:px-8 lg:py-28">
         <Reveal className="mx-auto max-w-[680px] text-center">
           <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-azul-escuro">Planos</p>

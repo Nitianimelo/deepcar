@@ -111,12 +111,18 @@ export default async function handler(req, res) {
       // venda nova para os anuncios. Renovacao fica de fora (nao veio de anuncio). O id e o do pedido: se a Cakto
       // mandar purchase_approved e subscription_created do mesmo pedido, ou reenviar, a Meta conta uma vez so
       if (VENDA_NOVA.has(d.evento) && d.pedidoId && r.estado !== 'ignorado') {
-        // o webhook nao tem navegador: vai o do cadastro (fbp/fbc/ip), que liga a venda ao clique no anuncio
+        // o webhook nao tem navegador: vai o do clique em "Assinar" que abriu este checkout (db/020, comprou sem conta
+        // ou com), senao o do cadastro (fbp/fbc/ip), que liga a venda ao clique no anuncio
         const conta = r.usuarioId ? await um(sql`select rastreio_meta from usuarios where id = ${r.usuarioId}`) : null
+        const ck = d.checkout ? await um(sql`update checkouts set pago_em = coalesce(pago_em, now()), pedido_id = ${d.pedidoId}
+                                               where id = ${d.checkout} returning navegador, visitante`) : null
+        const navegador = ck?.navegador?.client_user_agent ? ck.navegador : navegadorGuardado(conta?.rastreio_meta)
+        if (!navegador.fbc && d.fbc) navegador.fbc = d.fbc
+        if (!navegador.fbp && d.fbp) navegador.fbp = d.fbp
         await enviarEvento({
           nome: 'Purchase', id: `compra-${d.pedidoId}`, url: 'https://deepcar.app.br/#planos',
-          pessoa: { email: d.email, whatsapp: d.whatsapp, nome: d.nome, idExterno: r.usuarioId, visitante: conta?.rastreio_meta?.visitante },
-          navegador: navegadorGuardado(conta?.rastreio_meta),
+          pessoa: { email: d.email, whatsapp: d.whatsapp, nome: d.nome, idExterno: r.usuarioId, visitante: ck?.visitante ?? conta?.rastreio_meta?.visitante },
+          navegador,
           dados: { value: d.valor ?? undefined, currency: 'BRL', content_name: `${plano} ${ciclo}`, content_type: 'product' },
         })
       }

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { registrar as anotar } from './log'
 import { PLANOS_VENDA, type Ciclo, type PlanoPago } from '../data/planos'
 import { conferirSessao, type Plano, type Session } from './auth'
-import { visitanteId } from './pixel'
+import { iniciarCheckout, visitanteId } from './pixel'
+import { origemParaCadastro } from './origem'
 import { ouvirSessaoMudou } from './consulta'
 
 /** Padrão do teste; o que vale é o /admin → Planos e chega na sessão (testeMinutos). */
@@ -42,37 +43,61 @@ const CHECKOUT: Record<Ciclo, Record<PlanoPago, string | undefined>> = {
   },
 }
 
+const novoId = () => {
+  try { return crypto.randomUUID() } catch { return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}` }
+}
+
 /**
- * Clique num botão de assinar: o servidor manda InitiateCheckout pela API de Conversões (POST /api/sessao).
- * Não usa o pixel porque os botões ficam dentro do /app, onde o pixel não roda (a URL leva placa).
+ * Clique num botão de assinar (no /app ou na página de vendas, com ou sem conta). Um id por clique:
+ * - pixel (só nas páginas públicas) e servidor (API de Conversões) mandam InitiateCheckout com ele (a Meta junta);
+ * - o servidor guarda o navegador de quem clicou (db/020) e o link da Cakto leva o id como `sck`: quando a compra
+ *   chega pelo webhook, o Purchase sai com esse navegador e é ligado ao anúncio, mesmo sem conta.
+ * Devolve o link do checkout já com o id: use em onClick e troque o href (ver `abrirCheckout`).
  * keepalive: o checkout abre em outra aba e a página pode sair antes da resposta. Falha não atrapalha ninguém.
  */
-export function avisarCheckout(plano: PlanoPago, ciclo: Ciclo) {
+export function avisarCheckout(plano: PlanoPago, ciclo: Ciclo, s: Session | null = null) {
+  const id = novoId()
   anotar('clicou_assinar', { plano, ciclo })
   const p = PLANOS_VENDA.find((x) => x.id === plano)
   const valor = p ? Number((ciclo === 'anual' ? p.precoAnualVista : p.preco).replace(',', '.')) : undefined
+  iniciarCheckout(`checkout-${id}`, { plano, ciclo, valor })
+  const origem = origemParaCadastro()
   try {
     void fetch('/api/sessao', {
       method: 'POST',
       keepalive: true,
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ evento: 'checkout', plano, ciclo, valor, id: crypto.randomUUID(), visitante: visitanteId() }),
+      body: JSON.stringify({
+        evento: 'checkout', plano, ciclo, valor, id, visitante: visitanteId(), fbc: origem?.fbc,
+        origem: origem ? { utm_source: origem.utm_source, utm_medium: origem.utm_medium, utm_campaign: origem.utm_campaign, utm_content: origem.utm_content, utm_term: origem.utm_term } : undefined,
+        rota: location.pathname,
+      }),
     }).catch(() => {})
-  } catch { /* navegador antigo sem keepalive/randomUUID: segue sem o evento */ }
+  } catch { /* navegador antigo sem keepalive: segue sem o evento */ }
+  return linkCheckout(plano, s, ciclo, id)
+}
+
+/** onClick dos links de checkout: avisa e troca o href pelo link com o id do clique antes do navegador seguir. */
+export function abrirCheckout(e: { currentTarget: HTMLAnchorElement }, plano: PlanoPago, ciclo: Ciclo, s: Session | null) {
+  e.currentTarget.href = avisarCheckout(plano, ciclo, s)
 }
 
 /**
  * Checkout da Cakto com os dados da conta preenchidos — é o que faz o e-mail do pagamento
  * bater com o da conta e o plano entrar sozinho. Sem link configurado, cai nos planos da landing.
  */
-export function linkCheckout(plano: PlanoPago, s: Session | null, ciclo: Ciclo = 'mensal') {
+export function linkCheckout(plano: PlanoPago, s: Session | null, ciclo: Ciclo = 'mensal', id?: string) {
   const base = CHECKOUT[ciclo][plano]
   if (!base) return '/#planos'
   const q = new URLSearchParams()
   if (s?.email) q.set('email', s.email)
   if (s?.nome) q.set('name', s.nome)
   if (s?.whatsapp) q.set('phone', s.whatsapp)
+  // id do clique (volta no webhook) e a campanha que trouxe a pessoa (aparece nos relatórios da Cakto)
+  if (id) q.set('sck', id)
+  const o = origemParaCadastro()
+  for (const c of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const) if (o?.[c]) q.set(c, o[c] as string)
   const busca = q.toString()
   return busca ? `${base}?${busca}` : base
 }

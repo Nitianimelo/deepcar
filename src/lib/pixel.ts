@@ -110,6 +110,23 @@ export function contato(onde: string) {
   window.fbq?.('track', 'Contact', { content_name: onde })
 }
 
+/**
+ * Clique em "Assinar" (09/10/2026, funil página → checkout): InitiateCheckout no navegador com o mesmo eventID que o
+ * servidor manda pela API de Conversões (plano.ts → avisarCheckout); a Meta junta os dois. Só sai onde o pixel já
+ * carregou (páginas públicas); dentro do /app vai só o do servidor.
+ */
+export function iniciarCheckout(eventoId: string, dados: { plano: string; ciclo: string; valor?: number }) {
+  window.fbq?.('track', 'InitiateCheckout', {
+    value: dados.valor, currency: 'BRL', content_name: `${dados.plano} ${dados.ciclo}`,
+    content_ids: [`${dados.plano}-${dados.ciclo}`], content_type: 'product', num_items: 1,
+  }, { eventID: eventoId })
+}
+
+/** A seção de planos da página de vendas apareceu na tela (uma vez por página vista): ViewContent. */
+export function viuPlanos() {
+  window.fbq?.('track', 'ViewContent', { content_name: 'planos', content_type: 'product_group' })
+}
+
 /** Conta criada. Só existe se o pixel já foi carregado (o cadastro é página pública). */
 export function cadastroConcluido(eventoId: string, pessoa?: Correspondencia) {
   // agora a Meta pode receber os dados da pessoa também pelo navegador (o servidor já manda os mesmos)

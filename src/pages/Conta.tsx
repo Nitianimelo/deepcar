@@ -3,7 +3,7 @@ import { registrar as anotar } from '../lib/log'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, LogOut, MessageCircle, FlaskConical, ShieldCheck, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
-import { avisarCheckout, linkCheckout, linkSuporte, restanteFree, rotuloPlano, temWhatsappSuporte } from '../lib/plano'
+import { abrirCheckout, linkCheckout, linkSuporte, restanteFree, rotuloPlano, temWhatsappSuporte } from '../lib/plano'
 import { PLANOS_VENDA, type Ciclo } from '../data/planos'
 import { CartaoPlanoClaro, ChaveCiclo } from '../components/landing/PlanosLanding'
 import { classeBotaoClaro } from '../components/landing/estiloPlanos'
@@ -202,7 +202,7 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
                   <>
                     <a
                       href={linkCheckout(p.id, s, ciclo)}
-                      onClick={() => avisarCheckout(p.id, ciclo)}
+                      onClick={(e) => abrirCheckout(e, p.id, ciclo, s)}
                       target="_blank"
                       rel="noreferrer"
                       className={classeBotaoClaro(p.destaque)}
