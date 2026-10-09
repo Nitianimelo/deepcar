@@ -123,6 +123,14 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · CRM lê o uso de cada pessoa (db/018)
+- Pedido do dono: mais dados de quem se cadastra no CRM (app instalado ou não etc.) para trabalhar as conversas.
+- `db/018_crm_uso.sql`: `grant select` ao `crm_leitura` em `eventos_uso` (usuario_id, tipo, detalhe, rota, aparelho, em),
+  `aparelhos_push` (usuario_id, plataforma, visto_em), `consultas`, `planos_acesso` (plano, consultas_teste) e
+  `usuarios.visto_em`. **Aplicada no Neon.** Quem monta o resumo é o CRM (`server/src/deepcar.js` de lá).
+- Diagnóstico do funil feito hoje (ver CONTEXTO do CRM): a venda acontece no WhatsApp; 16 de 17 testes da regra nova
+  gastam as 3 consultas em menos de 30 min; zero cliques em assinar no produto.
+
 ### 2026-10-08 · App iPhone 1.0 sem venda no app (app de leitura)
 - **Decisão do dono:** a Apple pediu documentação (Stone) para pagar no Brasil; na 1.0 do iPhone, **nada de compra no
   app**. O iPhone funciona como app de leitura (diretriz 3.1.3(a)): quem tem plano entra e usa; o teste acaba numa
