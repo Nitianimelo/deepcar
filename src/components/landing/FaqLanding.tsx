@@ -12,7 +12,11 @@ const PERGUNTAS: [string, string][] = [
   ],
   [
     'Tem o carro que eu atendo?',
-    'São mais de 11 mil diagramas de cerca de 60 montadoras, do carro popular ao caminhão, linha leve e diesel. Use a "Consulta técnica" desta página para procurar pelo modelo ou pelo motor antes de assinar.',
+    'São mais de 20 mil sistemas de cerca de 60 montadoras, do carro popular ao caminhão, linha leve e diesel. Use a "Consulta técnica" desta página para procurar pelo modelo ou pelo motor antes de assinar.',
+  ],
+  [
+    'As atualizações são cobradas à parte?',
+    'Não. O acervo recebe atualizações todo mês, com modelos e sistemas novos, e tudo isso já está incluso no seu plano. Você não paga nada a mais por atualização.',
   ],
   ...(OFERTA.ativa
     ? [[
@@ -22,31 +26,31 @@ const PERGUNTAS: [string, string][] = [
     : []),
   [
     'Como funciona o desconto no anual?',
-    `O plano anual sai com ${OFERTA.descontoAnual}% de desconto em relação a 12 mensalidades: R$ ${PLANOS_VENDA[0].precoAnualVista} no Pro e R$ ${PLANOS_VENDA[1].precoAnualVista} no Full, à vista no Pix ou em até 12x no cartão. É um pagamento único que vale 12 meses e não renova sozinho.`,
+    `O plano anual sai com ${OFERTA.descontoAnual}% de desconto em relação a 12 mensalidades: R$ ${PLANOS_VENDA[0].precoAnualVista} no Pro e R$ ${PLANOS_VENDA[1].precoAnualVista} no Full, no Pix ou no cartão. É um pagamento único que vale 12 meses e não renova sozinho.`,
   ],
   [
     'Qual a diferença entre o Pro e o Full?',
     'O Pro libera a linha leve: injeção eletrônica, ABS, elétrica e câmbio. O Full libera tudo do Pro e também a linha diesel (injeção, elétrica e câmbio de picapes, utilitários e caminhões). Os dois têm a busca pela placa.',
   ],
   [
-    'Como recebo o acesso depois de pagar?',
-    'O acesso é liberado assim que o pagamento é aprovado (no Pix, em segundos). Se você ainda não tem conta, crie com o mesmo e-mail que usou no pagamento: o plano entra sozinho.',
-  ],
-  [
     'Quais as formas de pagamento?',
-    'Pix ou cartão de crédito. No plano anual, dá para parcelar em até 12x no cartão ou pagar à vista no Pix, pelo menor preço.',
+    'Cartão de crédito ou Pix, tanto no plano mensal quanto no anual. No anual, dá para parcelar no cartão ou pagar à vista no Pix.',
   ],
   [
-    'Posso cancelar quando quiser?',
-    'Sim. O plano mensal não tem fidelidade nem multa: você cancela quando quiser e o acesso continua até o fim do mês já pago. E se não gostar, pode pedir o reembolso em até 7 dias depois da compra.',
+    'Posso pagar a mensalidade no Pix, sem cartão?',
+    'Pode. No plano mensal você paga no Pix todo mês, sem precisar cadastrar cartão de crédito. Quando a mensalidade estiver para vencer, a nossa equipe te avisa.',
+  ],
+  [
+    'Quando o acesso é liberado?',
+    'Assim que o pagamento é aprovado, o acesso é liberado automaticamente, tanto no cartão quanto no Pix. Se você ainda não tem conta, crie com o mesmo e-mail que usou no pagamento: o plano entra sozinho.',
+  ],
+  [
+    'Posso cancelar? Tem reembolso?',
+    'Pode cancelar quando quiser: o plano mensal não tem fidelidade nem multa. E se não quiser continuar, você pede o reembolso do pagamento em até 7 dias depois da compra.',
   ],
   [
     'Funciona no celular?',
-    'Funciona no celular, no tablet e no computador da oficina. Tem app para Android, e no iPhone você usa direto pelo navegador. A mesma conta vale em todos, respeitando o número de aparelhos do plano.',
-  ],
-  [
-    'Não achei o meu carro. E agora?',
-    'Chame a gente no WhatsApp com a placa ou o modelo. A equipe verifica no acervo e te responde se tem o diagrama de que você precisa.',
+    'Funciona no navegador do celular, do tablet e do computador, e tem app para Android e para iPhone. A mesma conta vale em todos, respeitando o número de aparelhos do plano.',
   ],
 ]
 
