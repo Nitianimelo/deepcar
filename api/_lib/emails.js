@@ -140,10 +140,19 @@ const CHECKOUT = {
   mensal: { pro: 'https://pay.cakto.com.br/3c9ck5a_1126774', full: 'https://pay.cakto.com.br/vxd8vpe_1117560' },
   anual: { pro: 'https://pay.cakto.com.br/6ccodaw', full: 'https://pay.cakto.com.br/uigfpmf' },
 }
-const PRECO = { pro: { mensal: '47,90', anual: '29,90' }, full: { mensal: '59,90', anual: '37,90' } }
+// mesmos valores de src/data/planos.ts (mensal do 2º mês em diante, 1º mês com o cupom, anual por mês e à vista)
+const PRECO = {
+  pro: { mensal: '37,00', primeiro: '19,90', anual: '22,20', anualVista: '266,40' },
+  full: { mensal: '49,90', primeiro: '19,90', anual: '29,94', anualVista: '359,28' },
+}
+// cupom da 1ª mensalidade (src/data/planos.ts → OFERTA): vai no link do checkout mensal
+const CUPOM = { pro: 'DEEPCAR1990', full: 'DEEPCAR1990' }
+// igual a OFERTA.ativa em src/data/planos.ts: só liga quando o cupom existir na Cakto (senão o e-mail promete o que o checkout não cobra)
+const PRIMEIRO_MES = false
 function checkout(plano, ciclo, u) {
   const q = new URLSearchParams({ email: u.email ?? '', name: u.nome ?? '', utm_source: 'email', utm_medium: 'teste_acabou', utm_campaign: `${plano}_${ciclo}` })
   if (u.whatsapp) q.set('phone', u.whatsapp)
+  if (PRIMEIRO_MES && ciclo === 'mensal') q.set('coupon', CUPOM[plano])
   return `${CHECKOUT[ciclo][plano]}?${q}`
 }
 
@@ -157,13 +166,13 @@ function cartaoPlano(id, u, destaque) {
     ${destaque ? `<div style="display:inline-block;margin-bottom:10px;padding:4px 10px;border-radius:999px;background:${AZUL};color:#ffffff;font-size:11px;font-weight:bold;letter-spacing:1.2px;text-transform:uppercase">Mais completo</div>` : ''}
     <div style="font-size:20px;font-weight:bold;color:#0f1419">Plano ${p.nome}</div>
     <div style="margin-top:2px;font-size:14px;color:#5b6675">${p.chamada[0].toUpperCase() + p.chamada.slice(1)} · até ${p.aparelhos} aparelhos</div>
-    <div style="margin-top:14px"><span style="font-size:30px;font-weight:bold;color:#0f1419">R$&nbsp;${PRECO[id].anual}</span><span style="font-size:15px;color:#5b6675">/mês no plano anual</span></div>
-    <div style="margin-top:2px;font-size:13.5px;color:#5b6675">ou R$ ${PRECO[id].mensal}/mês no mensal, sem fidelidade</div>
+    <div style="margin-top:14px"><span style="font-size:30px;font-weight:bold;color:#0f1419">R$&nbsp;${PRECO[id].anual}</span><span style="font-size:15px;color:#5b6675">/mês no plano anual (40% OFF)</span></div>
+    <div style="margin-top:2px;font-size:13.5px;color:#5b6675">${PRIMEIRO_MES ? `ou 1º mês por R$ ${PRECO[id].primeiro} no mensal (depois R$ ${PRECO[id].mensal}/mês, sem fidelidade)` : `ou R$ ${PRECO[id].mensal}/mês no mensal, sem fidelidade`}</div>
     <div style="margin:14px 0 4px">${itens}</div>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px"><tr><td style="border-radius:12px;background:${destaque ? AZUL : '#151b24'}">
       <a href="${esc(checkout(id, 'anual', u))}" style="display:inline-block;padding:14px 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:12px">Assinar o ${p.nome} anual</a>
     </td></tr></table>
-    <div style="margin-top:10px;font-size:14px"><a href="${esc(checkout(id, 'mensal', u))}" style="color:${AZUL};font-weight:bold;text-decoration:none">Prefiro o ${p.nome} mensal (R$ ${PRECO[id].mensal}) &rarr;</a></div>
+    <div style="margin-top:10px;font-size:14px"><a href="${esc(checkout(id, 'mensal', u))}" style="color:${AZUL};font-weight:bold;text-decoration:none">${PRIMEIRO_MES ? `Prefiro o ${p.nome} mensal: 1º mês por R$ ${PRECO[id].primeiro}` : `Prefiro o ${p.nome} mensal (R$ ${PRECO[id].mensal})`} &rarr;</a></div>
   </td></tr>
 </table>`
 }
@@ -202,8 +211,8 @@ ${cartaoPlano('pro', u, false)}
 </table>`
   return {
     assunto: `${primeiro(u.nome)}, seu teste grátis na Deepcar acabou`,
-    html: modelo({ previa: 'Sua conta continua lá. Assine e o acesso volta na hora, a partir de R$ 29,90/mês.', titulo: 'Seu teste grátis acabou. Bora continuar?', corpo }),
-    texto: `Olá, ${primeiro(u.nome)}. Seu teste grátis na Deepcar terminou. Assine e o acesso volta na hora.\n\nFull (leve e diesel, 4 aparelhos): R$ 37,90/mês no anual ou R$ 59,90 no mensal\n  anual: ${checkout('full', 'anual', u)}\n  mensal: ${checkout('full', 'mensal', u)}\nPro (leves, 2 aparelhos): R$ 29,90/mês no anual ou R$ 47,90 no mensal\n  anual: ${checkout('pro', 'anual', u)}\n  mensal: ${checkout('pro', 'mensal', u)}\n\nDúvida? WhatsApp (48) 3197-3217: ${zap}`,
+    html: modelo({ previa: PRIMEIRO_MES ? 'Sua conta continua lá. Volte com o 1º mês por R$ 19,90 ou o anual com 40% OFF.' : 'Sua conta continua lá. Volte com o plano anual com 40% OFF.', titulo: 'Seu teste grátis acabou. Bora continuar?', corpo }),
+    texto: `Olá, ${primeiro(u.nome)}. Seu teste grátis na Deepcar terminou. Assine e o acesso volta na hora.\n\nFull (leve e diesel, 4 aparelhos): R$ 29,94/mês no anual (40% OFF) ou ${PRIMEIRO_MES ? '1º mês por R$ 19,90 no mensal (depois R$ 49,90)' : 'R$ 49,90 no mensal'}\n  anual: ${checkout('full', 'anual', u)}\n  mensal: ${checkout('full', 'mensal', u)}\nPro (leves, 2 aparelhos): R$ 22,20/mês no anual (40% OFF) ou ${PRIMEIRO_MES ? '1º mês por R$ 19,90 no mensal (depois R$ 37,00)' : 'R$ 37,00 no mensal'}\n  anual: ${checkout('pro', 'anual', u)}\n  mensal: ${checkout('pro', 'mensal', u)}\n\nDúvida? WhatsApp (48) 3197-3217: ${zap}`,
   }
 }
 

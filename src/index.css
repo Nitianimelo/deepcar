@@ -431,3 +431,15 @@ html:has(.landing) { scroll-behavior: smooth; }
     .destaque { transition: none; }
   }
 }
+
+/* faixa da oferta no topo da página de vendas (Landing → FaixaOferta): brilho passando e o botão pulsando de leve */
+.faixa-oferta { overflow: hidden; }
+.faixa-oferta::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.28) 50%, transparent 70%);
+  transform: translateX(-100%); animation: faixa-brilho 3.6s ease-in-out infinite;
+}
+.faixa-oferta span:last-child { animation: faixa-pulso 1.8s ease-in-out infinite; }
+@keyframes faixa-brilho { 0%, 55% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes faixa-pulso { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .faixa-oferta::after, .faixa-oferta span:last-child { animation: none; } }

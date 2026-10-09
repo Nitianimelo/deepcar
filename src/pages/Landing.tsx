@@ -10,6 +10,8 @@ import { GridBeam } from '../components/landing/GridBeam'
 import { Reveal } from '../components/landing/Reveal'
 import { BotaoWhatsapp } from '../components/landing/BotaoWhatsapp'
 import { PlanosLanding } from '../components/landing/PlanosLanding'
+import { FaqLanding } from '../components/landing/FaqLanding'
+import { OFERTA, PLANOS_VENDA, economiaAnual, precoPrimeiroMes } from '../data/planos'
 import { TourPlataforma } from '../components/landing/TourPlataforma'
 import { BuscaCarro } from '../components/landing/BuscaCarro'
 import { registrar as anotar } from '../lib/log'
@@ -18,12 +20,14 @@ export default function Landing() {
   useLeitura()
   return (
     <div className="landing min-h-full bg-pit pb-24 text-ink-1">{/* pb: o botão flutuante do WhatsApp não cobre os selos do rodapé */}
+      <FaixaOferta />
       <Header />
       <Hero />
       <TourPlataforma />
       <BuscaCarro />
       <Cobertura />
       <PlanosLanding />
+      <FaqLanding />
       <Footer />
       <BotaoWhatsapp />
     </div>
@@ -72,6 +76,38 @@ function useLeitura() {
 }
 
 /* ── Cabeçalho ─────────────────────────────────────────────────────── */
+/** Menu da página (cabeçalho): seções na ordem em que aparecem. */
+const MENU = [
+  ['#como-funciona', 'Recursos'],
+  ['#planos', 'Preços'],
+  ['#seu-carro', 'Consulta técnica'],
+  ['#faq', 'FAQ'],
+] as const
+
+/** "Pegar oferta": vai aos planos (que abrem no mensal, onde está o desconto). */
+function pegarOferta(onde: string) {
+  anotar('pegar_oferta', { onde })
+}
+
+/** Faixa no topo da página com a oferta da 1ª mensalidade (data/planos.ts → OFERTA). Some quando a oferta acaba. */
+function FaixaOferta() {
+  const primeiro = precoPrimeiroMes(PLANOS_VENDA[0])
+  const anual = Math.max(...PLANOS_VENDA.map((p) => economiaAnual(p).pct))
+  return (
+    <a
+      href="#planos"
+      onClick={() => pegarOferta('faixa')}
+      className="faixa-oferta relative z-40 block bg-gradient-to-r from-[#ff3d00] via-[#ff6a00] to-[#ff9100] text-white"
+    >
+      <div className="mx-auto flex max-w-[1200px] items-center justify-center gap-3 px-4 py-2.5 text-center sm:gap-4 sm:py-3">
+        <span className="text-[14.5px] font-extrabold uppercase tracking-wide sm:text-[17px]">🔥 {OFERTA.ativa ? `1º mês por R$ ${primeiro}` : `${anual}% OFF no plano anual`}</span>
+        <span className="hidden text-[14.5px] font-medium text-white/95 sm:inline">{OFERTA.ativa ? `Pro ou Full · e ${anual}% OFF no plano anual` : 'Pro ou Full, no Pix ou em até 12x no cartão'}</span>
+        <span className="flex-none rounded-full bg-white px-3.5 py-1.5 text-[13px] font-bold text-[#e03800] shadow-sm sm:px-4 sm:text-[14px]">Pegar oferta →</span>
+      </div>
+    </a>
+  )
+}
+
 function Header() {
   const ref = useRef<HTMLElement>(null)
 
@@ -100,15 +136,21 @@ function Header() {
       <div className="mx-auto flex h-[68px] max-w-[1200px] items-center gap-4 px-4 sm:gap-8 sm:px-8">
         <a href="#topo" className="flex items-center"><img src="/brand/logo-h-light.png" alt="Deepcar" className="h-6 sm:h-7" draggable={false} /></a>
         <nav className="ml-6 hidden items-center gap-7 text-[14px] text-ink-2 md:flex">
-          <a href="#plataforma" className="hover:text-ink-1">Plataforma</a>
-          <a href="#cobertura" className="hover:text-ink-1">Cobertura</a>
-          <a href="#planos" className="hover:text-ink-1">Planos</a>
+          {MENU.map(([href, nome]) => <a key={href} href={href} className="hover:text-ink-1">{nome}</a>)}
         </nav>
         <div className="ml-auto flex flex-none items-center gap-1.5 sm:gap-2.5">
           <Link to="/login" className="btn-ghost inline-flex flex-none items-center !px-3 text-[14px] sm:!px-4">Entrar</Link>
-          <Link to="/cadastro" className="btn-cta inline-flex h-10 flex-none items-center whitespace-nowrap px-3 text-[13.5px] sm:px-4 sm:text-[14px]">Criar conta grátis</Link>
+          <a href="#planos" onClick={() => pegarOferta('cabecalho')} className="btn-cta inline-flex h-10 flex-none items-center whitespace-nowrap px-3 text-[13.5px] sm:px-4 sm:text-[14px]">
+            Pegar oferta
+          </a>
         </div>
       </div>
+      {/* celular: o mesmo menu numa linha que rola de lado, logo abaixo do logo */}
+      <nav className="-mt-1 flex gap-2 overflow-x-auto px-4 pb-2.5 text-[13.5px] [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
+        {MENU.map(([href, nome]) => (
+          <a key={href} href={href} className="flex-none rounded-full border seam px-3.5 py-1.5 text-ink-2 active:bg-bench-2">{nome}</a>
+        ))}
+      </nav>
     </header>
   )
 }
@@ -135,10 +177,10 @@ function Hero() {
             Injeção eletrônica, elétrica, ABS e câmbio. No celular, no tablet ou no computador da sua oficina.
           </Reveal>
           <Reveal index={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <Link to="/cadastro" className="btn-cta btn-cta-grande inline-flex items-center justify-center gap-2 px-6">
-              Criar conta grátis <ArrowRight size={19} />
-            </Link>
-            <a href="#cobertura" className="btn-ghost inline-flex h-12 items-center justify-center px-5">Ver cobertura</a>
+            <a href="#planos" onClick={() => pegarOferta('topo')} className="btn-cta btn-cta-grande inline-flex items-center justify-center gap-2 px-6">
+              {OFERTA.ativa ? `Começar por R$ ${precoPrimeiroMes(PLANOS_VENDA[0])}` : 'Ver planos'} <ArrowRight size={19} />
+            </a>
+            <a href="#seu-carro" className="btn-ghost inline-flex h-12 items-center justify-center px-5">Veja se tem o seu carro</a>
           </Reveal>
 
           <Reveal index={4} className="mt-12">

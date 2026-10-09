@@ -4,9 +4,9 @@
 // a aba Plano da conta (src/pages/Conta.tsx), dentro de um painel claro; o convite do fim do teste segue com o CardPlano.
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, CreditCard, Minus, QrCode } from 'lucide-react'
+import { Check, CreditCard, Flame, Minus, QrCode, ShieldCheck, Zap } from 'lucide-react'
 import { NAV } from '../../data/nav'
-import { PLANOS_VENDA, type Ciclo, type PlanoVenda } from '../../data/planos'
+import { OFERTA, PLANOS_VENDA, economiaAnual, economiaPrimeiroMes, emReais, numero, precoPrimeiroMes, totalMensal12, type Ciclo, type PlanoVenda } from '../../data/planos'
 import { Reveal } from './Reveal'
 import { BotaoEquipe } from './BotaoWhatsapp'
 import { classeBotaoClaro } from './estiloPlanos'
@@ -15,8 +15,6 @@ import { viuPlanos } from '../../lib/pixel'
 import { abrirCheckout, linkCheckout } from '../../lib/plano'
 import { EVENTO_CARRO, type CarroEscolhido } from './BuscaCarro'
 
-const reais = (v: string) => Number(v.replace('.', '').replace(',', '.'))
-const brl = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 /** Sistemas na ordem do menu, com o nome completo ("Injeção eletrônica diesel"). */
 const SISTEMAS = NAV.flatMap((n) =>
@@ -25,20 +23,16 @@ const SISTEMAS = NAV.flatMap((n) =>
     : [{ key: n.key, nome: 'ABS e ESP' }],
 )
 
-/** Economia de pagar o anual (12x) em vez de 12 mensalidades, em % inteiro. */
-function economia(p: PlanoVenda) {
-  const mensal = reais(p.preco) * 12
-  return { reais: mensal - reais(p.precoAnual) * 12, pct: Math.round((1 - reais(p.precoAnual) / reais(p.preco)) * 100) }
-}
-const MAIOR_ECONOMIA = Math.max(...PLANOS_VENDA.map((p) => economia(p).pct))
+const MAIOR_ANUAL = Math.max(...PLANOS_VENDA.map((p) => economiaAnual(p).pct))
+const MENOR_1MES = PLANOS_VENDA.map((p) => precoPrimeiroMes(p)).sort((a, b) => numero(a) - numero(b))[0]
 
 export function ChaveCiclo({ ciclo, onChange }: { ciclo: Ciclo; onChange: (c: Ciclo) => void }) {
-  const opcoes: { id: Ciclo; rotulo: string; extra?: string }[] = [
-    { id: 'mensal', rotulo: 'Mensal' },
-    { id: 'anual', rotulo: 'Anual', extra: `economize até ${MAIOR_ECONOMIA}%` },
+  const opcoes: { id: Ciclo; rotulo: string; selo: string; seloCurto: string; laranja: boolean }[] = [
+    { id: 'mensal', rotulo: 'Mensal', selo: OFERTA.ativa ? `1º mês R$ ${MENOR_1MES}` : 'sem fidelidade', seloCurto: OFERTA.ativa ? `R$ ${MENOR_1MES}` : '', laranja: OFERTA.ativa },
+    { id: 'anual', rotulo: 'Anual', selo: `${MAIOR_ANUAL}% OFF`, seloCurto: `-${MAIOR_ANUAL}%`, laranja: true },
   ]
   return (
-    <div role="radiogroup" aria-label="Forma de pagamento" className="inline-grid grid-cols-2 rounded-full border border-papel-linha bg-papel-card p-1 text-[14px] shadow-sm">
+    <div role="radiogroup" aria-label="Forma de pagamento" className="inline-grid grid-cols-2 rounded-full border border-papel-linha bg-papel-card p-1 text-[14.5px] shadow-sm">
       {opcoes.map((o) => {
         const ativo = ciclo === o.id
         return (
@@ -48,16 +42,15 @@ export function ChaveCiclo({ ciclo, onChange }: { ciclo: Ciclo; onChange: (c: Ci
             role="radio"
             aria-checked={ativo}
             onClick={() => onChange(o.id)}
-            className={`inline-flex h-10 items-center justify-center gap-2 rounded-full px-5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azul-escuro/50 ${
+            className={`inline-flex h-11 items-center justify-center gap-2 rounded-full px-4 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azul-escuro/50 sm:px-5 ${
               ativo ? 'bg-tinta-1 text-white' : 'text-tinta-2 hover:text-tinta-1'
             }`}
           >
             {o.rotulo}
-            {o.extra && (
-              // celular estreito: só "-38%", para a chave não quebrar em duas linhas
-              <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${ativo ? 'bg-white/15 text-white' : 'bg-azul-escuro/10 text-azul-escuro'}`}>
-                <span className="sm:hidden">-{MAIOR_ECONOMIA}%</span>
-                <span className="hidden sm:inline">{o.extra}</span>
+            {o.selo && (
+              <span className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[11.5px] font-bold ${o.laranja ? 'bg-[#ff5a1f] text-white' : ativo ? 'bg-white/15 text-white' : 'bg-azul-escuro/10 text-azul-escuro'}`}>
+                <span className="sm:hidden">{o.seloCurto || o.selo}</span>
+                <span className="hidden sm:inline">{o.selo}</span>
               </span>
             )}
           </button>
@@ -67,43 +60,143 @@ export function ChaveCiclo({ ciclo, onChange }: { ciclo: Ciclo; onChange: (c: Ci
   )
 }
 
+/** "De R$ X por" + o preço grande: a âncora é sempre um preço real (mensalidade cheia / 12 mensalidades). */
+function DePor({ de, por, sufixo }: { de: string; por: string; sufixo: string }) {
+  return (
+    <>
+      <p className="mt-4 text-[14.5px] text-tinta-3">
+        De <span className="font-medium line-through decoration-[#ff5a1f]/70 decoration-2">R$ {de}</span> por
+      </p>
+      <p className="mt-0.5 flex items-baseline gap-1.5 text-tinta-1">
+        <span className="text-[17px] font-semibold">R$</span>
+        <span className="text-[52px] font-bold leading-none tracking-[-0.03em]">{por}</span>
+        <span className="text-[15px] font-medium text-tinta-3">{sufixo}</span>
+      </p>
+    </>
+  )
+}
+
 function Preco({ p, ciclo }: { p: PlanoVenda; ciclo: Ciclo }) {
   if (ciclo === 'mensal') {
+    const eco = economiaPrimeiroMes(p)
     return (
       <div className="mt-6">
-        <p className="flex items-baseline gap-1.5 text-tinta-1">
-          <span className="text-[16px] font-medium">R$</span>
-          <span className="text-[46px] font-semibold leading-none tracking-[-0.03em]">{p.preco}</span>
-          <span className="text-[15px] text-tinta-3">/mês</span>
-        </p>
-        <p className="mt-2.5 text-[14px] leading-relaxed text-tinta-2">
-          Assinatura cobrada todo mês, no <strong className="font-semibold text-tinta-1">cartão de crédito</strong> ou no <strong className="font-semibold text-tinta-1">Pix</strong>.
+        {OFERTA.ativa ? (
+          <>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ff5a1f] px-3 py-1 text-[12.5px] font-bold uppercase tracking-wide text-white">
+              <Flame size={14} aria-hidden="true" /> 1º mês por R$ {p.primeiroMes}
+            </span>
+            <DePor de={p.preco} por={p.primeiroMes} sufixo="no 1º mês" />
+            <p className="mt-2 inline-flex rounded-lg bg-emerald-50 px-2.5 py-1 text-[13.5px] font-semibold text-emerald-700">
+              Você economiza R$ {eco.reais} ({eco.pct}%) no primeiro mês
+            </p>
+            {/* linha do tempo da cobrança: o que paga hoje e o que paga depois, sem surpresa */}
+            <ol className="mt-5 grid grid-cols-2 overflow-hidden rounded-xl border border-papel-linha text-[13px]">
+              <li className="bg-[#fff4ee] p-3">
+                <span className="block font-semibold uppercase tracking-wide text-[#e03800]">Hoje</span>
+                <span className="mt-0.5 block text-[18px] font-bold text-tinta-1">R$ {p.primeiroMes}</span>
+                <span className="block text-tinta-3">1º mês</span>
+              </li>
+              <li className="border-l border-papel-linha bg-papel p-3">
+                <span className="block font-semibold uppercase tracking-wide text-tinta-3">A partir do 2º mês</span>
+                <span className="mt-0.5 block text-[18px] font-bold text-tinta-1">R$ {p.preco}</span>
+                <span className="block text-tinta-3">por mês</span>
+              </li>
+            </ol>
+          </>
+        ) : (
+          <p className="flex items-baseline gap-1.5 text-tinta-1">
+            <span className="text-[16px] font-medium">R$</span>
+            <span className="text-[46px] font-semibold leading-none tracking-[-0.03em]">{p.preco}</span>
+            <span className="text-[15px] text-tinta-3">/mês</span>
+          </p>
+        )}
+        <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13.5px] text-tinta-2">
+          <span className="inline-flex items-center gap-1.5"><QrCode size={15} className="text-tinta-3" aria-hidden="true" /> Pix</span>
+          <span className="inline-flex items-center gap-1.5"><CreditCard size={15} className="text-tinta-3" aria-hidden="true" /> Cartão</span>
+          <span>· Sem fidelidade, cancele quando quiser</span>
         </p>
       </div>
     )
   }
-  const eco = economia(p)
+  const eco = economiaAnual(p)
   return (
     <div className="mt-6">
-      <p className="flex items-baseline gap-1.5 text-tinta-1">
-        <span className="text-[16px] font-medium">12x de R$</span>
-        <span className="text-[46px] font-semibold leading-none tracking-[-0.03em]">{p.precoAnual}</span>
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ff5a1f] px-3 py-1 text-[12.5px] font-bold uppercase tracking-wide text-white">
+        <Flame size={14} aria-hidden="true" /> {eco.pct}% OFF no anual
+      </span>
+      <DePor de={p.anualDe} por={p.precoAnualVista} sufixo="por 12 meses" />
+      <p className="mt-1.5 text-[15px] text-tinta-2">
+        Equivale a <strong className="font-semibold text-tinta-1">R$ {p.precoAnual}/mês</strong>
       </p>
-      <p className="mt-1 text-[14px] text-tinta-3">no cartão de crédito</p>
-      <div className="mt-4 grid gap-2 rounded-xl border border-papel-linha bg-papel p-3.5 text-[13.5px] text-tinta-2">
-        <p className="flex items-center gap-2.5">
-          <CreditCard size={16} className="flex-none text-tinta-3" aria-hidden="true" />
-          <span><strong className="font-semibold text-tinta-1">Cartão:</strong> até 12x de R$ {p.precoAnual}</span>
-        </p>
+      <p className="mt-2 inline-flex rounded-lg bg-emerald-50 px-2.5 py-1 text-[13.5px] font-semibold text-emerald-700">
+        Você economiza R$ {eco.reais} no ano
+      </p>
+      <div className="mt-5 grid gap-2 rounded-xl border border-papel-linha bg-papel p-3.5 text-[13.5px] text-tinta-2">
         <p className="flex items-center gap-2.5">
           <QrCode size={16} className="flex-none text-tinta-3" aria-hidden="true" />
-          <span><strong className="font-semibold text-tinta-1">Pix à vista:</strong> R$ {p.precoAnualVista} <span className="text-tinta-3">(menor preço)</span></span>
+          <span><strong className="font-semibold text-tinta-1">Pix à vista:</strong> R$ {p.precoAnualVista}</span>
+        </p>
+        <p className="flex items-center gap-2.5">
+          <CreditCard size={16} className="flex-none text-tinta-3" aria-hidden="true" />
+          <span><strong className="font-semibold text-tinta-1">Cartão:</strong> em até 12x</span>
         </p>
       </div>
-      <p className="mt-3 text-[13.5px] leading-relaxed text-tinta-2">
-        Pagamento único que vale <strong className="font-semibold text-tinta-1">12 meses</strong>. Não renova sozinho.
-        <span className="mt-1 block font-semibold text-azul-escuro">Economia de R$ {brl(eco.reais)} em relação ao mensal.</span>
+      <p className="mt-3 text-[13px] leading-relaxed text-tinta-3">Pagamento único que vale 12 meses. Não renova sozinho.</p>
+    </div>
+  )
+}
+
+/**
+ * "Quanto você paga em 12 meses": barras do mensal (1º mês com a oferta + 11 cheios) contra o anual, para o plano
+ * escolhido. Deixa a conta feita para quem está em dúvida entre os dois ciclos.
+ */
+function Comparador({ onEscolher }: { onEscolher: (c: Ciclo) => void }) {
+  const [id, setId] = useState<PlanoVenda['id']>('full')
+  const p = PLANOS_VENDA.find((x) => x.id === id) ?? PLANOS_VENDA[0]
+  const mensal = totalMensal12(p)
+  const anual = numero(p.precoAnualVista)
+  const barra = (v: number) => `${Math.max(12, Math.round((v / mensal) * 100))}%`
+  return (
+    <div className="mx-auto mt-12 max-w-[920px] rounded-2xl border border-papel-linha bg-papel-card p-5 shadow-sm sm:p-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[12.5px] font-semibold uppercase tracking-[0.12em] text-azul-escuro">Faça a conta</p>
+          <h3 className="mt-1 text-[21px] font-semibold tracking-tight">Quanto você paga em 12 meses</h3>
+        </div>
+        <div role="radiogroup" aria-label="Plano" className="inline-grid grid-cols-2 self-start rounded-full border border-papel-linha bg-papel p-1 text-[14px]">
+          {PLANOS_VENDA.map((x) => (
+            <button key={x.id} type="button" role="radio" aria-checked={x.id === id} onClick={() => setId(x.id)}
+              className={`h-9 rounded-full px-5 font-semibold transition-colors ${x.id === id ? 'bg-tinta-1 text-white' : 'text-tinta-2'}`}>
+              {x.nome}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="mt-6 grid gap-4">
+        <div>
+          <div className="flex items-baseline justify-between text-[14px]">
+            <span className="font-medium text-tinta-2">Mensal {OFERTA.ativa && <span className="text-tinta-3">(1º mês R$ {p.primeiroMes} + 11× R$ {p.preco})</span>}</span>
+            <span className="font-semibold text-tinta-1">R$ {emReais(mensal)}</span>
+          </div>
+          <div className="mt-1.5 h-4 overflow-hidden rounded-full bg-papel"><div className="h-full rounded-full bg-tinta-3/60 transition-all duration-500" style={{ width: barra(mensal) }} /></div>
+        </div>
+        <div>
+          <div className="flex items-baseline justify-between text-[14px]">
+            <span className="font-medium text-tinta-2">Anual <span className="font-bold text-[#e03800]">-{economiaAnual(p).pct}%</span></span>
+            <span className="font-semibold text-tinta-1">R$ {p.precoAnualVista}</span>
+          </div>
+          <div className="mt-1.5 h-4 overflow-hidden rounded-full bg-papel"><div className="h-full rounded-full bg-gradient-to-r from-[#ff5a1f] to-[#ff9100] transition-all duration-500" style={{ width: barra(anual) }} /></div>
+        </div>
+      </div>
+      <p className="mt-5 text-[14.5px] leading-relaxed text-tinta-2">
+        No {p.nome} anual você paga <strong className="font-semibold text-tinta-1">R$ {emReais(mensal - anual)} a menos</strong> no ano.
+        No mensal você começa pagando só R$ {precoPrimeiroMes(p)} e cancela quando quiser.
       </p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button type="button" onClick={() => onEscolher('anual')} className="rounded-full bg-[#ff5a1f] px-4 py-2 text-[14px] font-semibold text-white hover:brightness-105">Ver o anual com {economiaAnual(p).pct}% OFF</button>
+        {OFERTA.ativa && <button type="button" onClick={() => onEscolher('mensal')} className="rounded-full border border-papel-linha px-4 py-2 text-[14px] font-semibold text-tinta-1 hover:bg-papel">Começar por R$ {precoPrimeiroMes(p)}</button>}
+      </div>
     </div>
   )
 }
@@ -162,7 +255,7 @@ export function CartaoPlanoClaro({ p, ciclo, acao, atual = false }: PropsCartao)
               onClick={(e) => abrirCheckout(e, p.id, ciclo, null)}
               className={classeBotaoClaro(p.destaque)}
             >
-              Assinar o {p.nome}{ciclo === 'anual' ? ' anual' : ''} <span aria-hidden="true">→</span>
+              {ciclo === 'mensal' && OFERTA.ativa ? `Quero o ${p.nome} por R$ ${precoPrimeiroMes(p)}` : `Quero o ${p.nome}${ciclo === 'anual' ? ` anual com ${economiaAnual(p).pct}% OFF` : ''}`} <span aria-hidden="true">→</span>
             </a>
             <p className="mt-2.5 text-center text-[12.5px] text-tinta-3">
               Pix ou cartão. Prefere conhecer antes? <Link to="/cadastro" className="font-medium text-azul-escuro underline-offset-4 hover:underline">Teste grátis</Link>
@@ -184,7 +277,8 @@ export function CartaoPlanoClaro({ p, ciclo, acao, atual = false }: PropsCartao)
 
 
 export function PlanosLanding() {
-  const [ciclo, setCiclo] = useState<Ciclo>('anual')
+  // com a oferta da 1ª mensalidade ligada, a página abre no mensal (é onde está o desconto)
+  const [ciclo, setCiclo] = useState<Ciclo>(OFERTA.ativa ? 'mensal' : 'anual')
   const secao = useRef<HTMLElement>(null)
   // carro escolhido na busca "Veja se tem o seu carro" (BuscaCarro): aparece em destaque em cima dos planos
   const [carro, setCarro] = useState<CarroEscolhido | null>(null)
@@ -211,10 +305,14 @@ export function PlanosLanding() {
           <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-azul-escuro">Planos</p>
           <h2 className="mt-3 text-[clamp(2rem,4vw,3rem)] font-semibold leading-[1.08] tracking-[-0.02em]">Escolha o plano da sua oficina</h2>
           <p className="mt-4 text-[16.5px] leading-relaxed text-tinta-2">
-            Assine o <strong className="font-semibold text-tinta-1">Pro</strong> para veículos leves ou o{' '}
-            <strong className="font-semibold text-tinta-1">Full</strong> para atender do leve ao diesel. Acesso liberado na hora, no
-            celular e no computador. Cancele quando quiser.
+            O <strong className="font-semibold text-tinta-1">Pro</strong> para veículos leves ou o{' '}
+            <strong className="font-semibold text-tinta-1">Full</strong> para atender do leve ao diesel.
           </p>
+          <ul className="mt-5 flex flex-wrap justify-center gap-2 text-[13.5px] font-medium text-tinta-2">
+            <li className="inline-flex items-center gap-1.5 rounded-full border border-papel-linha bg-papel-card px-3 py-1.5"><QrCode size={15} className="text-azul-escuro" aria-hidden="true" /> Pix ou cartão</li>
+            <li className="inline-flex items-center gap-1.5 rounded-full border border-papel-linha bg-papel-card px-3 py-1.5"><Zap size={15} className="text-azul-escuro" aria-hidden="true" /> Acesso liberado na hora</li>
+            <li className="inline-flex items-center gap-1.5 rounded-full border border-papel-linha bg-papel-card px-3 py-1.5"><ShieldCheck size={15} className="text-azul-escuro" aria-hidden="true" /> 7 dias de garantia</li>
+          </ul>
         </Reveal>
 
         {carro && (
@@ -235,6 +333,10 @@ export function PlanosLanding() {
             </Reveal>
           ))}
         </div>
+
+        <Reveal index={2}>
+          <Comparador onEscolher={(c) => { setCiclo(c); secao.current?.querySelector('article')?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }} />
+        </Reveal>
 
         {/* Os dois jeitos de começar, logo abaixo dos planos: cadastro no site ou o app Android. */}
         <Reveal index={2} className="mx-auto mt-8 max-w-[920px]">

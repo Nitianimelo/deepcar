@@ -2,7 +2,7 @@
 // (api/_lib/sessao.js): aqui é só a hora de virar a chave na tela e o texto que a pessoa lê.
 import { useEffect, useState } from 'react'
 import { registrar as anotar } from './log'
-import { PLANOS_VENDA, type Ciclo, type PlanoPago } from '../data/planos'
+import { OFERTA, PLANOS_VENDA, type Ciclo, type PlanoPago } from '../data/planos'
 import { conferirSessao, type Plano, type Session } from './auth'
 import { iniciarCheckout, visitanteId } from './pixel'
 import { origemParaCadastro } from './origem'
@@ -96,6 +96,8 @@ export function linkCheckout(plano: PlanoPago, s: Session | null, ciclo: Ciclo =
   if (s?.whatsapp) q.set('phone', s.whatsapp)
   // id do clique (volta no webhook) e a campanha que trouxe a pessoa (aparece nos relatórios da Cakto)
   if (id) q.set('sck', id)
+  // oferta da 1ª mensalidade (data/planos.ts → OFERTA): o cupom do plano vai no link, a Cakto aplica só na 1ª cobrança
+  if (OFERTA.ativa && ciclo === 'mensal') q.set(OFERTA.parametro, OFERTA.cupons[plano])
   const o = origemParaCadastro()
   for (const c of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'] as const) if (o?.[c]) q.set(c, o[c] as string)
   const busca = q.toString()

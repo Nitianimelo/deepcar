@@ -123,6 +123,25 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Preços novos, oferta e página "agressiva" (menu, faixa, FAQ, comparador)
+- **Pedido do dono:** mensal Pro R$ 37,00 e Full R$ 49,90 do 2º mês em diante, com o **1º mês por R$ 19,90** nos dois;
+  anual com **40% OFF** (sobre 12 mensalidades); Pix e cartão em tudo. Página "dinâmica e explicativa", com "de/por".
+  Âncora "de" sempre REAL (mensalidade cheia / 12 mensalidades): avisado ao dono que "de" inflado é propaganda
+  enganosa (CDC art. 37) e reprova anúncio na Meta.
+- **Cakto (aplicado pela API, 09/10 ~15h):** ofertas 3c9ck5a Pro mensal 47,90→**37,00**; vxd8vpe Full mensal
+  59,90→**49,90**; 6ccodaw Pro anual 289,49→**266,40**; uigfpmf Full anual 366,95→**359,28**. Assinantes atuais não
+  afetados (2 pagaram Pix avulso, 1 anual no cartão).
+- **1º mês R$ 19,90 = cupom DEEPCAR1990** ("Desconto só na 1ª cobrança da assinatura", valor fixo Pro 17,10 / Full
+  30,00), criado pelo dono na tela (a Cakto não tem cupom na API e o formulário não aceita preenchimento por script).
+  Vai no link do checkout mensal (`coupon=`). **Enquanto não existir:** `OFERTA.ativa=false` (src/data/planos.ts) e
+  `PRIMEIRO_MES=false` (api/_lib/emails.js) — ligar os dois juntos depois de conferir no checkout que cobra 19,90.
+- `src/data/planos.ts`: `preco` (2º mês+), `primeiroMes`, `precoAnual` (equivale/mês = à vista ÷ 12),
+  `precoAnualVista`, `anualDe` (12× mensal), `OFERTA`, `economiaPrimeiroMes`, `economiaAnual`, `totalMensal12`.
+- Página: faixa laranja no topo (1º mês R$ 19,90 / 40% OFF no anual), menu Recursos · Preços · Consulta técnica · FAQ
+  (no celular, linha que rola), botão "Pegar oferta"; planos com "De R$ X por", economia, linha do tempo
+  "Hoje / a partir do 2º mês", Pix/cartão, garantia de 7 dias; comparador "Quanto você paga em 12 meses" (Pro/Full);
+  FAQ (src/components/landing/FaqLanding.tsx). E-mail "teste acabou" com os preços novos.
+
 ### 2026-10-09 · Página de vendas: tour com telas reais, "Veja se tem o seu carro" e assinar direto
 - **Pedido do dono:** prints de um tour real (entrar → placa → diagramas com ano/motor → esquema → componente) em
   slides explicativos; busca de carro sem placa mostrando os modelos do acervo SEM o esquema; ao escolher, levar a assinar.
