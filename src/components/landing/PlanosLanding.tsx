@@ -3,14 +3,13 @@
 // aqui a pessoa decide o que comprar, então tudo é lista simples. `CartaoPlanoClaro` e `ChaveCiclo` também servem
 // a aba Plano da conta (src/pages/Conta.tsx), dentro de um painel claro; o convite do fim do teste segue com o CardPlano.
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Link } from 'react-router-dom'
 import { Check, CreditCard, Flame, Minus, QrCode, ShieldCheck, Zap } from 'lucide-react'
 import { NAV } from '../../data/nav'
 import { OFERTA, PLANOS_VENDA, economiaAnual, economiaPrimeiroMes, numero, precoPrimeiroMes, type Ciclo, type PlanoVenda } from '../../data/planos'
 import { Reveal } from './Reveal'
 import { BotaoEquipe } from './BotaoWhatsapp'
 import { classeBotaoClaro } from './estiloPlanos'
-import { IconeGooglePlay, LINK_GOOGLE_PLAY, PlayStoreBadge } from '../StoreBadges'
+import { IconeGooglePlay, LINK_GOOGLE_PLAY } from '../StoreBadges'
 import { viuPlanos } from '../../lib/pixel'
 import { abrirCheckout, linkCheckout } from '../../lib/plano'
 import { EVENTO_CARRO, type CarroEscolhido } from './BuscaCarro'
@@ -203,9 +202,7 @@ export function CartaoPlanoClaro({ p, ciclo, acao, atual = false }: PropsCartao)
             >
               {ciclo === 'mensal' && OFERTA.ativa ? `Quero o ${p.nome} por R$ ${precoPrimeiroMes(p)}` : `Quero o ${p.nome}${ciclo === 'anual' ? ` anual com ${economiaAnual(p).pct}% OFF` : ''}`} <span aria-hidden="true">→</span>
             </a>
-            <p className="mt-2.5 text-center text-[12.5px] text-tinta-3">
-              Pix ou cartão. Prefere conhecer antes? <Link to="/cadastro" className="font-medium text-azul-escuro underline-offset-4 hover:underline">Teste grátis</Link>
-            </p>
+            <p className="mt-2.5 text-center text-[12.5px] text-tinta-3">Pix ou cartão. Acesso liberado na hora.</p>
             <a
               href={LINK_GOOGLE_PLAY}
               target="_blank"
@@ -279,17 +276,6 @@ export function PlanosLanding() {
             </Reveal>
           ))}
         </div>
-
-        {/* Os dois jeitos de começar, logo abaixo dos planos: cadastro no site ou o app Android. */}
-        <Reveal index={2} className="mx-auto mt-8 max-w-[920px]">
-          <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-papel-linha bg-papel-card px-5 py-5 text-center sm:flex-row sm:gap-6 sm:text-left">
-            <p className="text-[15px] font-semibold">Comece agora, grátis:</p>
-            <Link to="/cadastro" className={`${classeBotaoClaro(true)} sm:w-auto sm:px-6`}>
-              Criar minha conta <span aria-hidden="true">→</span>
-            </Link>
-            <PlayStoreBadge />
-          </div>
-        </Reveal>
         <Reveal index={3} className="mt-12 flex flex-col items-center gap-4 text-center">
           <p className="text-[15.5px] text-tinta-2">Ficou em dúvida sobre qual plano escolher?</p>
           <BotaoEquipe />

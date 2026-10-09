@@ -68,7 +68,7 @@ function norm(s: string | null | undefined) {
 }
 
 // "1997 a 2001", "06/2018 em diante", "2012 a 2017"; sem ano legível não exclui o esquema
-function anoNaFaixa(ano: number, producao: string | null) {
+export function anoNaFaixa(ano: number, producao: string | null) {
   const anos = (producao ?? '').match(/\b(19|20)\d{2}\b/g)?.map(Number) ?? []
   if (!anos.length) return true
   const ini = Math.min(...anos)

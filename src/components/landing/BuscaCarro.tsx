@@ -5,9 +5,9 @@
 // O catálogo (catalogo/<sistema>.json no acervo, ~290 KB gzip no total) só é baixado quando a pessoa começa a digitar.
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { ArrowRight, Car, Loader2, Lock, Search, Truck, X } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { carregarCatalogo, type Esquema } from '../../lib/acervo'
 import { indexar, termosDe, type Indexado } from '../../lib/busca'
+import { anoNaFaixa } from '../../lib/compatibilidade'
 import { SECTION_META, SECOES, type SectionKey } from '../../data/nav'
 import { registrar as anotar } from '../../lib/log'
 import { Reveal } from './Reveal'
@@ -61,9 +61,23 @@ export function BuscaCarro() {
   const resultado = useMemo(() => {
     const termos = termosDe(q)
     if (!indice || !termos.length || q.trim().length < 2) return null
-    const achados = indice.filter(({ alvo }) => termos.every((t) => alvo.includes(t))).map((x) => x.e)
+    // ano digitado ("ecosport 2019") vale pela faixa de fabricação ("2013 a 2021"), não pelo texto
+    const anos = termos.filter((t) => /^(19|20)\d{2}$/.test(t)).map(Number)
+    let texto = termos.filter((t) => !/^(19|20)\d{2}$/.test(t))
+    const buscar = (ts: string[]) => indice
+      .filter(({ alvo }) => ts.every((t) => alvo.includes(t)))
+      .map((x) => x.e)
+      .filter((e) => anos.every((a) => anoNaFaixa(a, e.producao ?? [e.motorizacao, e.gerenciamento].filter(Boolean).join(' '))))
+    let achados = buscar(texto)
+    // nada com tudo o que digitou ("ecosport titanium"): tira as últimas palavras até achar ("ecosport"), e avisa
+    let aproximado: string | null = null
+    while (!achados.length && texto.length > 1) {
+      texto = texto.slice(0, -1)
+      achados = buscar(texto)
+      if (achados.length) aproximado = [...texto, ...anos.map(String)].join(' ')
+    }
     const veiculos = agrupar(achados)
-    return { total: veiculos.length, lista: veiculos.slice(0, MAX) }
+    return { total: veiculos.length, lista: veiculos.slice(0, MAX), aproximado }
   }, [indice, q])
 
   // o que as pessoas procuram (e não acham): /admin → Logs. Uma vez por termo, depois de parar de digitar.
@@ -147,6 +161,12 @@ export function BuscaCarro() {
               </div>
             ) : (
               <>
+                {resultado.aproximado && (
+                  <p className="mb-2 text-[14px] text-ink-2">
+                    Não achamos exatamente "{q.trim()}". Mostrando os resultados para <b className="font-semibold text-ink-1">"{resultado.aproximado}"</b>: a versão
+                    (Titanium, Freestyle…) nem sempre faz parte do nome do diagrama.
+                  </p>
+                )}
                 <p className="mb-3 text-[13.5px] text-ink-3">
                   {resultado.total > MAX ? `${resultado.total} versões encontradas. Mostrando as ${MAX} primeiras: refine com o motor ou o ano.` : `${resultado.total} ${resultado.total === 1 ? 'versão encontrada' : 'versões encontradas'}`}
                 </p>
@@ -217,7 +237,6 @@ function Detalhe({ v, onVoltar, onAssinar }: { v: Veiculo; onVoltar: () => void;
           <button type="button" onClick={onAssinar} className="btn-cta btn-cta-grande inline-flex w-full items-center justify-center gap-2 px-6 sm:w-auto">
             Assinar e abrir os esquemas <ArrowRight size={19} />
           </button>
-          <Link to="/cadastro" className="text-[13.5px] text-ink-3 underline-offset-4 hover:text-ink-1 hover:underline">ou teste grátis primeiro</Link>
         </div>
       </div>
     </div>

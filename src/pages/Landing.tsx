@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, ScanLine } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowRight } from 'lucide-react'
 import { Phone, Tablet } from '../components/DeviceMockups'
 import { AppStoreBadge, PlayStoreBadge } from '../components/StoreBadges'
 import { CarBlueprint } from '../components/CarBlueprint'
 import { MarcasStrip } from '../components/MarcasStrip'
-import { formatarPlaca, placaValida } from '../lib/placa'
 import { GridBeam } from '../components/landing/GridBeam'
 import { Reveal } from '../components/landing/Reveal'
 import { BotaoWhatsapp } from '../components/landing/BotaoWhatsapp'
@@ -15,6 +14,7 @@ import { OFERTA, PLANOS_VENDA, economiaAnual, precoPrimeiroMes } from '../data/p
 import { TourPlataforma } from '../components/landing/TourPlataforma'
 import { BuscaCarro } from '../components/landing/BuscaCarro'
 import { PorQueDeepcar } from '../components/landing/PorQueDeepcar'
+import { PreviaPlaca } from '../components/landing/PreviaPlaca'
 import { registrar as anotar } from '../lib/log'
 import { eventoLeitura } from '../lib/pixel'
 
@@ -234,17 +234,6 @@ function Hero() {
 
 /* ── Segunda dobra ─────────────────────────────────────────────────── */
 function Cobertura() {
-  const nav = useNavigate()
-  const [placa, setPlaca] = useState('')
-  const ok = placaValida(placa)
-
-  function onSubmit(e: FormEvent) {
-    e.preventDefault()
-    if (!ok) return
-    // quem chega pela placa ainda não tem conta: cria e cai direto no veículo
-    nav('/cadastro', { state: { from: `/app/veiculo/${placa.replace('-', '')}` } })
-  }
-
   return (
     <section id="cobertura" className="relative border-t seam">
       <div className="mx-auto max-w-[1200px] px-5 pb-12 pt-20 sm:px-8 lg:pt-28">
@@ -269,21 +258,7 @@ function Cobertura() {
             <div className="relative pt-40 sm:pt-48">
               <h3 className="text-[22px] font-semibold tracking-tight">Busque o que você precisa pela placa do veículo.</h3>
               <p className="mt-2 text-[15px] text-ink-3">Marca, modelo, ano e os sistemas disponíveis em segundos.</p>
-              <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <label className="relative flex-1">
-                  <ScanLine size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-4" />
-                  <input
-                    className="field code pl-12 text-[17px] uppercase tracking-[0.14em]"
-                    placeholder="ABC-1D23"
-                    value={placa}
-                    onChange={(e) => setPlaca(formatarPlaca(e.target.value))}
-                    autoCapitalize="characters" autoCorrect="off" spellCheck={false} maxLength={8}
-                    aria-label="Placa do veículo"
-                  />
-                </label>
-                <button type="submit" className="btn-cta btn-cta-grande px-6" disabled={!ok}>Testar gratuitamente</button>
-              </form>
-              <p className="code mt-3 text-[11.5px] text-ink-4">Placas Mercosul e padrão antigo. Sem cartão de crédito.</p>
+              <PreviaPlaca />
             </div>
           </Reveal>
         </div>

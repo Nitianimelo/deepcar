@@ -123,6 +123,21 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Página sem atalhos para o teste grátis + prévia da placa + busca com ano
+- **Achado:** cadastro grátis às 16:35 (Elcio, criativo 6 da campanha nova): buscou "ecosport 2019"/"ecosport
+  titanium" (0 resultados), digitou a placa no campo "Testar gratuitamente" da seção cobertura → cadastro.
+- **Pedido do dono:** tirar o teste grátis da página e corrigir a busca.
+- Campo de placa (seção cobertura) agora é **prévia sem conta** (`src/components/landing/PreviaPlaca.tsx`): `GET
+  /api/placa/:placa?previa=1` (mesmo arquivo da consulta, sem nova função) devolve só marca/modelo/anos/cilindrada/
+  combustível; a página casa com o catálogo (`sistemasDisponiveis`) e mostra quantos diagramas por sistema, nunca o
+  esquema; botão "Assinar e abrir os esquemas" vai aos planos com o carro em destaque. Limite: 3 placas novas por IP em
+  24 h e 300 por dia no total (`db/021_placas_previa`, aplicada). Logs `placa_landing`, `placa_landing_erro`.
+- Saíram da página: "ou teste grátis primeiro" (busca), "Teste grátis" e o bloco "Comece agora, grátis" (planos). O
+  cadastro grátis continua só pelo app e por /login → criar conta.
+- Busca por modelo: ano digitado vale pela faixa de fabricação (`anoNaFaixa`, exportada de lib/compatibilidade.ts);
+  sem resultado com tudo, tira as últimas palavras e avisa "Mostrando os resultados para ..." (versões como Titanium
+  nem sempre estão no nome do diagrama).
+
 ### 2026-10-09 · Seção "Por que assinar em vez de comprar um manual em PDF"
 - Pedido do dono: seção simples, comparativo animado Deepcar × PDF. Redesenhada no mesmo dia ("parecia IA"): tabela única, linhas finas, coluna da Deepcar em faixa, ícones discretos, entrada sutil. `src/components/landing/PorQueDeepcar.tsx`
   (#por-que, entre "cobertura" e os planos): 7 linhas (achar o veículo pela placa, 20 mil sistemas/98% da frota,
