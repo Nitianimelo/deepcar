@@ -144,7 +144,7 @@ Regras de trabalho estão em `AGENTE.md`.
 - Página: faixa laranja no topo (1º mês R$ 19,90 / 40% OFF no anual), menu Recursos · Preços · Consulta técnica · FAQ
   (no celular, linha que rola), botão "Pegar oferta"; planos com "De R$ X por", economia, linha do tempo
   "Hoje / a partir do 2º mês", Pix/cartão, garantia de 7 dias; comparador "Quanto você paga em 12 meses" (Pro/Full);
-  FAQ (src/components/landing/FaqLanding.tsx). E-mail "teste acabou" com os preços novos.
+  FAQ (src/components/landing/FaqLanding.tsx). O comparador "Faça a conta" foi tirado a pedido do dono no mesmo dia. E-mail "teste acabou" com os preços novos.
 
 ### 2026-10-09 · Página de vendas: tour com telas reais, "Veja se tem o seu carro" e assinar direto
 - **Pedido do dono:** prints de um tour real (entrar → placa → diagramas com ano/motor → esquema → componente) em

@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, CreditCard, Flame, Minus, QrCode, ShieldCheck, Zap } from 'lucide-react'
 import { NAV } from '../../data/nav'
-import { OFERTA, PLANOS_VENDA, economiaAnual, economiaPrimeiroMes, emReais, numero, precoPrimeiroMes, totalMensal12, type Ciclo, type PlanoVenda } from '../../data/planos'
+import { OFERTA, PLANOS_VENDA, economiaAnual, economiaPrimeiroMes, numero, precoPrimeiroMes, type Ciclo, type PlanoVenda } from '../../data/planos'
 import { Reveal } from './Reveal'
 import { BotaoEquipe } from './BotaoWhatsapp'
 import { classeBotaoClaro } from './estiloPlanos'
@@ -147,60 +147,6 @@ function Preco({ p, ciclo }: { p: PlanoVenda; ciclo: Ciclo }) {
   )
 }
 
-/**
- * "Quanto você paga em 12 meses": barras do mensal (1º mês com a oferta + 11 cheios) contra o anual, para o plano
- * escolhido. Deixa a conta feita para quem está em dúvida entre os dois ciclos.
- */
-function Comparador({ onEscolher }: { onEscolher: (c: Ciclo) => void }) {
-  const [id, setId] = useState<PlanoVenda['id']>('full')
-  const p = PLANOS_VENDA.find((x) => x.id === id) ?? PLANOS_VENDA[0]
-  const mensal = totalMensal12(p)
-  const anual = numero(p.precoAnualVista)
-  const barra = (v: number) => `${Math.max(12, Math.round((v / mensal) * 100))}%`
-  return (
-    <div className="mx-auto mt-12 max-w-[920px] rounded-2xl border border-papel-linha bg-papel-card p-5 shadow-sm sm:p-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-[12.5px] font-semibold uppercase tracking-[0.12em] text-azul-escuro">Faça a conta</p>
-          <h3 className="mt-1 text-[21px] font-semibold tracking-tight">Quanto você paga em 12 meses</h3>
-        </div>
-        <div role="radiogroup" aria-label="Plano" className="inline-grid grid-cols-2 self-start rounded-full border border-papel-linha bg-papel p-1 text-[14px]">
-          {PLANOS_VENDA.map((x) => (
-            <button key={x.id} type="button" role="radio" aria-checked={x.id === id} onClick={() => setId(x.id)}
-              className={`h-9 rounded-full px-5 font-semibold transition-colors ${x.id === id ? 'bg-tinta-1 text-white' : 'text-tinta-2'}`}>
-              {x.nome}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="mt-6 grid gap-4">
-        <div>
-          <div className="flex items-baseline justify-between text-[14px]">
-            <span className="font-medium text-tinta-2">Mensal {OFERTA.ativa && <span className="text-tinta-3">(1º mês R$ {p.primeiroMes} + 11× R$ {p.preco})</span>}</span>
-            <span className="font-semibold text-tinta-1">R$ {emReais(mensal)}</span>
-          </div>
-          <div className="mt-1.5 h-4 overflow-hidden rounded-full bg-papel"><div className="h-full rounded-full bg-tinta-3/60 transition-all duration-500" style={{ width: barra(mensal) }} /></div>
-        </div>
-        <div>
-          <div className="flex items-baseline justify-between text-[14px]">
-            <span className="font-medium text-tinta-2">Anual <span className="font-bold text-[#e03800]">-{economiaAnual(p).pct}%</span></span>
-            <span className="font-semibold text-tinta-1">R$ {p.precoAnualVista}</span>
-          </div>
-          <div className="mt-1.5 h-4 overflow-hidden rounded-full bg-papel"><div className="h-full rounded-full bg-gradient-to-r from-[#ff5a1f] to-[#ff9100] transition-all duration-500" style={{ width: barra(anual) }} /></div>
-        </div>
-      </div>
-      <p className="mt-5 text-[14.5px] leading-relaxed text-tinta-2">
-        No {p.nome} anual você paga <strong className="font-semibold text-tinta-1">R$ {emReais(mensal - anual)} a menos</strong> no ano.
-        No mensal você começa pagando só R$ {precoPrimeiroMes(p)} e cancela quando quiser.
-      </p>
-      <div className="mt-4 flex flex-wrap gap-3">
-        <button type="button" onClick={() => onEscolher('anual')} className="rounded-full bg-[#ff5a1f] px-4 py-2 text-[14px] font-semibold text-white hover:brightness-105">Ver o anual com {economiaAnual(p).pct}% OFF</button>
-        {OFERTA.ativa && <button type="button" onClick={() => onEscolher('mensal')} className="rounded-full border border-papel-linha px-4 py-2 text-[14px] font-semibold text-tinta-1 hover:bg-papel">Começar por R$ {precoPrimeiroMes(p)}</button>}
-      </div>
-    </div>
-  )
-}
-
 type PropsCartao = {
   p: PlanoVenda
   ciclo: Ciclo
@@ -333,10 +279,6 @@ export function PlanosLanding() {
             </Reveal>
           ))}
         </div>
-
-        <Reveal index={2}>
-          <Comparador onEscolher={(c) => { setCiclo(c); secao.current?.querySelector('article')?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }} />
-        </Reveal>
 
         {/* Os dois jeitos de começar, logo abaixo dos planos: cadastro no site ou o app Android. */}
         <Reveal index={2} className="mx-auto mt-8 max-w-[920px]">
