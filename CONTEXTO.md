@@ -123,6 +123,14 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Leitura da página de vendas por seção + rolagem para a Meta
+- Pedido do dono: registrar as rolagens. Já existia `rolou` (25/50/75/100) e `saiu_landing` (segundos).
+- Novo: `viu_secao` { secao: topo | como-funciona | seu-carro | cobertura | planos | faq } quando 35% da seção aparece,
+  uma vez por visita (Landing → useLeitura, IntersectionObserver). /admin → Logs ganhou a tabela "Página de vendas: até
+  onde a pessoa chega" (por aparelho: visitas, viu o tour, a busca, os planos, o FAQ, Pegar oferta, clicou em assinar).
+- Meta (pixel, `trackCustom`): `RolagemPagina` { pct } e `ViuSecao` { secao } — para públicos de remarketing (ex.: viu
+  os planos e não comprou). `ViewContent` dos planos continua. Política de privacidade já cobre (registro de uso + pixel).
+
 ### 2026-10-09 · Preços novos, oferta e página "agressiva" (menu, faixa, FAQ, comparador)
 - **Pedido do dono:** mensal Pro R$ 37,00 e Full R$ 49,90 do 2º mês em diante, com o **1º mês por R$ 19,90** nos dois;
   anual com **40% OFF** (sobre 12 mensalidades); Pix e cartão em tudo. Página "dinâmica e explicativa", com "de/por".

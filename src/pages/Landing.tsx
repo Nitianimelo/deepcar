@@ -15,6 +15,7 @@ import { OFERTA, PLANOS_VENDA, economiaAnual, precoPrimeiroMes } from '../data/p
 import { TourPlataforma } from '../components/landing/TourPlataforma'
 import { BuscaCarro } from '../components/landing/BuscaCarro'
 import { registrar as anotar } from '../lib/log'
+import { eventoLeitura } from '../lib/pixel'
 
 export default function Landing() {
   useLeitura()
@@ -39,6 +40,9 @@ export default function Landing() {
  * Registra 'rolou' ao passar de 25/50/75/100% da página (uma vez cada) e, ao sair (outra página do site, aba escondida
  * ou fechar), 'saiu_landing' com os segundos e o máximo rolado. /admin → Logs resume por aparelho.
  */
+/** Seções da página, na ordem (ids dos <section>): o funil por seção do /admin → Logs usa os mesmos nomes. */
+const SECOES_LANDING = ['topo', 'como-funciona', 'seu-carro', 'cobertura', 'planos', 'faq']
+
 function useLeitura() {
   useEffect(() => {
     const inicio = Date.now()
@@ -52,7 +56,9 @@ function useLeitura() {
       const total = doc.scrollHeight - window.innerHeight
       const pct = total > 0 ? Math.min(100, Math.round((window.scrollY / total) * 100)) : 100
       if (pct > max) max = pct
-      for (const m of [25, 50, 75, 100]) if (max >= m && !marcos.has(m)) { marcos.add(m); anotar('rolou', { pct: m }) }
+      for (const m of [25, 50, 75, 100]) {
+        if (max >= m && !marcos.has(m)) { marcos.add(m); anotar('rolou', { pct: m }); eventoLeitura('RolagemPagina', { pct: m }) }
+      }
     }
     const rolar = () => { if (!raf) raf = requestAnimationFrame(medir) }
     const sair = () => {
@@ -62,10 +68,25 @@ function useLeitura() {
     }
     const esconder = () => { if (document.visibilityState === 'hidden') sair() }
     window.addEventListener('scroll', rolar, { passive: true })
+    // seções que a pessoa chegou a ver (uma vez cada, 35% da seção na tela): onde ela desiste, independente do
+    // tamanho da tela. Vai para o /admin → Logs ("viu_secao") e para a Meta ("ViuSecao", remarketing)
+    const vistas = new Set<string>()
+    const obs = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver((itens) => {
+      for (const i of itens) {
+        const id = (i.target as HTMLElement).id
+        if (!i.isIntersecting || vistas.has(id)) continue
+        vistas.add(id)
+        anotar('viu_secao', { secao: id })
+        eventoLeitura('ViuSecao', { secao: id })
+        obs?.unobserve(i.target)
+      }
+    }, { threshold: 0.35 })
+    for (const id of SECOES_LANDING) { const el = document.getElementById(id); if (el) obs?.observe(el) }
     // antes do envio em lote do log.ts (que também ouve a aba sumir): anota primeiro, o lote leva junto
     document.addEventListener('visibilitychange', esconder, { capture: true })
     window.addEventListener('pagehide', sair, { capture: true })
     return () => {
+      obs?.disconnect()
       window.removeEventListener('scroll', rolar)
       document.removeEventListener('visibilitychange', esconder, { capture: true })
       window.removeEventListener('pagehide', sair, { capture: true })

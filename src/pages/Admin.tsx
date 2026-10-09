@@ -1035,10 +1035,11 @@ type ResumoLogs = {
   assinar: { id: string; nome: string; email: string; plano: Plano; cliques: number; ultimo: string }[]
   navegador: { so: string; acao: string; n: number }[]
   leitura?: { so: string; visitantes: number; rolou_metade: number; segundos_mediana: number | null; abriu_cadastro: number; cadastrou: number }[]
+  secoes?: { so: string; visitantes: number; tour: number; busca: number; planos: number; faq: number; oferta: number; assinar: number }[]
 }
 
 const NOMES_EVENTO: Record<string, string> = {
-  whatsapp: 'Chamou no WhatsApp', compra_apple: 'Assinou pela App Store', push_diag: 'Notificações (diagnóstico)', rolou: 'Rolou a página de vendas', saiu_landing: 'Saiu da página de vendas', app_aberto: 'Abriu o app Android', compra_play: 'Assinou pela Google Play',
+  whatsapp: 'Chamou no WhatsApp', viu_secao: 'Viu seção da página de vendas', tour_passo: 'Passo do tour (página de vendas)', busca_landing: 'Buscou carro na página de vendas', escolheu_carro: 'Escolheu carro na página de vendas', carro_para_planos: 'Foi aos planos pelo carro', pegar_oferta: 'Clicou em Pegar oferta', compra_apple: 'Assinou pela App Store', push_diag: 'Notificações (diagnóstico)', rolou: 'Rolou a página de vendas', saiu_landing: 'Saiu da página de vendas', app_aberto: 'Abriu o app Android', compra_play: 'Assinou pela Google Play',
   pagina: 'Página', busca: 'Busca', placa: 'Placa encontrada', placa_erro: 'Placa com erro', esquema: 'Esquema',
   viu_planos: 'Viu os planos', clicou_assinar: 'Clicou em assinar', cadastro: 'Cadastrou', cadastro_erro: 'Erro no cadastro',
   login: 'Entrou', login_erro: 'Erro ao entrar', compartilhou: 'Compartilhou', navegador_interno: 'Navegador do Instagram/Facebook',
@@ -1171,6 +1172,29 @@ function AbaLogs() {
                       <td>{l.cadastrou}</td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </section>
+          )}
+          {!!r.secoes?.length && (
+            <section className={`${cartao} md:col-span-2 xl:col-span-3`}>
+              <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Página de vendas: até onde a pessoa chega</h2>
+              <table className="mt-2 w-full text-left text-[13.5px]">
+                <thead className="text-ink-4"><tr>
+                  <th className="py-1 font-medium">Aparelho</th><th className="font-medium">Visitas</th><th className="font-medium">Viu o tour</th>
+                  <th className="font-medium">Viu a busca</th><th className="font-medium">Viu os planos</th><th className="font-medium">Viu o FAQ</th>
+                  <th className="font-medium">Pegar oferta</th><th className="font-medium">Clicou em assinar</th>
+                </tr></thead>
+                <tbody>
+                  {r.secoes.map((l) => {
+                    const pct = (n: number) => <>{n} <span className="text-ink-4">({l.visitantes ? Math.round((100 * n) / l.visitantes) : 0}%)</span></>
+                    return (
+                      <tr key={l.so} className="border-t seam-soft">
+                        <td className="py-1.5 text-ink-1">{l.so}</td><td>{l.visitantes}</td>
+                        <td>{pct(l.tour)}</td><td>{pct(l.busca)}</td><td>{pct(l.planos)}</td><td>{pct(l.faq)}</td><td>{pct(l.oferta)}</td><td>{pct(l.assinar)}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </section>

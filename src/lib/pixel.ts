@@ -122,6 +122,15 @@ export function iniciarCheckout(eventoId: string, dados: { plano: string; ciclo:
   }, { eventID: eventoId })
 }
 
+/**
+ * Leitura da página de vendas para a Meta (09/10/2026): eventos personalizados para montar públicos de remarketing
+ * ("rolou 75% e não comprou", "viu os planos"). `RolagemPagina` { pct: 25|50|75|100 } e `ViuSecao` { secao }.
+ * Só onde o pixel já carregou (página pública); não leva nada da pessoa além do que o pixel já tem.
+ */
+export function eventoLeitura(nome: 'RolagemPagina' | 'ViuSecao', dados: Record<string, string | number>) {
+  window.fbq?.('trackCustom', nome, dados)
+}
+
 /** A seção de planos da página de vendas apareceu na tela (uma vez por página vista): ViewContent. */
 export function viuPlanos() {
   window.fbq?.('track', 'ViewContent', { content_name: 'planos', content_type: 'product_group' })

@@ -166,7 +166,7 @@ async function logs(req, res) {
   const busca = q ? `%${q}%` : null
   // aparelho: '' (tudo), 'site', 'android' (app Android), 'ios' (app iPhone)
   const aparelho = ['site', 'android', 'ios'].includes(req.query.aparelho) ? req.query.aparelho : ''
-  const [eventos, porTipo, semResultado, placasErro, assinar, navegador, leitura] = await Promise.all([
+  const [eventos, porTipo, semResultado, placasErro, assinar, navegador, leitura, secoes] = await Promise.all([
     sql`select e.id, e.tipo, e.detalhe, e.rota, e.aparelho, e.em, e.visitante, u.id as usuario_id, u.nome, u.email, u.plano
           from eventos_uso e left join usuarios u on u.id = e.usuario_id
          where e.em > now() - make_interval(days => ${dias})
@@ -202,6 +202,21 @@ async function logs(req, res) {
                count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'pagina' and e.rota like '/cadastro%'))::int abriu_cadastro,
                count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'cadastro'))::int cadastrou
           from vis v group by v.so order by 2 desc`,
+    // funil da página de vendas por seção (09/10/2026): de quem abriu a página, quantos viram cada seção, clicaram em
+    // "Pegar oferta" e em assinar (checkout). Por aparelho, igual à tabela de cima.
+    sql`with e as (select coalesce(usuario_id::text, visitante) quem, tipo, rota, detalhe,
+                          case when aparelho like 'iPhone%' then 'iPhone' when aparelho like 'Android%' then 'Android'
+                               when aparelho like 'Windows%' or aparelho like 'Mac%' then 'Computador' else 'Outro' end so
+                     from eventos_uso where em > now() - make_interval(days => ${dias})),
+             vis as (select distinct quem, so from e where tipo = 'pagina' and (rota = '/' or rota like '/?%'))
+        select v.so, count(*)::int visitantes,
+               count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'viu_secao' and e.detalhe->>'secao' = 'como-funciona'))::int tour,
+               count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'viu_secao' and e.detalhe->>'secao' = 'seu-carro'))::int busca,
+               count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'viu_secao' and e.detalhe->>'secao' = 'planos'))::int planos,
+               count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'viu_secao' and e.detalhe->>'secao' = 'faq'))::int faq,
+               count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'pegar_oferta'))::int oferta,
+               count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'clicou_assinar'))::int assinar
+          from vis v group by v.so order by 2 desc`,
   ])
-  return res.status(200).json({ dias, eventos, resumo: { porTipo, semResultado, placasErro, assinar, navegador, leitura } })
+  return res.status(200).json({ dias, eventos, resumo: { porTipo, semResultado, placasErro, assinar, navegador, leitura, secoes } })
 }
