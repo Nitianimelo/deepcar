@@ -12,7 +12,8 @@ import { SECTION_META, SECOES, type SectionKey } from '../../data/nav'
 import { registrar as anotar } from '../../lib/log'
 import { Reveal } from './Reveal'
 
-export type CarroEscolhido = { nome: string; secoes: SectionKey[] }
+/** `placa`: veio do campo de placa da página (não consultamos: a consulta só existe para quem assina). */
+export type CarroEscolhido = { nome: string; secoes: SectionKey[]; placa?: boolean }
 export const EVENTO_CARRO = 'deepcar:carro-escolhido'
 
 type Veiculo = { chave: string; marca: string; modelo: string; motorizacao: string | null; producao: string | null; itens: Esquema[] }

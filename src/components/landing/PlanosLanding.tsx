@@ -260,8 +260,10 @@ export function PlanosLanding() {
 
         {carro && (
           <div className="mx-auto mt-8 max-w-[680px] rounded-2xl border border-azul-escuro/30 bg-azul-escuro/[0.06] px-5 py-4 text-center text-[15px] text-tinta-1">
-            Para abrir os esquemas do <strong className="font-semibold">{carro.nome}</strong>, escolha o plano
-            {soFull ? <> <strong className="font-semibold">Full</strong> (tem diagrama de linha diesel).</> : ' Pro ou Full.'}
+            {carro.placa
+              ? <>Para consultar a placa <strong className="code font-semibold tracking-wider">{carro.nome}</strong> e abrir os esquemas desse veículo, escolha um plano. O acesso libera na hora.</>
+              : <>Para abrir os esquemas do <strong className="font-semibold">{carro.nome}</strong>, escolha o plano
+                {soFull ? <> <strong className="font-semibold">Full</strong> (tem diagrama de linha diesel).</> : ' Pro ou Full.'}</>}
           </div>
         )}
 

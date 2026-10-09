@@ -9,53 +9,16 @@ import { podeConsultar, registrarConsulta } from '../_lib/consultas.js'
 import { normalizarPlaca } from '../../server/placa/veiculo.mjs'
 import { ativacaoMeta } from '../_lib/meta.js'
 import { anotarApp } from '../_lib/uso.js'
-import { dadosDoNavegador } from '../_lib/meta.js'
 
 export const config = { runtime: 'nodejs' }
 
 const PLACAS_DIA_VENCIDO = 10
-// prévia sem conta (página de vendas, db/021): por IP, placas novas em 24 h; teto geral do dia (protege a cota)
-const PREVIA_POR_IP = 3
-const PREVIA_POR_DIA = 300
-
-/**
- * GET /api/placa/ABC1D23?previa=1, sem conta: só o que identifica o veículo (marca, modelo, anos, motor, combustível),
- * para a página casar com o catálogo e mostrar os sistemas que existem. Nada de chassi, cor ou município.
- */
-async function previaPlaca(req, res) {
-  res.setHeader('Cache-Control', 'no-store')
-  const placa = normalizarPlaca(req.query.placa)
-  if (!placa) return res.status(400).json({ erro: 'Placa inválida.' })
-  const ip = dadosDoNavegador(req).client_ip_address ?? 'sem-ip'
-  const visitante = /^[\w-]{8,64}$/.test(String(req.query.v ?? '')) ? String(req.query.v) : null
-  const ja = await sql`select 1 from placas_previa where ip = ${ip} and placa = ${placa} and em > now() - interval '1 day' limit 1`
-  if (!ja.length) {
-    const [porIp] = await sql`select count(distinct placa)::int n from placas_previa where ip = ${ip} and em > now() - interval '1 day'`
-    const [dia] = await sql`select count(*)::int n from placas_previa where em > now() - interval '1 day'`
-    if (porIp.n >= PREVIA_POR_IP || dia.n >= PREVIA_POR_DIA) {
-      return res.status(429).json({ erro: 'Você já consultou algumas placas hoje. Procure pelo modelo na busca acima ou assine para consultar à vontade.', limite: true })
-    }
-  }
-  try {
-    const env = await ambienteCom(...VARIAVEIS_PLACA)
-    const v = await consultarPlaca(req.query.placa, env)
-    await sql`insert into placas_previa (ip, visitante, placa) values (${ip}, ${visitante}, ${placa})`
-    return res.status(200).json({
-      placa: v.placa, marca: v.marca, modelo: v.modelo, anoModelo: v.anoModelo ?? null, anoFabricacao: v.anoFabricacao ?? null,
-      cilindradas: v.cilindradas ?? null, combustivel: v.combustivel ?? null,
-    })
-  } catch (err) {
-    return res.status(err.status ?? 500).json({ erro: err.message ?? 'Falha na consulta.' })
-  }
-}
-
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET')
     return res.status(405).json({ erro: 'Use GET.' })
   }
-  if (req.query.previa === '1') return previaPlaca(req, res)
-  // consulta de placa custa cota do provedor: só para quem está logado (fora a prévia da página de vendas, acima). Teste encerrado (08/10/2026, decisão do dono)
+  // consulta de placa custa cota do provedor: só para quem está logado. Teste encerrado (08/10/2026, decisão do dono)
   // continua vendo a ficha e os sistemas do veículo, com os esquemas borrados; o app Android ANTIGO (que não sabe
   // borrar) continua recebendo 402
   const u = await exigir(req, res, { acesso: ehApp(req) })

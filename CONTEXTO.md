@@ -127,6 +127,9 @@ Regras de trabalho estão em `AGENTE.md`.
 - **Achado:** cadastro grátis às 16:35 (Elcio, criativo 6 da campanha nova): buscou "ecosport 2019"/"ecosport
   titanium" (0 resultados), digitou a placa no campo "Testar gratuitamente" da seção cobertura → cadastro.
 - **Pedido do dono:** tirar o teste grátis da página e corrigir a busca.
+- **Revisto no mesmo dia (dono: gasta crédito do provedor):** o campo de placa da página NÃO consulta mais; ao tocar em
+  "Ver os esquemas" leva aos planos com "Para consultar a placa ABC-1D23 ... escolha um plano". A rota `?previa=1` foi
+  tirada do servidor (a tabela db/021 ficou sem uso). Texto abaixo era:
 - Campo de placa (seção cobertura) agora é **prévia sem conta** (`src/components/landing/PreviaPlaca.tsx`): `GET
   /api/placa/:placa?previa=1` (mesmo arquivo da consulta, sem nova função) devolve só marca/modelo/anos/cilindrada/
   combustível; a página casa com o catálogo (`sistemasDisponiveis`) e mostra quantos diagramas por sistema, nunca o
