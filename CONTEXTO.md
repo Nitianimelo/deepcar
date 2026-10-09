@@ -135,6 +135,10 @@ Regras de trabalho estão em `AGENTE.md`.
   30,00), criado pelo dono na tela (a Cakto não tem cupom na API e o formulário não aceita preenchimento por script).
   Vai no link do checkout mensal (`coupon=`). **Enquanto não existir:** `OFERTA.ativa=false` (src/data/planos.ts) e
   `PRIMEIRO_MES=false` (api/_lib/emails.js) — ligar os dois juntos depois de conferir no checkout que cobra 19,90.
+  **Ligado no mesmo dia:** cupons criados pelo navegador (Pro `DEEPCAR1990` R$ 17,10; Full `DEEPCAR1990FULL` R$ 30,00 —
+  código é único na conta; validade 31/12/2027) e **"Exibir Campo de Cupom" ligado** em Configurações dos 2 produtos
+  mensais (sem isso o `?coupon=` do link é ignorado; `?cupom=` não funciona). Conferido: checkout cobra R$ 19,90.
+  **Atenção:** o checkout soma "Taxa de serviço R$ 0,99" (config da Cakto) — total aparece R$ 20,89.
 - `src/data/planos.ts`: `preco` (2º mês+), `primeiroMes`, `precoAnual` (equivale/mês = à vista ÷ 12),
   `precoAnualVista`, `anualDe` (12× mensal), `OFERTA`, `economiaPrimeiroMes`, `economiaAnual`, `totalMensal12`.
 - Página: faixa laranja no topo (1º mês R$ 19,90 / 40% OFF no anual), menu Recursos · Preços · Consulta técnica · FAQ

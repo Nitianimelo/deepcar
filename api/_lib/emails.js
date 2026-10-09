@@ -146,9 +146,9 @@ const PRECO = {
   full: { mensal: '49,90', primeiro: '19,90', anual: '29,94', anualVista: '359,28' },
 }
 // cupom da 1ª mensalidade (src/data/planos.ts → OFERTA): vai no link do checkout mensal
-const CUPOM = { pro: 'DEEPCAR1990', full: 'DEEPCAR1990' }
+const CUPOM = { pro: 'DEEPCAR1990', full: 'DEEPCAR1990FULL' }
 // igual a OFERTA.ativa em src/data/planos.ts: só liga quando o cupom existir na Cakto (senão o e-mail promete o que o checkout não cobra)
-const PRIMEIRO_MES = false
+const PRIMEIRO_MES = true
 function checkout(plano, ciclo, u) {
   const q = new URLSearchParams({ email: u.email ?? '', name: u.nome ?? '', utm_source: 'email', utm_medium: 'teste_acabou', utm_campaign: `${plano}_${ciclo}` })
   if (u.whatsapp) q.set('phone', u.whatsapp)

@@ -102,9 +102,11 @@ export function textoSomente(planos: PlanoVenda[]) {
  * prometer um valor que o checkout não cobra.
  */
 export const OFERTA = {
-  ativa: false, // liga quando o cupom DEEPCAR1990 existir na Cakto (Pro e Full) e o checkout cobrar R$ 19,90
+  ativa: true, // cupons conferidos no checkout em 09/10/2026: Pro e Full cobram R$ 19,90 na 1ª mensalidade
   descontoAnual: 40,
-  cupons: { pro: 'DEEPCAR1990', full: 'DEEPCAR1990' } as Record<PlanoPago, string>,
+  // o código é único na conta da Cakto: um por produto. O checkout precisa do "Exibir Campo de Cupom" ligado no produto
+  // (Configurações), senão ignora o ?coupon= do link
+  cupons: { pro: 'DEEPCAR1990', full: 'DEEPCAR1990FULL' } as Record<PlanoPago, string>,
   parametro: 'coupon',
 } as const
 
