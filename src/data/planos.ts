@@ -128,3 +128,16 @@ export const economiaAnual = (p: PlanoVenda) => {
 /** O que se paga em 12 meses no mensal (1º mês com a oferta + 11 cheios) — para comparar com o anual. */
 export const totalMensal12 = (p: PlanoVenda) => reaisDe(precoPrimeiroMes(p)) + reaisDe(p.preco) * 11
 export const numero = reaisDe
+
+/** Botão de assinar com a oferta ("Quero o Pro por R$ 19,90" / "Quero o Pro anual com 40% OFF"): página e painel. */
+export const rotuloOferta = (p: PlanoVenda, ciclo: Ciclo) =>
+  ciclo === 'mensal'
+    ? OFERTA.ativa ? `Quero o ${p.nome} por R$ ${p.primeiroMes}` : `Assinar o ${p.nome}`
+    : `Quero o ${p.nome} anual com ${economiaAnual(p).pct}% OFF`
+
+/** Frase curta da oferta para faixas e convites ("1º mês por R$ 19,90 ou 40% OFF no anual"). */
+export const fraseOferta = () => {
+  const anual = Math.max(...PLANOS_VENDA.map((p) => economiaAnual(p).pct))
+  const primeiro = PLANOS_VENDA.map((p) => precoPrimeiroMes(p)).sort((a, b) => reaisDe(a) - reaisDe(b))[0]
+  return OFERTA.ativa ? `1º mês por R$ ${primeiro} ou ${anual}% OFF no anual` : `${anual}% OFF no plano anual`
+}

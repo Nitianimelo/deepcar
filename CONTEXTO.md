@@ -123,6 +123,16 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Oferta também no painel de quem já tem conta (site)
+- Pedido do dono: levar a oferta (1º mês R$ 19,90 / 40% OFF no anual) para quem já se cadastrou e não assinou.
+- O painel já usava os mesmos cartões da página (CartaoPlanoClaro → preço "de/por", linha do tempo) e o
+  `linkCheckout` (cupom no link). Ajustes: convite do fim do teste e aba Plano abrem no **mensal** para quem não
+  pagou (`OFERTA.ativa && !pago`), selo laranja `SeloOferta` (AssineParaAcessar.tsx), botões `rotuloOferta`
+  ("Quero o Pro por R$ 19,90" / "Quero o Pro anual com 40% OFF"), `fraseOferta()` na faixa das telas e no convite do
+  momento (Funil.tsx) no lugar de "a partir de 12x de R$ 29,90", e a faixa do topo no celular (LimiteFree →
+  AvisoTopo) vira a faixa laranja "🔥 1º mês por R$ 19,90 · Pegar oferta".
+- Testado com conta de teste encerrado (sessão de produção num servidor local): links com `coupon=` certos.
+
 ### 2026-10-09 · Leitura da página de vendas por seção + rolagem para a Meta
 - Pedido do dono: registrar as rolagens. Já existia `rolou` (25/50/75/100) e `saiu_landing` (segundos).
 - Novo: `viu_secao` { secao: topo | como-funciona | seu-carro | cobertura | planos | faq } quando 35% da seção aparece,

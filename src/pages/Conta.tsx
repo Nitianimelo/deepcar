@@ -4,8 +4,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BadgeDollarSign, LogOut, MessageCircle, FlaskConical, ShieldCheck, UserRound } from 'lucide-react'
 import { getSession, logout, type Session } from '../lib/auth'
 import { abrirCheckout, linkCheckout, linkSuporte, restanteFree, rotuloPlano, temWhatsappSuporte } from '../lib/plano'
-import { PLANOS_VENDA, type Ciclo } from '../data/planos'
+import { PLANOS_VENDA, type Ciclo, OFERTA, rotuloOferta } from '../data/planos'
 import { CartaoPlanoClaro, ChaveCiclo } from '../components/landing/PlanosLanding'
+import { SeloOferta } from '../components/AssineParaAcessar'
 import { classeBotaoClaro } from '../components/landing/estiloPlanos'
 
 /** Como o estado da assinatura é lido na tela. */
@@ -125,8 +126,8 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
   useEffect(() => { anotar('viu_planos', { onde: 'conta' }) }, [])
   const mensagem = `Olá! Sou ${s.nome} (${s.email}) e quero falar sobre a assinatura do Deepcar.`
   const cicloAtual: Ciclo = s.assinatura?.ciclo === 'anual' ? 'anual' : 'mensal'
-  // sempre abre no anual (o mais barato por mês): quem paga o mensal já vê ali o convite para passar ao anual
-  const [ciclo, setCiclo] = useState<Ciclo>('anual')
+  // quem ainda não assinou abre no mensal quando há a oferta do 1º mês; quem já paga abre no anual (convite para passar)
+  const [ciclo, setCiclo] = useState<Ciclo>(OFERTA.ativa && !pago ? 'mensal' : 'anual')
   const validoAte = s.assinatura?.validoAte ? new Date(s.assinatura.validoAte).toLocaleDateString('pt-BR') : null
 
   return (
@@ -174,8 +175,9 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
         <div className="text-center">
           <h2 className="text-[22px] font-semibold tracking-tight sm:text-[26px]">{pago ? 'Seu plano e as opções' : 'Escolha seu plano'}</h2>
           <p className="mx-auto mt-1.5 max-w-[560px] text-[14.5px] leading-relaxed text-tinta-2">
-            Mensal no cartão ou Pix. Anual em até 12x no cartão ou à vista no Pix, pagamento único que vale 12 meses.
+            Mensal ou anual, no Pix ou no cartão. O anual é um pagamento único que vale 12 meses.
           </p>
+          {!pago && <SeloOferta className="mt-4" />}
           <div className="mt-5 flex justify-center">
             <ChaveCiclo ciclo={ciclo} onChange={setCiclo} />
           </div>
@@ -208,7 +210,7 @@ function AbaPlano({ s, restante }: { s: Session; restante: number | null }) {
                       className={classeBotaoClaro(p.destaque)}
                     >
                       {!pago
-                        ? `Assinar ${p.nome}${anual ? ' anual' : ''}`
+                        ? rotuloOferta(p, ciclo)
                         : mesmoPlano
                           ? `Passar para ${anual ? 'anual' : 'mensal'}`
                           : `Trocar para ${p.nome}${anual ? ' anual' : ''}`}

@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, Lightbulb, X } from 'lucide-react'
 import { Destaque, Folha } from './Folha'
 import { useAcesso } from '../lib/acesso'
-import { PLANOS_VENDA } from '../data/planos'
+import { fraseOferta } from '../data/planos'
 import { SECOES } from '../data/nav'
 import {
   boasVindasVistas, conviteMostrado, convitePendente, dicaEsquemaVista, marcarBoasVindas, marcarDicaEsquema,
@@ -16,7 +16,7 @@ import {
 } from '../lib/funil'
 
 const PLANOS = '/app/conta?aba=plano'
-const MENOR_PARCELA = PLANOS_VENDA.map((p) => p.precoAnual).sort((a, b) => Number(a.replace(',', '.')) - Number(b.replace(',', '.')))[0]
+
 
 /** Conta no teste em andamento (admin e pagantes não veem nada disto). */
 function useTesteAtivo() {
@@ -129,8 +129,7 @@ export function ConviteMomento() {
         <button type="button" onClick={fechar} className={botaoSecundario}>Continuar testando</button>
       </>}
     >
-      Assine e mantenha a placa e os esquemas liberados o ano inteiro: <b className="font-semibold text-ink-1">a partir de 12x de R$ {MENOR_PARCELA}</b> no
-      cartão, ou à vista no Pix.
+      Assine e mantenha a placa e os esquemas liberados: <b className="font-semibold text-ink-1">{fraseOferta()}</b>, no Pix ou no cartão.
     </Folha>
   )
 }

@@ -9,11 +9,11 @@
 import { useEffect, useState } from 'react'
 import { registrar as anotar } from '../lib/log'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Lock, MessageCircle, Sparkles } from 'lucide-react'
+import { ArrowRight, Flame, Lock, MessageCircle, Sparkles } from 'lucide-react'
 import { abrirCheckout, linkCheckout, linkSuporte, temWhatsappSuporte } from '../lib/plano'
 import { useAcesso } from '../lib/acesso'
 import { urlImagem, type EsquemaDetalhe } from '../lib/acervo'
-import { PLANOS_VENDA, planosQueLiberam, textoSomente, type Ciclo, type PlanoVenda } from '../data/planos'
+import { PLANOS_VENDA, planosQueLiberam, textoSomente, type Ciclo, type PlanoVenda, OFERTA, fraseOferta, rotuloOferta } from '../data/planos'
 import type { SectionKey } from '../data/nav'
 import { CartaoPlanoClaro, ChaveCiclo } from './landing/PlanosLanding'
 import { classeBotaoClaro } from './landing/estiloPlanos'
@@ -77,11 +77,11 @@ export function ConviteAssinatura({ titulo, oQue, planos, etiqueta, carro }: Pro
   const { sessao } = useAcesso()
   // registro de uso: quem chegou a ver os planos, e por qual motivo (teste acabou, sistema fora do plano...)
   useEffect(() => { anotar('viu_planos', { onde: etiqueta ?? titulo.slice(0, 60) }) }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  // abre no anual, o mais barato por mês: a mesma escolha da landing e da aba Plano
-  const [ciclo, setCiclo] = useState<Ciclo>('anual')
   // a mesma tela vale quando o anual vence (api/_lib/sessao.js → vencerAnual)
   const anualVenceu = sessao?.assinatura?.status === 'expirada'
   const pago = sessao?.plano === 'pro' || sessao?.plano === 'full'
+  // quem ainda não assinou abre no mensal quando há a oferta do 1º mês (como a página de vendas); os outros, no anual
+  const [ciclo, setCiclo] = useState<Ciclo>(OFERTA.ativa && !pago ? 'mensal' : 'anual')
   const lista = planos ?? PLANOS_VENDA
   const mensagem = anualVenceu
     ? 'Olá! Meu plano anual do Deepcar terminou e quero renovar.'
@@ -107,6 +107,8 @@ export function ConviteAssinatura({ titulo, oQue, planos, etiqueta, carro }: Pro
         Você continua navegando pela plataforma à vontade. Para abrir {oQue}, escolha um plano: o acesso libera na hora,
         aqui mesmo.
       </p>
+
+      {!pago && <SeloOferta className="mt-4" />}
 
       <div className="mt-5">
         <ChaveCiclo ciclo={ciclo} onChange={setCiclo} />
@@ -134,7 +136,7 @@ export function ConviteAssinatura({ titulo, oQue, planos, etiqueta, carro }: Pro
                   rel="noreferrer"
                   className={classeBotaoClaro(p.destaque)}
                 >
-                  {pago && !atual ? `Passar para o ${p.nome}` : `Assinar ${p.nome}${ciclo === 'anual' ? ' anual' : ''}`}
+                  {pago && !atual ? `Passar para o ${p.nome}` : rotuloOferta(p, ciclo)}
                   <ArrowRight size={16} />
                 </a>
               )}
@@ -192,8 +194,14 @@ export function AvisoSistemaBloqueado({ secao }: { secao: SectionKey }) {
   )
 }
 
-/** Menor parcela do anual entre os planos ("29,90"): o número que mais convence quem está testando. */
-const MENOR_PARCELA = PLANOS_VENDA.map((p) => p.precoAnual).sort((a, b) => Number(a.replace(',', '.')) - Number(b.replace(',', '.')))[0]
+/** Faixa laranja da oferta (a mesma da página de vendas), no convite e onde mais couber. */
+export function SeloOferta({ className = '' }: { className?: string }) {
+  return (
+    <p className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#ff3d00] to-[#ff9100] px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wide text-white ${className}`}>
+      <Flame size={15} aria-hidden="true" /> {fraseOferta()}
+    </p>
+  )
+}
 
 const TEXTOS_FAIXA = {
   inicio: ['Você está no teste grátis.', 'Assine e tenha a placa e os esquemas liberados em todo carro que entrar na oficina.'],
@@ -217,7 +225,7 @@ export function FaixaAssinar({ lugar, className = '' }: { lugar: keyof typeof TE
         <Sparkles size={17} className="mt-0.5 flex-none text-trace-hi" aria-hidden="true" />
         <span>
           <b className="font-semibold text-ink-1">{titulo}</b> {texto}{' '}
-          <span className="whitespace-nowrap text-ink-3">A partir de 12x de R$ {MENOR_PARCELA}.</span>
+          <span className="font-semibold text-[#ff8a50]">🔥 {fraseOferta()}.</span>
         </span>
       </p>
       <Link to="/app/conta?aba=plano" className="btn-primary inline-flex !h-11 flex-none items-center justify-center gap-2 px-5 text-[14.5px]">
