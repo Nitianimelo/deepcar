@@ -23,7 +23,6 @@ export default function Landing() {
       <TourPlataforma />
       <BuscaCarro />
       <Cobertura />
-      <BuscaPlaca />
       <PlanosLanding />
       <Footer />
       <BotaoWhatsapp />
@@ -160,86 +159,6 @@ function Hero() {
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 sm:left-4 sm:translate-x-0 lg:left-0">
             <Phone scale={0.55} className="flutua drop-shadow-2xl" />
           </div>
-        </Reveal>
-      </div>
-    </section>
-  )
-}
-
-/* ── Busca por placa ───────────────────────────────────────────────── */
-function BuscaPlaca() {
-  const passos = [
-    ['Digite a placa', 'Padrão antigo ou Mercosul, no celular ou no computador.'],
-    ['Veja o veículo', 'Montadora, modelo, ano, combustível e motorização na hora.'],
-    ['Abra o manual técnico', 'Só os sistemas compatíveis com aquele carro, sem procurar em lista.'],
-  ]
-  return (
-    <section id="placa" className="relative overflow-hidden border-t seam">
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ background: 'radial-gradient(800px 500px at 85% 20%, rgba(14,58,118,0.45) 0%, transparent 60%)' }}
-      />
-      <div className="relative mx-auto grid max-w-[1200px] items-center gap-10 px-5 py-20 sm:px-8 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)] lg:gap-14 lg:py-28">
-        <Reveal>
-          <p className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Busca por placa</p>
-          <h2 className="mt-4 text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
-            O manual técnico certo em um toque.
-          </h2>
-          <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-ink-2">
-            Em vez de garimpar o modelo no catálogo, digite a placa. O Deepcar identifica montadora, modelo, ano e
-            motorização e já mostra os manuais técnicos daquele veículo — injeção, ABS, elétrica e câmbio.
-            Menos tempo procurando, mais tempo com o carro no elevador.
-          </p>
-
-          <ol className="mt-9 space-y-5 border-t seam pt-8">
-            {passos.map(([titulo, texto], i) => (
-              <Reveal as="li" key={titulo} index={i + 1} className="flex gap-4">
-                <span className="code mt-0.5 grid h-7 w-7 flex-none place-items-center rounded-full border border-trace/30 bg-trace/10 text-[12px] text-trace-hi">
-                  {i + 1}
-                </span>
-                <span>
-                  <span className="block text-[15.5px] font-medium text-ink-1">{titulo}</span>
-                  <span className="block text-[14.5px] leading-relaxed text-ink-3">{texto}</span>
-                </span>
-              </Reveal>
-            ))}
-          </ol>
-
-          <div className="mt-9 flex flex-wrap items-center gap-3">
-            <Link to="/cadastro" className="btn-cta btn-cta-grande inline-flex items-center justify-center gap-2 px-6">
-              Testar com uma placa <ArrowRight size={19} />
-            </Link>
-          </div>
-        </Reveal>
-
-        {/* foto da oficina: sem moldura, sangrando pela direita e dissolvendo no fundo */}
-        <Reveal as="figure" index={1} className="relative -mx-5 overflow-hidden sm:-mx-8 lg:mx-0 lg:-mr-[max(0px,calc((100vw-1200px)/2+2rem))] lg:rounded-l-[28px]">
-          <picture>
-            <source type="image/webp" srcSet="/landing/oficina-placa-900.webp 900w, /landing/oficina-placa-1536.webp 1536w" sizes="(min-width: 1024px) 58vw, 100vw" />
-            <img
-              src="/landing/oficina-placa-1536.jpg"
-              srcSet="/landing/oficina-placa-900.jpg 900w, /landing/oficina-placa-1536.jpg 1536w"
-              sizes="(min-width: 1024px) 58vw, 100vw"
-              width={1536}
-              height={1024}
-              loading="lazy"
-              decoding="async"
-              alt="Mecânico na oficina consultando o Deepcar no celular, com a lista de montadoras aberta"
-              className="block h-[360px] w-full object-cover object-[62%_45%] sm:h-[460px] lg:h-[600px]"
-            />
-          </picture>
-          {/* a foto se dissolve no fundo em vez de terminar numa linha reta */}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0"
-            style={{ background: 'linear-gradient(to top, var(--color-pit) 0%, rgba(21,27,36,.3) 12%, transparent 30%)' }}
-          />
-          {/* só no desktop, onde o texto fica ao lado: a borda esquerda encosta no fundo da coluna de texto */}
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 hidden lg:block"
-            style={{ background: 'linear-gradient(90deg, var(--color-pit) 0%, rgba(21,27,36,.5) 10%, transparent 34%)' }}
-          />
         </Reveal>
       </div>
     </section>

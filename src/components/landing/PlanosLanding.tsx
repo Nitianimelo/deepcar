@@ -182,11 +182,6 @@ export function CartaoPlanoClaro({ p, ciclo, acao, atual = false }: PropsCartao)
   )
 }
 
-const PASSOS = [
-  { t: 'Crie sua conta grátis', d: 'Leva um minuto e não pede cartão. O teste libera todos os sistemas.' },
-  { t: 'Escolha o plano', d: 'Mensal ou anual. No anual, até 12x no cartão ou à vista no Pix.' },
-  { t: 'Use na hora', d: 'Pagamento aprovado, o plano libera sozinho na sua conta, no computador e no celular.' },
-]
 
 export function PlanosLanding() {
   const [ciclo, setCiclo] = useState<Ciclo>('anual')
@@ -251,20 +246,6 @@ export function PlanosLanding() {
             <PlayStoreBadge />
           </div>
         </Reveal>
-
-        <Reveal index={2} className="mx-auto mt-14 max-w-[920px]">
-          <h3 className="text-center text-[20px] font-semibold">Como funciona</h3>
-          <ol className="mt-6 grid gap-4 sm:grid-cols-3">
-            {PASSOS.map((s, i) => (
-              <li key={s.t} className="rounded-2xl border border-papel-linha bg-papel-card p-5">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-tinta-1 text-[14px] font-semibold text-white">{i + 1}</span>
-                <p className="mt-3 text-[15.5px] font-semibold">{s.t}</p>
-                <p className="mt-1 text-[14px] leading-relaxed text-tinta-2">{s.d}</p>
-              </li>
-            ))}
-          </ol>
-        </Reveal>
-
         <Reveal index={3} className="mt-12 flex flex-col items-center gap-4 text-center">
           <p className="text-[15.5px] text-tinta-2">Ficou em dúvida sobre qual plano escolher?</p>
           <BotaoEquipe />
