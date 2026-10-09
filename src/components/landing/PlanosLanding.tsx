@@ -12,6 +12,8 @@ import { BotaoEquipe } from './BotaoWhatsapp'
 import { classeBotaoClaro } from './estiloPlanos'
 import { IconeGooglePlay, LINK_GOOGLE_PLAY, PlayStoreBadge } from '../StoreBadges'
 import { viuPlanos } from '../../lib/pixel'
+import { abrirCheckout, linkCheckout } from '../../lib/plano'
+import { EVENTO_CARRO, type CarroEscolhido } from './BuscaCarro'
 
 const reais = (v: string) => Number(v.replace('.', '').replace(',', '.'))
 const brl = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -153,10 +155,18 @@ export function CartaoPlanoClaro({ p, ciclo, acao, atual = false }: PropsCartao)
       <div className="mt-auto pt-8">
         {acao ?? (
           <>
-            <Link to="/cadastro" className={classeBotaoClaro(p.destaque)}>
-              Começar com o teste grátis <span aria-hidden="true">→</span>
-            </Link>
-            <p className="mt-2.5 text-center text-[12.5px] text-tinta-3">Crie a conta, teste à vontade e assine depois.</p>
+            {/* página de vendas (09/10/2026): assina direto no checkout, sem precisar de conta antes; o plano entra
+                sozinho quando a conta é criada com o mesmo e-mail (api/_lib/assinatura.js → pendentes) */}
+            <a
+              href={linkCheckout(p.id, null, ciclo)}
+              onClick={(e) => abrirCheckout(e, p.id, ciclo, null)}
+              className={classeBotaoClaro(p.destaque)}
+            >
+              Assinar o {p.nome}{ciclo === 'anual' ? ' anual' : ''} <span aria-hidden="true">→</span>
+            </a>
+            <p className="mt-2.5 text-center text-[12.5px] text-tinta-3">
+              Pix ou cartão. Prefere conhecer antes? <Link to="/cadastro" className="font-medium text-azul-escuro underline-offset-4 hover:underline">Teste grátis</Link>
+            </p>
             <a
               href={LINK_GOOGLE_PLAY}
               target="_blank"
@@ -181,6 +191,14 @@ const PASSOS = [
 export function PlanosLanding() {
   const [ciclo, setCiclo] = useState<Ciclo>('anual')
   const secao = useRef<HTMLElement>(null)
+  // carro escolhido na busca "Veja se tem o seu carro" (BuscaCarro): aparece em destaque em cima dos planos
+  const [carro, setCarro] = useState<CarroEscolhido | null>(null)
+  useEffect(() => {
+    const ouvir = (e: Event) => setCarro((e as CustomEvent<CarroEscolhido>).detail)
+    window.addEventListener(EVENTO_CARRO, ouvir)
+    return () => window.removeEventListener(EVENTO_CARRO, ouvir)
+  }, [])
+  const soFull = !!carro?.secoes.some((s) => s.endsWith('diesel'))
   // ViewContent quando os planos aparecem na tela (uma vez por visita à página): sinal de interesse para a Meta
   useEffect(() => {
     const el = secao.current
@@ -198,10 +216,18 @@ export function PlanosLanding() {
           <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-azul-escuro">Planos</p>
           <h2 className="mt-3 text-[clamp(2rem,4vw,3rem)] font-semibold leading-[1.08] tracking-[-0.02em]">Escolha o plano da sua oficina</h2>
           <p className="mt-4 text-[16.5px] leading-relaxed text-tinta-2">
-            Comece com o teste grátis, sem cartão. Quando quiser continuar, assine o <strong className="font-semibold text-tinta-1">Pro</strong> para
-            veículos leves ou o <strong className="font-semibold text-tinta-1">Full</strong> para atender do leve ao diesel.
+            Assine o <strong className="font-semibold text-tinta-1">Pro</strong> para veículos leves ou o{' '}
+            <strong className="font-semibold text-tinta-1">Full</strong> para atender do leve ao diesel. Acesso liberado na hora, no
+            celular e no computador. Cancele quando quiser.
           </p>
         </Reveal>
+
+        {carro && (
+          <div className="mx-auto mt-8 max-w-[680px] rounded-2xl border border-azul-escuro/30 bg-azul-escuro/[0.06] px-5 py-4 text-center text-[15px] text-tinta-1">
+            Para abrir os esquemas do <strong className="font-semibold">{carro.nome}</strong>, escolha o plano
+            {soFull ? <> <strong className="font-semibold">Full</strong> (tem diagrama de linha diesel).</> : ' Pro ou Full.'}
+          </div>
+        )}
 
         <Reveal index={1} className="mt-9 flex justify-center">
           <ChaveCiclo ciclo={ciclo} onChange={setCiclo} />

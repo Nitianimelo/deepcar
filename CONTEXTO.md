@@ -123,6 +123,23 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Página de vendas: tour com telas reais, "Veja se tem o seu carro" e assinar direto
+- **Pedido do dono:** prints de um tour real (entrar → placa → diagramas com ano/motor → esquema → componente) em
+  slides explicativos; busca de carro sem placa mostrando os modelos do acervo SEM o esquema; ao escolher, levar a assinar.
+- `src/components/landing/TourPlataforma.tsx` (seção #como-funciona, logo depois do hero): 7 passos com prints reais
+  (`public/landing/tour/01..07.webp`, 780 px, ~40 KB; conta Full, placa NGY4310 → Fiat Strada → injeção → Bobina de
+  Ignição). Celular: aparelho + setas/pontos + arrastar; computador: lista de passos clicável. Log `tour_passo`.
+- `src/components/landing/BuscaCarro.tsx` (#seu-carro): baixa os 7 `catalogo/<sistema>.json` do acervo (público,
+  ~290 KB gzip) só quando a pessoa digita; agrupa por marca+modelo+motor+anos; ao escolher, mostra os diagramas
+  (sistema, código do motor, gerenciamento, fabricação, nº de componentes) e uma prévia BORRADA de outro esquema;
+  "Assinar e abrir os esquemas" rola até #planos e manda `deepcar:carro-escolhido` (PlanosLanding mostra "Para abrir
+  os esquemas do X, escolha o plano Pro ou Full / Full" se tiver diesel). Logs `busca_landing`, `escolheu_carro`,
+  `carro_para_planos`.
+- PlanosLanding: botão principal dos cartões = **"Assinar o Pro/Full"** direto no checkout da Cakto
+  (`abrirCheckout`, sem conta; InitiateCheckout + sck); "Teste grátis" virou link secundário.
+- **Verificação:** build ok, lint 10; testado em preview (celular e computador): tour, busca "strada 1.4" (11 versões),
+  "hilux 2.8", detalhe, faixa nos planos e link do checkout com `sck`.
+
 ### 2026-10-09 · Rastreio do funil página → checkout (db/020), para a campanha nova
 - **Decisão do dono:** ticket baixo não comporta venda consultiva; pausou todas as campanhas. Nova: Meta → página de
   vendas → checkout da Cakto (com ou sem conta), suporte no WhatsApp só para dúvida. Passo 1 = eventos.

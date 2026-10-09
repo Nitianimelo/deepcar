@@ -10,6 +10,8 @@ import { GridBeam } from '../components/landing/GridBeam'
 import { Reveal } from '../components/landing/Reveal'
 import { BotaoWhatsapp } from '../components/landing/BotaoWhatsapp'
 import { PlanosLanding } from '../components/landing/PlanosLanding'
+import { TourPlataforma } from '../components/landing/TourPlataforma'
+import { BuscaCarro } from '../components/landing/BuscaCarro'
 import { registrar as anotar } from '../lib/log'
 
 export default function Landing() {
@@ -18,6 +20,8 @@ export default function Landing() {
     <div className="landing min-h-full bg-pit pb-24 text-ink-1">{/* pb: o botão flutuante do WhatsApp não cobre os selos do rodapé */}
       <Header />
       <Hero />
+      <TourPlataforma />
+      <BuscaCarro />
       <Cobertura />
       <BuscaPlaca />
       <PlanosLanding />
