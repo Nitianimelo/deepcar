@@ -26,6 +26,7 @@ const Conta = lazy(() => import('./pages/Conta'))
 const VeiculoPage = lazy(() => import('./pages/VeiculoPage'))
 const Compartilhado = lazy(() => import('./pages/Compartilhado'))
 const Privacidade = lazy(() => import('./pages/Privacidade'))
+const Suporte = lazy(() => import('./pages/Suporte'))
 const ExcluirConta = lazy(() => import('./pages/ExcluirConta'))
 const Obrigado = lazy(() => import('./pages/Obrigado'))
 const EsqueciSenha = lazy(() => import('./pages/Senha').then((m) => ({ default: m.EsqueciSenha })))
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="/admin" element={<Admin />} />
         <Route path="/c/:token" element={<Compartilhado />} />
         <Route path="/privacidade" element={<Privacidade />} />
+        <Route path="/suporte" element={<Suporte />} />
         <Route path="/excluir-conta" element={<ExcluirConta />} />
         <Route path="/obrigado" element={<Obrigado />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />

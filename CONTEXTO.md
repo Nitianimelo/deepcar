@@ -123,6 +123,14 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Página /suporte (URL de suporte da App Store)
+- `src/pages/Suporte.tsx`: WhatsApp e e-mail de suporte, perguntas frequentes (senha, cancelar assinatura no iPhone,
+  Android ou site, mesma conta em todo lugar, esquema não encontrado, excluir conta). Link no rodapé das páginas simples.
+- `/excluir-conta`: cita os apps Android e iPhone e avisa que excluir a conta não cancela assinatura das lojas.
+- Conta de revisão da Apple `revisao.apple@deepcar.app.br` (plano Full manual, nome "Marcos Andrade"); senha só no
+  iCloud `Grupo Inttus/apple-developer/LEIAME.md`. Não apagar enquanto o app estiver na App Store.
+- **Verificação:** build ok, lint 10.
+
 ### 2026-10-08 · Diagnóstico das notificações do app + chave do APNs no cofre
 - Chave APNs da Apple gravada no cofre (`APNS_P8`, `APNS_KEY_ID` = V6VMKX7YL9; arquivo só no iCloud `Grupo Inttus/apple-developer`).
 - O iPhone de teste (TestFlight, build 1) não mostrou o pedido de permissão e não registrou o aparelho. Para descobrir

@@ -26,7 +26,8 @@ export default function ExcluirConta() {
         <a href={`mailto:${EMAIL}`}>{EMAIL}</a> antes de excluir a conta.
       </p>
       <p>
-        Pelo aplicativo Android: <b>Conta → Excluir conta</b>. Detalhes na <Link to="/privacidade">política de privacidade</Link>.
+        Pelos aplicativos para Android e iPhone: <b>Conta → Excluir conta</b>. A exclusão também não cancela uma assinatura
+        feita no iPhone ou no Android: cancele antes em Ajustes → [seu nome] → Assinaturas (iPhone) ou na Google Play. Detalhes na <Link to="/privacidade">política de privacidade</Link>.
       </p>
 
       <div className="mt-8 rounded-2xl border seam bg-bench-2 p-6 sm:p-7">

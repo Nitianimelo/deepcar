@@ -21,6 +21,7 @@ export function PaginaSimples({ rotulo, titulo, children }: { rotulo: string; ti
       <footer className="border-t seam">
         <div className="mx-auto flex max-w-3xl flex-wrap gap-x-6 gap-y-2 px-5 py-6 text-[13px] text-ink-4">
           <span className="code">© {new Date().getFullYear()} Deepcar</span>
+          <Link to="/suporte" className="hover:text-ink-2">Suporte</Link>
           <Link to="/privacidade" className="hover:text-ink-2">Privacidade</Link>
           <Link to="/excluir-conta" className="hover:text-ink-2">Excluir conta</Link>
           <span className="basis-full">Deepcar é um produto da Inttus Soluções Tecnológicas Ltda · CNPJ 50.256.051/0001-57</span>
