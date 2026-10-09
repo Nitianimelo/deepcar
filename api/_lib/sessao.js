@@ -8,6 +8,7 @@ import { promisify } from 'node:util'
 import { sql, um } from './db.js'
 import { acessoDe, MINUTOS_TESTE_PADRAO, minutosTeste } from './planos.js'
 import { conferirPlay } from './play.js'
+import { conferirApple } from './apple.js'
 
 const scryptAsync = promisify(scrypt)
 const COOKIE = 'deepcar_sessao'
@@ -131,8 +132,9 @@ export async function usuarioDaSessao(req) {
   // ultimo uso do aparelho (o limite de dispositivos derruba o parado ha mais tempo); no maximo 1 escrita a cada 5 min
   await sql`update sessoes set visto_em = now()
              where token = ${digerir(token)} and (visto_em is null or visto_em < now() - interval '5 minutes')`
-  // assinatura da Google Play com o prazo vencido: pergunta à Google se renovou (api/_lib/play.js)
-  return conferirPlay(await vencerAnual(linha))
+  // assinatura da Google Play com o prazo vencido: pergunta à Google se renovou (api/_lib/play.js); da App Store,
+  // vencida há mais de 2 dias sem renovação avisada, volta ao teste encerrado (api/_lib/apple.js)
+  return conferirApple(await conferirPlay(await vencerAnual(linha)))
 }
 
 export async function encerrarSessao(req) {

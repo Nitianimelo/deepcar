@@ -123,6 +123,29 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Servidor pronto para o app iPhone (App Store, APNs, registro de uso)
+- **Pedido do dono:** app Deepcar para iPhone (cópia do Android otimizada para iOS), com push e compra, aprovável pela
+  Apple; notificações e registro de uso unidos no /admin. Conta Apple Developer da INTTUS (Team RM7UYJK7M2) aprovada
+  hoje; app iOS no mesmo projeto Capacitor do Android (iCloud `Grupo Inttus/deepcar-android`, pasta `ios/`), bundle
+  `deepcar.app.ios`.
+- **O que mudou aqui:**
+  - `db/017_app_ios.sql`: `usuarios.apple_tx_original` (único), `apple_produto`, `apple_expira_em`, `apple_ambiente`.
+  - `api/_lib/apple.js`: confere o comprovante assinado (JWS) da Apple pela cadeia `x5c` até a Apple Root CA - G3
+    (impressão digital fixa) e pela assinatura ES256; `registrarCompraApple` (produto, bundle, appAccountToken = UUID do
+    sha-256 do e-mail, compra de outra conta → 409); Sandbox aceito (TestFlight e revisão). `notificacaoApple`:
+    notificações da App Store v2 em `POST /api/webhooks/cakto?origem=apple` (renovou/mudou → atualiza; falhou → atraso;
+    venceu/reembolso/revogação → free). `conferirApple` na sessão: vencida há 2 dias sem aviso → teste encerrado.
+  - `api/_lib/apns.js`: envio direto ao APNs (HTTP/2, JWT ES256 com `APNS_P8`/`APNS_KEY_ID` do cofre, tópico
+    `deepcar.app.ios`); sem a chave, não envia. `api/_lib/push.js`: aparelhos com `plataforma`; Android pelo FCM, iPhone
+    pelo APNs; tokens inválidos apagados. `api/sessao.js`: `evento: 'apple'` e `push` com `plataforma`.
+  - `api/_lib/uso.js`: `X-Deepcar-Plataforma: ios` → aparelho "iPhone · app <versão>". `api/registrar.js`: origem do app
+    com `plataforma`. /admin → Avisos: escolhe Android, iPhone ou os dois (contagem por plataforma); /admin → Logs:
+    filtro "Site / App Android / App iPhone"; evento `compra_apple`.
+  - Política de privacidade (08/10): App Store, APNs e "os apps não rastreiam você entre apps".
+- **Banco:** `017` **aplicada no Neon antes do push**. **Cofre (pendente):** `APNS_P8`, `APNS_KEY_ID` (chave APNs da Apple).
+- **Verificação:** build ok, lint 10; comprovante falso (sem formato / sem a cadeia da Apple) recusado; UUID da conta
+  igual ao do app. Compra real e push no iPhone: falta o app no TestFlight e a chave do APNs.
+
 ### 2026-10-08 · Correção: cadastro pelo app novo ganhava o teste de 10 h
 - **Bug (achado no registro de uso):** `api/registrar.js` abria o teste com `app: doApp || ehApp(req)`; `doApp` é
   `origem.entrada === 'app'`, que o app 1.3.x também manda. Todo cadastro pelo app novo ganhava o prazo de 10 h

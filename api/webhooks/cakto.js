@@ -8,6 +8,7 @@ import { acaoDoEvento, conferirEntrega, idDaEntrega, lerCorpoCru, normalizar, pl
 import { ativarPlano, derrubarParaFree, marcarAtraso, MOTIVOS } from '../_lib/assinatura.js'
 import { segredo } from '../_lib/segredos.js'
 import { enviarEvento, navegadorGuardado } from '../_lib/meta.js'
+import { notificacaoApple } from '../_lib/apple.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -32,6 +33,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ erro: 'Corpo inválido.' })
   }
   if (!corpo || typeof corpo !== 'object') return res.status(400).json({ erro: 'Corpo inválido.' })
+
+  // notificações da App Store (app do iPhone, 08/10/2026): ?origem=apple. A prova da origem é a assinatura da Apple no
+  // próprio corpo (signedPayload), conferida em api/_lib/apple.js; este arquivo é reaproveitado pelo limite de 12 funções
+  if (req.query?.origem === 'apple') {
+    try {
+      const r = await notificacaoApple(corpo)
+      console.log('[apple] notificação', JSON.stringify(r))
+      return res.status(200).json({ ok: true })
+    } catch (err) {
+      console.error('[apple] notificação recusada:', err.message)
+      return res.status(err.status ?? 500).json({ erro: err.message })
+    }
+  }
 
   try {
     const chave = await segredo('CAKTO_WEBHOOK_SECRET')

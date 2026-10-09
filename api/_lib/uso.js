@@ -10,7 +10,9 @@ export const doApp = (req) => /^Dalvik\//.test(String(req?.headers?.['user-agent
 
 const aparelho = (req) => {
   const v = String(req?.headers?.['x-deepcar-app'] ?? '').replace(/[^\w.-]/g, '').slice(0, 20)
-  return `Android · app ${v || 'antigo'}`
+  // o app manda X-Deepcar-Plataforma (iPhone desde 08/10/2026); o Android antigo não manda nada
+  const so = req?.headers?.['x-deepcar-plataforma'] === 'ios' ? 'iPhone' : 'Android'
+  return `${so} · app ${v || 'antigo'}`
 }
 
 export async function anotarApp(req, usuarioId, tipo, detalhe = null, rota = null) {

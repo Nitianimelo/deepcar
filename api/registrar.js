@@ -47,7 +47,9 @@ export default async function handler(req, res) {
     // origem e rastreio so do site (mesma regra do eventID): cadastro pelo app Android nao vai para a Meta
     // o app marca { entrada: 'app' } (sem campanha): o /admin e o CRM mostram que a conta nasceu no Android
     const doApp = !eventoId && dados.origem?.entrada === 'app'
-    const origem = eventoId ? limparOrigem(dados.origem) : doApp ? { entrada: 'app', em: new Date().toISOString() } : null
+    // o app iPhone (08/10/2026) manda também a plataforma: o /admin e o CRM separam Android e iPhone
+    const plataformaApp = req.headers['x-deepcar-plataforma'] === 'ios' || dados.origem?.plataforma === 'ios' ? 'ios' : 'android'
+    const origem = eventoId ? limparOrigem(dados.origem) : doApp ? { entrada: 'app', plataforma: plataformaApp, em: new Date().toISOString() } : null
     const navegador = eventoId ? dadosDoNavegador(req) : null
     const visitante = eventoId ? visitanteValido(dados.visitante) : undefined
     const rastreio = navegador ? rastreioParaGuardar(navegador, dados.origem?.fbc, visitante) : null

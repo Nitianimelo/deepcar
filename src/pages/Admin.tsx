@@ -946,18 +946,21 @@ type Aviso = { id: number; titulo: string; texto: string; publico: string; apare
 const PUBLICOS_AVISO = [['todos', 'Todos com o app'], ['teste', 'Só quem está no teste'], ['pagos', 'Só assinantes']] as const
 
 /** Notificação no celular de quem tem o app Android e aceitou (api/admin/usuarios ?acao=push). Novidades, funções novas. */
+type ContagemAparelhos = { todas: number; android: number; ios: number }
+
 function AbaAvisos() {
   const [historico, setHistorico] = useState<Aviso[]>([])
-  const [aparelhos, setAparelhos] = useState<Record<string, number>>({})
+  const [aparelhos, setAparelhos] = useState<Record<string, ContagemAparelhos>>({})
   const [titulo, setTitulo] = useState('')
   const [texto, setTexto] = useState('')
   const [publico, setPublico] = useState<string>('todos')
+  const [plataforma, setPlataforma] = useState<'todas' | 'android' | 'ios'>('todas')
   const [enviando, setEnviando] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null)
 
   const carregar = useCallback(async () => {
     try {
-      const r = (await api('/api/admin/usuarios?acao=push')) as { historico: Aviso[]; aparelhos: Record<string, number> }
+      const r = (await api('/api/admin/usuarios?acao=push')) as { historico: Aviso[]; aparelhos: Record<string, ContagemAparelhos> }
       setHistorico(r.historico ?? []); setAparelhos(r.aparelhos ?? {})
     } catch (e) { setMsg({ ok: false, texto: e instanceof Error ? e.message : 'Falha ao carregar.' }) }
   }, [])
@@ -965,11 +968,11 @@ function AbaAvisos() {
 
   async function enviar(e: FormEvent) {
     e.preventDefault()
-    const n = aparelhos[publico] ?? 0
+    const n = aparelhos[publico]?.[plataforma] ?? 0
     if (!confirm(`Mandar "${titulo}" para ${n} ${n === 1 ? 'aparelho' : 'aparelhos'}? Não dá para desfazer.`)) return
     setEnviando(true); setMsg(null)
     try {
-      const r = (await api('/api/admin/usuarios?acao=push', { method: 'POST', body: JSON.stringify({ titulo, texto, publico }) })) as { aparelhos: number; entregues: number }
+      const r = (await api('/api/admin/usuarios?acao=push', { method: 'POST', body: JSON.stringify({ titulo, texto, publico, plataforma }) })) as { aparelhos: number; entregues: number }
       setMsg({ ok: true, texto: `Enviado: ${r.entregues} de ${r.aparelhos} aparelhos receberam.` })
       setTitulo(''); setTexto(''); await carregar()
     } catch (e2) { setMsg({ ok: false, texto: e2 instanceof Error ? e2.message : 'Não foi possível enviar.' }) }
@@ -979,8 +982,8 @@ function AbaAvisos() {
   return (
     <>
       <h1 className="text-[26px] font-semibold tracking-tight">Avisos no app</h1>
-      <p className="mt-1 text-ink-3">Notificação no celular de quem tem o app Android e aceitou receber. Use para novidades e funções novas.
-        O aviso de &quot;teste acabou&quot; sai sozinho.</p>
+      <p className="mt-1 text-ink-3">Notificação no celular de quem tem o app (Android e iPhone) e aceitou receber. Use para novidades e funções
+        novas. O aviso de &quot;teste acabou&quot; sai sozinho. O que cada pessoa faz no app está na aba Logs.</p>
       <form onSubmit={enviar} className="mt-6 max-w-2xl space-y-4 rounded-xl border seam bg-bench-2 p-5">
         <label className="block text-[13px] text-ink-3">Título <span className="text-ink-4">({titulo.length}/65)</span>
           <input className="field mt-1.5 h-11" maxLength={65} value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Novidade na Deepcar" required />
@@ -991,7 +994,15 @@ function AbaAvisos() {
         <div className="flex flex-wrap gap-2">
           {PUBLICOS_AVISO.map(([k, rotulo]) => (
             <button key={k} type="button" onClick={() => setPublico(k)} className={`rounded-lg border px-3 py-2 text-[13px] ${publico === k ? 'border-trace/50 bg-trace/15 text-ink-1' : 'seam text-ink-3 hover:text-ink-1'}`}>
-              {rotulo} <span className="text-ink-4">· {aparelhos[k] ?? 0}</span>
+              {rotulo} <span className="text-ink-4">· {aparelhos[k]?.[plataforma] ?? 0}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-[13px]">
+          <span className="text-ink-4">Aparelhos:</span>
+          {([['todas', 'Android e iPhone'], ['android', 'Só Android'], ['ios', 'Só iPhone']] as const).map(([k, rotulo]) => (
+            <button key={k} type="button" onClick={() => setPlataforma(k)} className={`rounded-lg border px-3 py-1.5 ${plataforma === k ? 'border-trace/50 bg-trace/15 text-ink-1' : 'seam text-ink-3 hover:text-ink-1'}`}>
+              {rotulo} <span className="text-ink-4">· {aparelhos[publico]?.[k] ?? 0}</span>
             </button>
           ))}
         </div>
@@ -1007,7 +1018,7 @@ function AbaAvisos() {
           <li key={a.id} className="rounded-lg border seam bg-bench-2 px-4 py-3 text-[13.5px]">
             <p className="font-medium text-ink-1">{a.titulo}</p>
             <p className="mt-0.5 text-ink-2">{a.texto}</p>
-            <p className="mt-1.5 text-[12px] text-ink-4">{new Date(a.enviado_em).toLocaleString('pt-BR')} · {PUBLICOS_AVISO.find(([k]) => k === a.publico)?.[1] ?? a.publico} · {a.entregues} de {a.aparelhos} aparelhos{a.enviado_por ? ` · ${a.enviado_por}` : ''}</p>
+            <p className="mt-1.5 text-[12px] text-ink-4">{new Date(a.enviado_em).toLocaleString('pt-BR')} · {(PUBLICOS_AVISO.find(([k]) => k === a.publico.split(' · ')[0])?.[1] ?? a.publico) + (a.publico.includes(' · ') ? ` · ${a.publico.endsWith('ios') ? 'só iPhone' : 'só Android'}` : '')} · {a.entregues} de {a.aparelhos} aparelhos{a.enviado_por ? ` · ${a.enviado_por}` : ''}</p>
           </li>
         ))}
       </ul>
@@ -1027,7 +1038,7 @@ type ResumoLogs = {
 }
 
 const NOMES_EVENTO: Record<string, string> = {
-  whatsapp: 'Chamou no WhatsApp', rolou: 'Rolou a página de vendas', saiu_landing: 'Saiu da página de vendas', app_aberto: 'Abriu o app Android', compra_play: 'Assinou pela Google Play',
+  whatsapp: 'Chamou no WhatsApp', compra_apple: 'Assinou pela App Store', rolou: 'Rolou a página de vendas', saiu_landing: 'Saiu da página de vendas', app_aberto: 'Abriu o app Android', compra_play: 'Assinou pela Google Play',
   pagina: 'Página', busca: 'Busca', placa: 'Placa encontrada', placa_erro: 'Placa com erro', esquema: 'Esquema',
   viu_planos: 'Viu os planos', clicou_assinar: 'Clicou em assinar', cadastro: 'Cadastrou', cadastro_erro: 'Erro no cadastro',
   login: 'Entrou', login_erro: 'Erro ao entrar', compartilhou: 'Compartilhou', navegador_interno: 'Navegador do Instagram/Facebook',
@@ -1057,16 +1068,17 @@ function AbaLogs() {
   const [tipo, setTipo] = useState('')
   const [q, setQ] = useState('')
   const [usuario, setUsuario] = useState<{ id: string; nome: string } | null>(null)
+  const [aparelho, setAparelho] = useState('')
   const [dados, setDados] = useState<{ eventos: EventoUso[]; resumo: ResumoLogs } | null>(null)
   const [erro, setErro] = useState('')
 
   const carregar = useCallback(async () => {
     try {
-      const p = new URLSearchParams({ acao: 'logs', dias: String(dias), tipo, q })
+      const p = new URLSearchParams({ acao: 'logs', dias: String(dias), tipo, q, aparelho })
       if (usuario) p.set('usuario', usuario.id)
       setDados((await api(`/api/admin/usuarios?${p}`)) as { eventos: EventoUso[]; resumo: ResumoLogs }); setErro('')
     } catch (e) { setErro(e instanceof Error ? e.message : 'Falha ao carregar.') }
-  }, [dias, tipo, q, usuario])
+  }, [dias, tipo, q, usuario, aparelho])
   useEffect(() => { const t = setTimeout(() => void carregar(), 300); return () => clearTimeout(t) }, [carregar])
 
   const r = dados?.resumo
@@ -1090,6 +1102,12 @@ function AbaLogs() {
         <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="field h-9 w-auto py-0 text-[13px]">
           <option value="">Todos os eventos</option>
           {Object.entries(NOMES_EVENTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <select value={aparelho} onChange={(e) => setAparelho(e.target.value)} className="field h-9 w-auto py-0 text-[13px]">
+          <option value="">Site e apps</option>
+          <option value="site">Só o site</option>
+          <option value="android">App Android</option>
+          <option value="ios">App iPhone</option>
         </select>
         <label className="relative">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />

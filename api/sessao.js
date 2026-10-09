@@ -22,6 +22,7 @@ import { ativacaoMeta, dadosDoNavegador, enviarEvento, visitanteValido } from '.
 import { abrirJanelaFree, conferirSenha, corpo, ehApp, limparCookie, publicoCompleto, usuarioDaSessao } from './_lib/sessao.js'
 import { registrarConsulta } from './_lib/consultas.js'
 import { registrarCompraPlay } from './_lib/play.js'
+import { registrarCompraApple } from './_lib/apple.js'
 import { anotarAberturaApp, anotarApp } from './_lib/uso.js'
 
 export const config = { runtime: 'nodejs' }
@@ -40,6 +41,11 @@ export default async function handler(req, res) {
       if (evento === 'play') {
         const pago = await registrarCompraPlay(u, corpo(req).token)
         await anotarApp(req, u.id, 'compra_play', { plano: pago?.plano, ciclo: pago?.assinatura_ciclo })
+        return res.status(200).json(await publicoCompleto(pago))
+      }
+      if (evento === 'apple') {
+        const pago = await registrarCompraApple(u, corpo(req).jws)
+        await anotarApp(req, u.id, 'compra_apple', { plano: pago?.plano, ciclo: pago?.assinatura_ciclo })
         return res.status(200).json(await publicoCompleto(pago))
       }
       if (evento === 'push') return await registrarAparelho(req, res, u)
@@ -127,8 +133,10 @@ async function consultaEsquema(req, res, u) {
 async function registrarAparelho(req, res, u) {
   const token = String(corpo(req).token ?? '').trim()
   if (!/^[\w:.-]{20,400}$/.test(token)) return res.status(400).json({ erro: 'Aparelho inválido.' })
-  await sql`insert into aparelhos_push (token, usuario_id) values (${token}, ${u.id})
-            on conflict (token) do update set usuario_id = excluded.usuario_id, visto_em = now()`
+  // iPhone (desde 08/10/2026): token do APNs, enviado pela Apple; Android: token do Firebase
+  const plataforma = corpo(req).plataforma === 'ios' ? 'ios' : 'android'
+  await sql`insert into aparelhos_push (token, usuario_id, plataforma) values (${token}, ${u.id}, ${plataforma})
+            on conflict (token) do update set usuario_id = excluded.usuario_id, plataforma = excluded.plataforma, visto_em = now()`
   return res.status(204).end()
 }
 

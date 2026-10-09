@@ -1,17 +1,17 @@
-// /privacidade — política de privacidade do site e do app Android (a Google Play exige o endereço público).
+// /privacidade — política de privacidade do site e dos apps Android e iPhone (a Google Play e a App Store exigem o endereço público).
 // Descreve o que o código faz de fato: ao mudar coleta, provedor ou prazo, atualize este texto junto.
 import { Link } from 'react-router-dom'
 import { PaginaSimples } from '../components/PaginaSimples'
 import { useTitulo } from '../lib/seo'
 
 const EMAIL = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'nitiani@compilla.dev'
-const ATUALIZADA_EM = '7 de outubro de 2026'
+const ATUALIZADA_EM = '8 de outubro de 2026'
 
 export default function Privacidade() {
   useTitulo('Política de privacidade · Deepcar')
   return (
     <PaginaSimples rotulo="Deepcar" titulo="Política de privacidade">
-      <p className="text-ink-3">Atualizada em {ATUALIZADA_EM}. Vale para o site deepcar.app.br e para o aplicativo Deepcar para Android.</p>
+      <p className="text-ink-3">Atualizada em {ATUALIZADA_EM}. Vale para o site deepcar.app.br e para os aplicativos Deepcar para Android e para iPhone.</p>
 
       <h2>Quem somos</h2>
       <p>
@@ -41,7 +41,10 @@ export default function Privacidade() {
           <b>Pagamentos:</b> as assinaturas feitas no site são processadas pela Cakto. Recebemos dela o plano, o estado do
           pagamento e o e-mail do comprador, para liberar o acesso. As assinaturas feitas no aplicativo para Android são
           processadas pela Google Play: recebemos o código da compra, o plano e até quando ele vale, e consultamos a Google
-          para confirmar renovações e cancelamentos. Não recebemos nem guardamos dados de cartão.
+          para confirmar renovações e cancelamentos. As assinaturas feitas no aplicativo para iPhone são processadas pela
+          App Store: recebemos da Apple o comprovante da compra (código da transação, plano, até quando vale e um código
+          ligado à sua conta da Deepcar), e a Apple nos avisa de renovações, cancelamentos e reembolsos. Não recebemos nem
+          guardamos dados de cartão.
         </li>
         <li>
           <b>Registro de uso:</b> guardamos o que você faz no site e no aplicativo (páginas abertas, buscas e quantos
@@ -50,10 +53,10 @@ export default function Privacidade() {
           Fica no nosso banco de dados por até 120 dias e não é compartilhado.
         </li>
         <li>
-          <b>Notificações (só no aplicativo para Android):</b> se você permitir, guardamos um código do aparelho gerado pelo
-          Firebase Cloud Messaging, ligado à sua conta, para enviar avisos como o fim do teste grátis e novidades da
-          Deepcar. Dá para desligar nas configurações do Android; o código é apagado quando o aplicativo é desinstalado ou
-          a conta é excluída.
+          <b>Notificações (só nos aplicativos):</b> se você permitir, guardamos um código do aparelho, ligado à sua conta,
+          para enviar avisos como o fim do teste grátis e novidades da Deepcar. No Android o código é gerado pelo Firebase
+          Cloud Messaging (Google); no iPhone, pelo serviço de notificações da Apple (APNs). Dá para desligar nas
+          configurações do aparelho; o código é apagado quando o aplicativo é desinstalado ou a conta é excluída.
         </li>
         <li>
           <b>Links compartilhados:</b> quando você compartilha um esquema, registramos o link, o esquema, quantas vezes
@@ -71,7 +74,7 @@ export default function Privacidade() {
           o endereço IP, o navegador, os identificadores de anúncio da Meta (cookies _fbp/_fbc) e o código aleatório do
           navegador, para ela saber se a conta ou a compra veio de um anúncio. Para isso guardamos, junto da conta, o IP, o
           navegador, esses identificadores e o código aleatório do momento do cadastro. Dentro da plataforma, nos esquemas, nas placas consultadas e nos links compartilhados nada
-          disso é enviado: no aviso de assinatura vai só o plano escolhido. O aplicativo Android não usa o pixel e cadastros feitos por ele não são
+          disso é enviado: no aviso de assinatura vai só o plano escolhido. Os aplicativos para Android e iPhone não usam o pixel nem rastreiam você entre apps, e cadastros feitos por eles não são
           informados à Meta. Para limitar o uso desses dados em anúncios, use as configurações de
           anúncios da sua conta da Meta ou bloqueie cookies de terceiros no navegador.
         </li>
@@ -104,6 +107,7 @@ export default function Privacidade() {
         <li>Cloudflare: armazenamento dos esquemas (não recebe dados pessoais).</li>
         <li>Cakto: processamento dos pagamentos feitos no site.</li>
         <li>Google (Google Play e Firebase): pagamentos feitos no aplicativo para Android e envio das notificações.</li>
+        <li>Apple (App Store e APNs): pagamentos feitos no aplicativo para iPhone e envio das notificações.</li>
         <li>Resend: envio dos e-mails da Deepcar (boas-vindas e criação de nova senha), com o seu nome e e-mail.</li>
         <li>Falcon Data Hub: consulta dos dados do veículo a partir da placa.</li>
         <li>Meta (Facebook/Instagram): medição dos anúncios (pixel nas páginas públicas do site e aviso de cadastro e compra).</li>

@@ -5,13 +5,14 @@
 //   PATCH  /api/admin/usuarios?id=...     muda { plano, papel, ativo, nome, oficina, senha, whatsapp, liberarFree, encerrarSessoes }
 //   DELETE /api/admin/usuarios?id=...     remove (as sessões vão junto)
 //   GET    /api/admin/usuarios?acao=push  avisos já enviados + quantos aparelhos há por público
-//   POST   /api/admin/usuarios?acao=push  { titulo, texto, publico: todos|teste|pagos } notificação no app Android
+//   POST   /api/admin/usuarios?acao=push  { titulo, texto, publico: todos|teste|pagos, plataforma: todas|android|ios }
+//          notificação nos apps (Android pelo Firebase, iPhone pelo APNs)
 //          (fica aqui porque a Vercel Hobby aceita só 12 funções)
 //   GET    /api/admin/usuarios?acao=logs&q=&tipo=&dias=&usuario=  registro de uso (eventos_uso) + resumo do período
 import { sql, um } from '../_lib/db.js'
 import { cifrarSenha, corpo, exigir } from '../_lib/sessao.js'
 import { normalizarWhatsapp, SENHA_MINIMA } from '../_lib/validar.js'
-import { enviarPush, NOMES_PUBLICO, tokensDoPublico } from '../_lib/push.js'
+import { enviarPush, NOMES_PUBLICO, PLATAFORMAS, tokensDoPublico } from '../_lib/push.js'
 
 export const config = { runtime: 'nodejs' }
 
@@ -133,7 +134,11 @@ async function avisos(req, res, admin) {
     const [historico, contagem] = await Promise.all([
       sql`select n.id, n.titulo, n.texto, n.publico, n.aparelhos, n.entregues, n.enviado_em, u.nome as enviado_por
             from notificacoes n left join usuarios u on u.id = n.enviado_por order by n.enviado_em desc limit 30`,
-      Promise.all(NOMES_PUBLICO.map(async (p) => [p, (await tokensDoPublico(p)).length])),
+      // aparelhos por público e plataforma: { todos: { todas, android, ios }, ... }
+      Promise.all(NOMES_PUBLICO.map(async (p) => {
+        const ap = await tokensDoPublico(p)
+        return [p, { todas: ap.length, android: ap.filter((a) => (a.plataforma ?? 'android') === 'android').length, ios: ap.filter((a) => a.plataforma === 'ios').length }]
+      })),
     ])
     return res.status(200).json({ historico, aparelhos: Object.fromEntries(contagem) })
   }
@@ -142,10 +147,13 @@ async function avisos(req, res, admin) {
   const titulo = String(d.titulo ?? '').trim(), texto = String(d.texto ?? '').trim(), publico = String(d.publico ?? 'todos')
   if (!titulo || !texto) return res.status(400).json({ erro: 'Escreva o título e o texto.' })
   if (titulo.length > 65 || texto.length > 240) return res.status(400).json({ erro: 'Título até 65 e texto até 240 caracteres.' })
-  const tokens = await tokensDoPublico(publico)
+  const plataforma = PLATAFORMAS.includes(d.plataforma) ? d.plataforma : 'todas'
+  const tokens = await tokensDoPublico(publico, plataforma)
   const entregues = await enviarPush(tokens, { titulo, texto, link: '/' })
+  // o público guardado leva a plataforma quando não é "todas" (ex.: "teste · ios"): o histórico mostra para onde foi
+  const rotulo = plataforma === 'todas' ? publico : `${publico} · ${plataforma}`
   await sql`insert into notificacoes (titulo, texto, publico, aparelhos, entregues, enviado_por)
-            values (${titulo}, ${texto}, ${publico}, ${tokens.length}, ${entregues}, ${admin.id})`
+            values (${titulo}, ${texto}, ${rotulo}, ${tokens.length}, ${entregues}, ${admin.id})`
   return res.status(200).json({ aparelhos: tokens.length, entregues })
 }
 
@@ -156,12 +164,16 @@ async function logs(req, res) {
   const tipo = String(req.query.tipo ?? '').trim()
   const usuario = /^[0-9a-f-]{36}$/.test(String(req.query.usuario ?? '')) ? String(req.query.usuario) : null
   const busca = q ? `%${q}%` : null
+  // aparelho: '' (tudo), 'site', 'android' (app Android), 'ios' (app iPhone)
+  const aparelho = ['site', 'android', 'ios'].includes(req.query.aparelho) ? req.query.aparelho : ''
   const [eventos, porTipo, semResultado, placasErro, assinar, navegador, leitura] = await Promise.all([
     sql`select e.id, e.tipo, e.detalhe, e.rota, e.aparelho, e.em, e.visitante, u.id as usuario_id, u.nome, u.email, u.plano
           from eventos_uso e left join usuarios u on u.id = e.usuario_id
          where e.em > now() - make_interval(days => ${dias})
            and (${tipo}::text = '' or e.tipo = ${tipo})
            and (${usuario}::uuid is null or e.usuario_id = ${usuario}::uuid)
+           and (${aparelho} = '' or (${aparelho} = 'site' and coalesce(e.aparelho, '') not like '%· app%')
+                or (${aparelho} = 'android' and e.aparelho like 'Android · app%') or (${aparelho} = 'ios' and e.aparelho like 'iPhone · app%'))
            and (${busca}::text is null or u.nome ilike ${busca} or u.email ilike ${busca} or e.visitante ilike ${busca})
          order by e.em desc limit 400`,
     sql`select tipo, count(*)::int n, count(distinct coalesce(usuario_id::text, visitante))::int pessoas
