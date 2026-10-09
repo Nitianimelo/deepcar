@@ -68,19 +68,21 @@ function useLeitura() {
     }
     const esconder = () => { if (document.visibilityState === 'hidden') sair() }
     window.addEventListener('scroll', rolar, { passive: true })
-    // seções que a pessoa chegou a ver (uma vez cada, 35% da seção na tela): onde ela desiste, independente do
+    // seções que a pessoa chegou a ver (uma vez cada: 35% da seção na tela, ou metade da tela para seções mais altas que
+    // ela, como os planos no celular): onde ela desiste, independente do
     // tamanho da tela. Vai para o /admin → Logs ("viu_secao") e para a Meta ("ViuSecao", remarketing)
     const vistas = new Set<string>()
     const obs = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver((itens) => {
       for (const i of itens) {
         const id = (i.target as HTMLElement).id
-        if (!i.isIntersecting || vistas.has(id)) continue
+        const minimo = Math.min(i.boundingClientRect.height * 0.35, window.innerHeight * 0.5)
+        if (!i.isIntersecting || vistas.has(id) || i.intersectionRect.height < minimo) continue
         vistas.add(id)
         anotar('viu_secao', { secao: id })
         eventoLeitura('ViuSecao', { secao: id })
         obs?.unobserve(i.target)
       }
-    }, { threshold: 0.35 })
+    }, { threshold: [0, 0.1, 0.2, 0.35, 0.5] })
     for (const id of SECOES_LANDING) { const el = document.getElementById(id); if (el) obs?.observe(el) }
     // antes do envio em lote do log.ts (que também ouve a aba sumir): anota primeiro, o lote leva junto
     document.addEventListener('visibilitychange', esconder, { capture: true })
