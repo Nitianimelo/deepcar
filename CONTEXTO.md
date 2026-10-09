@@ -123,6 +123,11 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · E-mail de suporte público = contato@deepcar.app.br
+- Pedido do dono: o e-mail mostrado em /suporte, /privacidade, /excluir-conta (e no app, `src/lib/plano.ts`) passa de
+  nitiani@compilla.dev para **contato@deepcar.app.br** (padrão no código; `VITE_SUPORTE_EMAIL` não existe na Vercel).
+  Mensagens para esse endereço chegam no Receiving do Resend (mesmo endereço do reply_to dos e-mails).
+
 ### 2026-10-08 · Página /suporte (URL de suporte da App Store)
 - `src/pages/Suporte.tsx`: WhatsApp e e-mail de suporte, perguntas frequentes (senha, cancelar assinatura no iPhone,
   Android ou site, mesma conta em todo lugar, esquema não encontrado, excluir conta). Link no rodapé das páginas simples.

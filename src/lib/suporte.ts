@@ -1,6 +1,6 @@
 // Contato de suporte (WhatsApp ou e-mail). Arquivo sem dependências: entra no pacote da landing.
 export const numeroSuporte = ((import.meta.env.VITE_SUPORTE_WHATSAPP as string | undefined) ?? '').replace(/\D/g, '')
-export const emailSuporte = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'nitiani@compilla.dev'
+export const emailSuporte = (import.meta.env.VITE_SUPORTE_EMAIL as string | undefined) ?? 'contato@deepcar.app.br'
 
 /** 55 + DDD + 9 dígitos = 13; menos que isso não é número cheio e não vale abrir o WhatsApp. */
 export const temWhatsappSuporte = numeroSuporte.length >= 12
