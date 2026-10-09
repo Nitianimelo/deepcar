@@ -42,7 +42,7 @@ const PERGUNTAS: [string, string][] = [
   ],
   [
     'Quando o acesso é liberado?',
-    'Assim que o pagamento é aprovado, o acesso é liberado automaticamente, tanto no cartão quanto no Pix. Se você ainda não tem conta, crie com o mesmo e-mail que usou no pagamento: o plano entra sozinho.',
+    'Assim que o pagamento é aprovado, o acesso é liberado automaticamente, tanto no cartão quanto no Pix. Se você ainda não tem conta, ela é criada na hora com o e-mail do pagamento: chega um e-mail para você criar a sua senha e já entrar.',
   ],
   [
     'Posso cancelar? Tem reembolso?',

@@ -4,7 +4,7 @@
 // O redirect é só conforto: quem LIBERA o plano é o webhook (api/webhooks/cakto.js), nunca esta página.
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CheckCircle2, Loader2, LogIn, UserPlus } from 'lucide-react'
+import { CheckCircle2, Loader2, LogIn } from 'lucide-react'
 import { conferirSessao, type Session } from '../lib/auth'
 import { linkSuporte } from '../lib/plano'
 import { useTitulo } from '../lib/seo'
@@ -106,8 +106,9 @@ export default function Obrigado() {
               <CheckCircle2 className="mx-auto h-12 w-12 text-ok" aria-hidden />
               <h1 className="mt-5 text-2xl font-semibold tracking-tight">Pagamento recebido!</h1>
               <p className="mt-2 text-[15px] leading-relaxed text-ink-2">
-                Para acessar, entre com o <b className="text-ink-1">mesmo e-mail que você usou na compra</b>. O plano
-                já fica liberado na sua conta.
+                O plano já está liberado no <b className="text-ink-1">e-mail que você usou na compra</b>. Se ainda não tinha
+                conta, ela foi criada agora: <b className="text-ink-1">abra o e-mail da Deepcar e toque em "Criar minha senha e
+                entrar"</b>.
               </p>
               <Link
                 to="/login"
@@ -116,11 +117,8 @@ export default function Obrigado() {
               >
                 <LogIn className="h-4 w-4" aria-hidden /> Já tenho conta, entrar
               </Link>
-              <Link to="/cadastro" className="btn-primary mt-3 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-semibold">
-                <UserPlus className="h-4 w-4" aria-hidden /> Criar minha conta
-              </Link>
               <p className="mt-3 text-[13px] leading-relaxed text-ink-3">
-                Ainda não tem conta? Crie com o mesmo e-mail da compra e o plano é liberado na hora.
+                Não chegou o e-mail? Olhe o spam ou use "Esqueci a senha" na tela de entrar, com o e-mail da compra.
               </p>
             </>
           )}

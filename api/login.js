@@ -74,5 +74,10 @@ async function redefinir(req, res) {
   await sql`update redefinicoes_senha set usado_em = now() where usuario_id = ${linha.usuario_id} and usado_em is null`
   // quem pediu a senha nova pode estar com a conta aberta num aparelho perdido: derruba todas as sessões
   await sql`delete from sessoes where usuario_id = ${linha.usuario_id}`
-  return res.status(200).json({ ok: true })
+  // e já entra (09/10/2026): quem pagou sem conta cria a senha pelo link do e-mail e cai direto na plataforma
+  const u = await consumirPendente(await um(sql`select * from usuarios where id = ${linha.usuario_id}`))
+  const { token: sessao, expira } = await criarSessao(u.id, req.headers['user-agent'])
+  porCookie(res, sessao, expira)
+  await sql`update usuarios set visto_em = now() where id = ${u.id}`
+  return res.status(200).json(await publicoCompleto(u))
 }

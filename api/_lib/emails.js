@@ -70,7 +70,7 @@ function linhaResumo(rotulo, valor) {
 }
 
 /** Plano pago liberado (compra nova, troca de plano ou de ciclo). `u` = a conta já atualizada. */
-export function emailCompra(u) {
+export function emailCompra(u, linkSenha = null) {
   const p = PLANOS[u.plano] ?? PLANOS.pro
   const anual = u.assinatura_ciclo === 'anual'
   const play = u.assinatura_origem === 'play'
@@ -99,7 +99,11 @@ ${p_('Obrigado por confiar na Deepcar para o dia a dia da sua oficina. A partir 
 </table>
 <div style="margin:26px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:${AZUL}">O que está liberado</div>
 <table role="presentation" cellpadding="0" cellspacing="0" border="0">${itens}</table>
-${botao('Abrir a Deepcar', link)}
+${linkSenha
+  ? `${p_(`<b>Sua conta já está criada</b> com o e-mail ${esc(u.email)}. Falta só escolher a sua senha para entrar:`)}
+${botao('Criar minha senha e entrar', linkSenha)}
+<p style="margin:10px 0 0;font-size:13px;color:#5b6675">O link vale 7 dias. Se vencer, use "Esqueci a senha" na tela de entrar.</p>`
+  : botao('Abrir a Deepcar', link)}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:22px 0 0;background:#f3f7fd;border:1px solid #dbe7f8;border-radius:14px">
   <tr><td style="padding:18px 22px;font-family:Arial,Helvetica,sans-serif;font-size:14.5px;line-height:1.6;color:#2b3440">
     <b>Para render mais:</b><br>
@@ -112,7 +116,7 @@ ${botao('Abrir a Deepcar', link)}
   return {
     assunto: `Bem-vindo ao Deepcar ${p.nome}, ${primeiro(u.nome)}!`,
     html: modelo({ previa: `Pagamento confirmado: o plano ${p.nome} já está ativo na sua conta.`, titulo: `Seja bem-vindo ao Deepcar ${p.nome}!`, corpo, selo: `Plano ${p.nome} ativo` }),
-    texto: `Olá, ${primeiro(u.nome)}! Pagamento confirmado: o plano ${p.nome} já está ativo (${anual ? 'anual' : 'mensal'}${validade ? `, ${anual ? 'válido até' : 'renova em'} ${validade}` : ''}).\n\nLiberado: ${p.itens.join(', ')}.\n\nAbrir: ${link}\nApp Android: ${PLAY}\nSuporte no WhatsApp: (48) 3197-3217`,
+    texto: `Olá, ${primeiro(u.nome)}! Pagamento confirmado: o plano ${p.nome} já está ativo (${anual ? 'anual' : 'mensal'}${validade ? `, ${anual ? 'válido até' : 'renova em'} ${validade}` : ''}).\n\nLiberado: ${p.itens.join(', ')}.\n\n${linkSenha ? `Sua conta já está criada com este e-mail. Crie a sua senha e entre (vale 7 dias): ${linkSenha}` : `Abrir: ${link}`}\nApp Android: ${PLAY}\nSuporte no WhatsApp: (48) 3197-3217`,
   }
 }
 
@@ -120,11 +124,11 @@ ${botao('Abrir a Deepcar', link)}
  * Manda o e-mail de compra quando a conta passou a ter um plano pago novo (free → pago, troca de plano ou de ciclo).
  * Renovação (mesmo plano e ciclo) não manda. Nunca derruba quem chamou.
  */
-export async function avisarCompra(antes, depois) {
+export async function avisarCompra(antes, depois, linkSenha = null) {
   try {
     if (!depois || !['pro', 'full'].includes(depois.plano) || depois.papel === 'admin') return
     if (antes && antes.plano === depois.plano && antes.assinatura_ciclo === depois.assinatura_ciclo) return
-    const m = emailCompra(depois)
+    const m = emailCompra(depois, linkSenha)
     await Promise.all([
       enviarEmail({ para: depois.email, assunto: m.assunto, html: m.html, texto: m.texto, etiqueta: 'compra' }),
       avisarDono(antes, depois),

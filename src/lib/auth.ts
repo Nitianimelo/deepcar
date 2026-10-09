@@ -55,6 +55,9 @@ function guardarPerfil(s: Session | null) {
   } catch { /* modo anônimo */ }
 }
 
+/** Sessão aberta por outro caminho (criar a senha pelo link do e-mail já entra): guarda o perfil como no login. */
+export const lembrarSessao = (s: Session) => guardarPerfil(s)
+
 /** Retrato do último perfil conhecido. Serve para desenhar a tela, nunca para liberar acesso. */
 export function getSession(): Session | null {
   try {

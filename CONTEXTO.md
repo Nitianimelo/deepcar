@@ -123,6 +123,20 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Pagou sem ter conta: a conta é criada na hora e a pessoa só cria a senha
+- **Pedido do dono:** mandar pelo CRM um link para quem fala no WhatsApp sem ter conta, em que a pessoa paga e já entra
+  (antes eram dois caminhos: pagar e depois se cadastrar com o mesmo e-mail).
+- **O que mudou:** `api/_lib/assinatura.js` → `criarContaDaCompra`: no `ativarPlano`, sem conta com o e-mail, cria a conta
+  (e-mail, nome e WhatsApp do pagamento, senha aleatória, `origem.entrada = 'compra'`) e aplica o plano; gera um link de
+  senha de 7 dias (`redefinicoes_senha`, mesmo esquema do "esqueci a senha") que vai no e-mail "Bem-vindo ao plano"
+  (`emailCompra(u, linkSenha)`: botão "Criar minha senha e entrar"). E-mail inválido → pendência como antes.
+  `api/login.js ?acao=redefinir` agora **já abre a sessão** (cookie) e devolve o perfil; `Senha.tsx` guarda e vai para
+  `/app` (`novo=1` → título "Crie sua senha"). `/obrigado` sem sessão explica o e-mail; FAQ "Quando o acesso é liberado?".
+- **Banco / Variáveis:** sem mudança.
+- **Verificação:** build ok, lint 10.
+- **Pendências:** sem e-mail aberto, a pessoa usa "Esqueci a senha" com o e-mail da compra. O redirect da Cakto com
+  `{{callback}}` (login sem e-mail) depende do Compliance da Cakto.
+
 ### 2026-10-09 · Página sem atalhos para o teste grátis + prévia da placa + busca com ano
 - **Achado:** cadastro grátis às 16:35 (Elcio, criativo 6 da campanha nova): buscou "ecosport 2019"/"ecosport
   titanium" (0 resultados), digitou a placa no campo "Testar gratuitamente" da seção cobertura → cadastro.

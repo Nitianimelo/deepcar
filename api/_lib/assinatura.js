@@ -1,7 +1,11 @@
 // O que um pagamento faz com a conta. Fica separado do webhook porque o cadastro
 // (api/registrar.js), o login e o /admin aplicam exatamente as mesmas regras.
+import { createHash, randomBytes } from 'node:crypto'
 import { avisarCompra } from './emails.js'
 import { sql, um } from './db.js'
+import { cifrarSenha } from './sessao.js'
+import { SITE } from './email.js'
+import { normalizarWhatsapp } from './validar.js'
 
 /** Motivos que derrubam o acesso, na coluna assinatura_status. */
 export const MOTIVOS = {
@@ -70,17 +74,44 @@ export async function aplicarNaConta(usuarioId, plano, d = {}) {
       free_expira_em = null
     where id = ${usuarioId}
     returning *`)
-  await avisarCompra(antes, depois) // "Bem-vindo ao plano X": só em compra nova ou troca, nunca na renovação
+  await avisarCompra(antes, depois, d.linkSenha) // "Bem-vindo ao plano X": só em compra nova ou troca, nunca na renovação
   return depois
 }
 
 /**
- * Pagamento aprovado. Sem conta com aquele e-mail, guarda como pendente: a pessoa
- * se cadastra depois com o mesmo e-mail e o plano entra sozinho (api/registrar.js).
+ * Pagou sem ter conta (link do WhatsApp, página de vendas): desde 09/10/2026 a conta é criada na hora com o e-mail,
+ * nome e WhatsApp do pagamento e uma senha aleatória, e o e-mail de compra leva "Criar minha senha" (link de 7 dias,
+ * a mesma tabela do "esqueci a senha"). A pessoa cria a senha e já entra (api/login.js → redefinir faz o login).
+ */
+async function criarContaDaCompra(d) {
+  const email = String(d.email ?? '').trim().toLowerCase()
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return null
+  const nome = (String(d.nome ?? '').trim() || email.split('@')[0]).slice(0, 120)
+  const u = await um(sql`
+    insert into usuarios (email, senha, nome, oficina, whatsapp, origem)
+    values (${email}, ${await cifrarSenha(randomBytes(24).toString('base64url'))}, ${nome}, 'Minha oficina',
+            ${normalizarWhatsapp(d.whatsapp) ?? null}, ${JSON.stringify({ entrada: 'compra', em: new Date().toISOString() })}::jsonb)
+    on conflict (lower(email)) do nothing
+    returning *`)
+  if (!u) return null
+  const token = randomBytes(32).toString('base64url')
+  await sql`insert into redefinicoes_senha (token, usuario_id, expira_em)
+            values (${createHash('sha256').update(token).digest('hex')}, ${u.id}, now() + interval '7 days')`
+  return { u, linkSenha: `${SITE}/redefinir-senha?t=${token}&novo=1` }
+}
+
+/**
+ * Pagamento aprovado. Sem conta com aquele e-mail, cria a conta (criarContaDaCompra) e aplica o plano; se não der
+ * (e-mail estranho), guarda como pendente: quem se cadastrar depois com o mesmo e-mail recebe o plano (api/registrar.js).
  */
 export async function ativarPlano(plano, d) {
   const dono = await acharDono(d)
   if (!dono) {
+    const criada = await criarContaDaCompra(d).catch((err) => { console.error('[assinatura] criar conta:', err.message); return null })
+    if (criada) {
+      const atualizado = await aplicarNaConta(criada.u.id, plano, { ...d, linkSenha: criada.linkSenha })
+      return { estado: 'aplicado', usuarioId: atualizado?.id ?? criada.u.id, detalhe: 'conta criada na compra' }
+    }
     const pendente = await guardarPendente(plano, d)
     return { estado: 'pendente', pendenteId: pendente?.id ?? null }
   }
