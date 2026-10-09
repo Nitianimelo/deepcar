@@ -33,8 +33,8 @@ const PASSOS = [
     texto: 'Digite bobina, injetor, sonda lambda, relé... e o desenho pula para ele. Sem rolar o esquema inteiro.',
   },
   {
-    titulo: 'Leia cada fio',
-    texto: 'Cor do fio, pino do módulo e função de cada ligação, com zoom de pinça. Na bancada, com o carro na frente.',
+    titulo: 'Veja cada conexão',
+    texto: 'O diagrama mostra as peças, as conexões com o módulo e a informação de cada ligação, com zoom de pinça. Na bancada, com o carro na frente.',
   },
 ] as const
 
@@ -56,7 +56,7 @@ export function TourPlataforma() {
         <Reveal className="max-w-[640px]">
           <p className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Como funciona</p>
           <h2 className="mt-4 text-[clamp(2rem,4vw,3.2rem)] font-semibold leading-[1.05] tracking-[-0.02em]">
-            Da placa ao fio certo em sete toques.
+            Da placa ao diagrama certo em sete toques.
           </h2>
           <p className="mt-5 text-[17px] leading-relaxed text-ink-2">
             Estas são telas reais da plataforma, consultando uma Fiat Strada até chegar na bobina de ignição.
