@@ -123,6 +123,13 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · Diagnóstico das notificações do app + chave do APNs no cofre
+- Chave APNs da Apple gravada no cofre (`APNS_P8`, `APNS_KEY_ID` = V6VMKX7YL9; arquivo só no iCloud `Grupo Inttus/apple-developer`).
+- O iPhone de teste (TestFlight, build 1) não mostrou o pedido de permissão e não registrou o aparelho. Para descobrir
+  sem cabo: `POST /api/sessao { evento: 'push_diag', etapa, info }` grava `push_diag` em /admin → Logs ("Notificações
+  (diagnóstico)"); o app (build 2) manda permissão negada, erro de registro do APNs/Firebase ou exceção.
+- **Verificação:** build ok, lint 10.
+
 ### 2026-10-08 · Servidor pronto para o app iPhone (App Store, APNs, registro de uso)
 - **Pedido do dono:** app Deepcar para iPhone (cópia do Android otimizada para iOS), com push e compra, aprovável pela
   Apple; notificações e registro de uso unidos no /admin. Conta Apple Developer da INTTUS (Team RM7UYJK7M2) aprovada

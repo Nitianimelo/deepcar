@@ -48,6 +48,12 @@ export default async function handler(req, res) {
         await anotarApp(req, u.id, 'compra_apple', { plano: pago?.plano, ciclo: pago?.assinatura_ciclo })
         return res.status(200).json(await publicoCompleto(pago))
       }
+      if (evento === 'push_diag') {
+        // diagnóstico das notificações no app (permissão negada, erro do APNs/Firebase): aparece em /admin → Logs
+        const d = corpo(req)
+        await anotarApp(req, u.id, 'push_diag', { etapa: String(d.etapa ?? '').slice(0, 40), info: String(d.info ?? '').slice(0, 300) })
+        return res.status(204).end()
+      }
       if (evento === 'push') return await registrarAparelho(req, res, u)
       return await eventoCheckout(req, res, u)
     }
