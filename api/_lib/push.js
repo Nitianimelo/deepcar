@@ -71,11 +71,20 @@ export async function avisarTesteAcabou(usuarioId) {
                                  where id = ${usuarioId} and push_teste_acabou_em is null and plano = 'free' returning id`)
     if (!marcou) return
     const aparelhos = await sql`select token, plataforma from aparelhos_push where usuario_id = ${usuarioId}`
-    await enviarPush(aparelhos, {
-      titulo: 'Seu teste grátis acabou',
-      texto: 'Assine um plano para continuar usando a Deepcar e abrir todos os esquemas.',
-      link: '/conta?aba=plano',
-    })
+    // o app do iPhone não vende (versão 1.0, sem compra pela App Store): lá o aviso é só informativo, sem "assine",
+    // para não levar a uma compra fora da App Store (diretriz 3.1.1 da Apple)
+    await Promise.all([
+      enviarPush(aparelhos.filter((a) => a.plataforma !== 'ios'), {
+        titulo: 'Seu teste grátis acabou',
+        texto: 'Assine um plano para continuar usando a Deepcar e abrir todos os esquemas.',
+        link: '/conta?aba=plano',
+      }),
+      enviarPush(aparelhos.filter((a) => a.plataforma === 'ios'), {
+        titulo: 'Seu teste grátis terminou',
+        texto: 'Obrigado por testar a Deepcar. Você continua navegando pelo app normalmente.',
+        link: '/',
+      }),
+    ])
   } catch (err) {
     console.error('[push] teste acabou:', err.message)
   }

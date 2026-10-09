@@ -123,6 +123,19 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-08 · App iPhone 1.0 sem venda no app (app de leitura)
+- **Decisão do dono:** a Apple pediu documentação (Stone) para pagar no Brasil; na 1.0 do iPhone, **nada de compra no
+  app**. O iPhone funciona como app de leitura (diretriz 3.1.3(a)): quem tem plano entra e usa; o teste acaba numa
+  mensagem neutra. Nenhuma tela do iPhone fala em preço, planos, "assine" ou "fale com o suporte para assinar"
+  (3.1.1 reprova). A venda continua fora do app: e-mail "teste acabou", WhatsApp do CRM, site. Android não muda.
+- `api/_lib/push.js` → `avisarTesteAcabou`: no iPhone o aviso é neutro ("Seu teste grátis terminou", sem "assine",
+  abre o início); no Android continua o convite para a aba Plano.
+- App (iCloud `deepcar-android`): `vendeNoApp = !ios` em `src/lib/plataforma.ts` decide tudo (convite → "SemAcesso",
+  sem FaixaAssinar/ConviteMomento, pastilha "Teste grátis/Teste encerrado" sem link, Conta sem a aba Plano).
+- Ficha da App Store: descrição e notas da revisão sem assinatura. As 4 assinaturas criadas no App Store Connect
+  ficam paradas (não vão nesta versão). Para vender no iPhone depois: contrato de apps pagos ativo, preços,
+  `vendeNoApp = true` e incluir as assinaturas na versão.
+
 ### 2026-10-08 · E-mail de suporte público = contato@deepcar.app.br
 - Pedido do dono: o e-mail mostrado em /suporte, /privacidade, /excluir-conta (e no app, `src/lib/plano.ts`) passa de
   nitiani@compilla.dev para **contato@deepcar.app.br** (padrão no código; `VITE_SUPORTE_EMAIL` não existe na Vercel).
