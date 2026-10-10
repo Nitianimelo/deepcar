@@ -1088,6 +1088,8 @@ function quandoFoi(iso: string, agora: number) {
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
+const dataHora = (iso: string) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')
+
 function lerOcultar() { try { return localStorage.getItem('deepcar.admin.ocultar') !== '0' } catch { return true } }
 
 /** O que cada pessoa faz no site e no app (eventos_uso), para achar onde o cadastro trava. Atualiza sozinho a cada 30 s. */
@@ -1120,8 +1122,42 @@ function AbaLogs() {
     setOcultar((v) => { try { localStorage.setItem('deepcar.admin.ocultar', v ? '0' : '1') } catch { /* modo anônimo */ } return !v })
   }
   const nome = (n: string | null) => (ocultar ? mascaraNome(n) : n ?? '')
-  const email = (e: string | null) => (ocultar ? mascaraEmail(e) : e ?? '')
   const detalhe = (e: EventoUso) => (ocultar ? mascaraPlaca(resumoEvento(e)) : resumoEvento(e))
+  const [copiado, setCopiado] = useState('')
+  const texto = (v: string) => (ocultar ? mascaraPlaca(v) : v)
+  /** Tudo o que o log tem, em pares campo → valor (o que aparece no cartão e vai na cópia). */
+  function camposLog(e: EventoUso): [string, string][] {
+    const c: [string, string][] = []
+    if (e.usuario_id) {
+      c.push(['quem', nome(e.nome)])
+      if (e.email) c.push(['e-mail', ocultar ? mascaraEmail(e.email) : e.email])
+      if (e.plano) c.push(['plano', e.plano])
+      c.push(['conta', ocultar ? `${e.usuario_id.slice(0, 4)}…` : e.usuario_id])
+    }
+    if (e.visitante) c.push(['visitante', ocultar ? `${e.visitante.slice(0, 6)}…` : e.visitante])
+    if (e.aparelho) c.push(['aparelho', e.aparelho])
+    if (e.rota) c.push(['rota', texto(e.rota)])
+    for (const [k, v] of Object.entries(e.detalhe ?? {})) {
+      if (v == null || v === '') continue
+      c.push([k, texto(typeof v === 'object' ? JSON.stringify(v) : String(v))])
+    }
+    return c
+  }
+  const linhaLog = (e: EventoUso) => [dataHora(e.em), e.tipo, NOMES_EVENTO[e.tipo] ?? e.tipo, ...camposLog(e).map(([k, v]) => `${k}=${v}`)].join(' | ')
+  async function copiarTexto(t: string, aviso: string) {
+    try { await navigator.clipboard.writeText(t) } catch {
+      const area = document.createElement('textarea'); area.value = t; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove()
+    }
+    setCopiado(aviso); setTimeout(() => setCopiado(''), 2500)
+  }
+  async function copiarLogs(janela: '1h' | '24h' | 'hoje' | 'tudo') {
+    const agoraMs = agora // relógio da tela (atualiza a cada 5 s)
+    const inicioHoje = new Date(); inicioHoje.setHours(0, 0, 0, 0)
+    const desde = janela === '1h' ? agoraMs - 3_600_000 : janela === '24h' ? agoraMs - 86_400_000 : janela === 'hoje' ? inicioHoje.getTime() : 0
+    const lista = (dados?.eventos ?? []).filter((e) => new Date(e.em).getTime() >= desde)
+    const cab = `Deepcar · logs (${{ '1h': 'última hora', '24h': 'últimas 24 h', hoje: 'hoje', tudo: `últimos ${dias === 1 ? 'hoje' : `${dias} dias`}` }[janela]}) · ${lista.length} eventos · copiado em ${dataHora(new Date().toISOString())}`
+    await copiarTexto([cab, ...lista.map(linhaLog)].join('\n'), `${lista.length} logs copiados`)
+  }
 
   const r = dados?.resumo
   const tipoN = (k: string) => r?.porTipo.find((t) => t.tipo === k)
@@ -1314,40 +1350,62 @@ function AbaLogs() {
       )}
 
       <section className={`${cartao} mt-3 !p-0`}>
-        <div className="flex items-center justify-between gap-3 border-b seam px-5 py-4">
-          <h2 className={rotulo}>Acontecendo agora</h2>
-          <span className="text-[12px] text-ink-4">{dados?.eventos.length ?? 0} eventos mais recentes</span>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b seam px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok/70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-ok" /></span>
+            <h2 className={rotulo}>Logs ao vivo</h2>
+            <span className="code text-[11px] text-ink-4">{dados?.eventos.length ?? 0} carregados</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Copy size={14} className="mr-0.5 text-ink-4" />
+            {([['1h', 'Última hora'], ['24h', 'Últimas 24 h'], ['hoje', 'Hoje'], ['tudo', 'Tudo']] as const).map(([k, r]) => (
+              <button key={k} type="button" onClick={() => void copiarLogs(k)} className="rounded-md border seam px-2.5 py-1 text-[12px] text-ink-3 hover:border-trace/40 hover:text-ink-1">{r}</button>
+            ))}
+            {copiado && <span role="status" className="ml-1 text-[12px] text-ok">{copiado}</span>}
+          </div>
         </div>
         <ul className="divide-y divide-white/[0.05]">
           {(dados?.eventos ?? []).slice(0, mostrar).map((e, i) => {
             const [Icone, cor] = ICONE_EVENTO[e.tipo] ?? [Activity, 'text-ink-3 bg-white/[0.06]']
+            const campos = camposLog(e)
             return (
-              <li key={e.id} className={`flex items-start gap-3.5 px-5 py-3 transition-colors hover:bg-white/[0.02] ${i < 12 ? 'surge' : ''}`} style={i < 12 ? { ['--i' as string]: i } : undefined}>
-                <span className={`mt-0.5 grid h-9 w-9 flex-none place-items-center rounded-xl ${cor}`}><Icone size={16} /></span>
-                <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap items-baseline gap-x-2 text-[13.5px]">
-                    <span className="font-medium text-ink-1">{NOMES_EVENTO[e.tipo] ?? e.tipo}</span>
-                    <span className="truncate text-ink-3">{detalhe(e)}</span>
-                  </p>
-                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[12px] text-ink-4">
-                    {e.usuario_id
-                      ? <button type="button" onClick={() => setUsuario({ id: e.usuario_id!, nome: e.nome ?? '' })} className="text-trace-hi hover:underline">{nome(e.nome)}{!ocultar && e.email && <span className="text-ink-4"> · {email(e.email)}</span>}</button>
-                      : <span>Visitante {e.visitante?.slice(0, 4) ?? ''}</span>}
-                    {e.aparelho && <span className="rounded-md bg-white/[0.05] px-1.5 py-0.5 text-ink-3">{e.aparelho}</span>}
-                  </p>
+              <li key={e.id} className={`group px-5 py-3.5 transition-colors hover:bg-white/[0.02] ${i < 12 ? 'surge' : ''}`} style={i < 12 ? { ['--i' as string]: i } : undefined}>
+                <div className="flex items-start gap-3.5">
+                  <span className={`mt-0.5 grid h-9 w-9 flex-none place-items-center rounded-xl ${cor}`}><Icone size={16} /></span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-[13.5px] font-medium text-ink-1">{NOMES_EVENTO[e.tipo] ?? e.tipo}</span>
+                      <span className="code rounded bg-white/[0.06] px-1.5 py-0.5 text-[11px] text-ink-3">{e.tipo}</span>
+                      <span className="code text-[11px] text-ink-4">#{e.id}</span>
+                      <span className="ml-auto code text-[11.5px] tabular-nums text-ink-3" title={e.em}>{dataHora(e.em)} <span className="text-ink-4">· {quandoFoi(e.em, agora)}</span></span>
+                    </div>
+                    <p className="mt-0.5 text-[13px] text-ink-2">{detalhe(e) || <span className="text-ink-4">sem detalhe</span>}</p>
+                    <dl className="mt-2 flex flex-wrap gap-1.5 code text-[11px]">
+                      {campos.map(([k, v]) => (
+                        <div key={k} className="flex max-w-full items-baseline gap-1 rounded-md border border-white/[0.06] bg-well/70 px-1.5 py-0.5">
+                          <dt className="text-ink-4">{k}</dt>
+                          <dd className="truncate text-ink-2">
+                            {k === 'conta' && e.usuario_id
+                              ? <button type="button" onClick={() => setUsuario({ id: e.usuario_id!, nome: e.nome ?? '' })} className="text-trace-hi hover:underline">{v}</button>
+                              : v}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                  <button type="button" onClick={() => void copiarTexto(linhaLog(e), '1 log copiado')} aria-label="Copiar este log" className="flex-none rounded-md p-1.5 text-ink-4 opacity-60 hover:bg-white/[0.05] hover:text-ink-1 group-hover:opacity-100"><Copy size={14} /></button>
                 </div>
-                <span className="flex-none whitespace-nowrap pt-0.5 text-[12px] tabular-nums text-ink-4" title={new Date(e.em).toLocaleString('pt-BR')}>{quandoFoi(e.em, agora)}</span>
               </li>
             )
           })}
           {dados && !dados.eventos.length && <li className="px-5 py-10 text-center text-ink-4">Nenhum evento com esses filtros.</li>}
-          {!dados && !erro && Array.from({ length: 6 }, (_, i) => <li key={i} className="px-5 py-3.5"><div className="skeleton h-9 rounded-lg" /></li>)}
+          {!dados && !erro && Array.from({ length: 6 }, (_, i) => <li key={i} className="px-5 py-3.5"><div className="skeleton h-12 rounded-lg" /></li>)}
         </ul>
         {(dados?.eventos.length ?? 0) > mostrar && (
           <button type="button" onClick={() => setMostrar((n) => n + 60)} className="w-full border-t seam py-3 text-[13px] text-trace-hi hover:bg-white/[0.02]">Mostrar mais</button>
         )}
       </section>
-      <p className="mt-2 text-[12px] text-ink-4">Eventos mais recentes do filtro (até 400). O registro guarda 120 dias.</p>
+      <p className="mt-2 text-[12px] text-ink-4">Até 400 eventos mais recentes do filtro e do período escolhido (os botões de copiar usam esses). O registro guarda 120 dias. Com "Dados pessoais ocultos" ligado, a cópia sai mascarada.</p>
     </>
   )
 }

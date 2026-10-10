@@ -123,6 +123,13 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Logs: "Logs ao vivo" técnico e botões de copiar
+- Pedido do dono: o feed virou "Logs ao vivo", cada cartão com tudo o que o log tem (nome do evento + código do tipo,
+  #id, data/hora com segundos, quem, e-mail, plano, conta, visitante, aparelho, rota e cada campo do `detalhe`).
+  Botões de copiar: última hora, últimas 24 h, hoje e tudo (sobre os até 400 eventos carregados do período), e um
+  por log. Formato: uma linha por evento, `data | tipo | nome | campo=valor | ...`. Com "Dados pessoais ocultos"
+  ligado, a cópia sai mascarada.
+
 ### 2026-10-09 · Logs: nomes que não confundem
 - Dono achou confuso "Página 886" × "Entraram na página 342". `pagina` agora é "Telas abertas (site e app)" (toda tela,
   toda vez); o funil diz "Visitantes da página" e "(cada aparelho conta 1 vez)"; "Eventos no período" mostra vezes · pessoas.
