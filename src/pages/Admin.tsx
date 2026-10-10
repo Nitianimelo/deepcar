@@ -1215,6 +1215,7 @@ function AbaLogs() {
   const [mostrar, setMostrar] = useState(60)
   const [copiado, setCopiado] = useState('')
   const [aberto, setAberto] = useState<number | null>(null)
+  const [cru, setCru] = useState(false)
 
   const carregar = useCallback(async () => {
     try {
@@ -1233,7 +1234,8 @@ function AbaLogs() {
   }
   const nome = (n: string | null) => (ocultar ? mascaraNome(n) : n ?? '')
   const texto = (v: string) => (ocultar ? mascaraTexto(semToken(v)) : semToken(v))
-  const quem = (e: EventoUso) => (e.usuario_id ? nome(e.nome) || 'Conta sem nome' : 'Visitante')
+  // visitante sem conta: o id do aparelho (visitanteId() do navegador) separa uma pessoa da outra
+  const quem = (e: EventoUso) => (e.usuario_id ? nome(e.nome) || 'Conta sem nome' : `Visitante ${e.visitante ? e.visitante.slice(0, 8) : 'sem id'}`)
   const frase = (e: EventoUso) => texto(fraseEvento(e))
 
   /** Os dados técnicos do log, em pares campo → valor (detalhe aberto e cópia). */
@@ -1245,7 +1247,7 @@ function AbaLogs() {
       if (e.plano) c.push(['Plano atual', e.plano === 'free' ? 'Teste grátis' : rotuloPlano(e.plano)])
       c.push(['ID da conta', ocultar ? `${e.usuario_id.slice(0, 8)}…` : e.usuario_id])
     } else c.push(['Pessoa', 'Visitante sem conta'])
-    if (e.visitante) c.push(['ID do aparelho', ocultar ? `${e.visitante.slice(0, 8)}…` : e.visitante])
+    if (e.visitante) c.push(['ID do visitante', e.visitante])
     if (e.aparelho) c.push(['Aparelho', e.aparelho])
     const origem = origemDaRota(e.rota)
     if (origem) c.push(['Origem', origem])
@@ -1256,6 +1258,11 @@ function AbaLogs() {
     }
     return c
   }
+  /** O registro como está no banco (com nome, e-mail e placa mascarados se "Dados pessoais ocultos" estiver ligado). */
+  const linhaCrua = (e: EventoUso) => texto(JSON.stringify({
+    id: e.id, em: e.em, tipo: e.tipo, usuario_id: e.usuario_id, nome: e.nome && ocultar ? mascaraNome(e.nome) : e.nome,
+    email: e.email, plano: e.plano, visitante: e.visitante, aparelho: e.aparelho, rota: e.rota, detalhe: e.detalhe,
+  }))
   const linhaLog = (e: EventoUso) => [dataHora(e.em), categoria(e), quem(e), e.aparelho ?? '', frase(e), ...camposLog(e).slice(4).map(([k, v]) => `${k}: ${v}`)].join(' | ')
   async function copiarTexto(t: string, aviso: string) {
     try { await navigator.clipboard.writeText(t) } catch {
@@ -1268,6 +1275,7 @@ function AbaLogs() {
     const desde = janela === '1h' ? agora - 3_600_000 : janela === '24h' ? agora - 86_400_000 : janela === 'hoje' ? inicioHoje.getTime() : 0
     const lista = (dados?.eventos ?? []).filter((e) => new Date(e.em).getTime() >= desde)
     const nomeJanela = { '1h': 'última hora', '24h': 'últimas 24 h', hoje: 'hoje', tudo: dias === 1 ? 'hoje' : `últimos ${dias} dias` }[janela]
+    if (cru) { await copiarTexto(lista.map(linhaCrua).join('\n'), `${lista.length} logs crus copiados`); return }
     const cab = `Deepcar · logs (${nomeJanela}) · ${lista.length} eventos · copiado em ${dataHora(new Date(agora).toISOString())}\nformato: quando | categoria | quem | aparelho | o que fez | dados técnicos`
     await copiarTexto([cab, ...lista.map(linhaLog)].join('\n'), `${lista.length} logs copiados`)
   }
@@ -1334,7 +1342,7 @@ function AbaLogs() {
         </select>
         <label className="relative w-full sm:ml-auto sm:w-auto">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-          <input className="field h-9 w-full bg-bench-1 pl-8 text-[13px] sm:w-64" placeholder="Procurar pessoa (nome ou e-mail)" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="field h-9 w-full bg-bench-1 pl-8 text-[13px] sm:w-64" placeholder="Procurar nome, e-mail ou id do visitante" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
         {usuario && (
           <button type="button" onClick={() => setUsuario(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-trace/40 bg-trace/10 px-3 py-1.5 text-[13px] text-trace-hi">
@@ -1464,9 +1472,14 @@ function AbaLogs() {
         <div className="flex flex-wrap items-center justify-between gap-3 border-b seam px-5 py-3.5">
           <div>
             <h2 className={titulo}>Logs ao vivo</h2>
-            <p className={explica}>{dados?.eventos.length ?? 0} eventos carregados, do mais recente ao mais antigo. Clique numa linha para ver os dados técnicos.</p>
+            <p className={explica}>{dados?.eventos.length ?? 0} eventos carregados, do mais recente ao mais antigo. {cru ? 'Cada linha é o registro do banco, em JSON.' : 'Clique numa linha para ver os dados técnicos.'}</p>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
+            <div className="mr-2 flex rounded-md border seam bg-bench-1 p-0.5 text-[12px]">
+              {([[false, 'Formatado'], [true, 'Cru']] as const).map(([v, rr]) => (
+                <button key={rr} type="button" onClick={() => setCru(v)} aria-pressed={cru === v} className={`rounded px-2.5 py-0.5 ${cru === v ? 'bg-ink-1 font-medium text-bench-1' : 'text-ink-3 hover:text-ink-1'}`}>{rr}</button>
+              ))}
+            </div>
             <span className="mr-0.5 text-[12px] text-ink-4">Copiar:</span>
             {([['1h', 'Última hora'], ['24h', '24 h'], ['hoje', 'Hoje'], ['tudo', 'Tudo']] as const).map(([k, rr]) => (
               <button key={k} type="button" onClick={() => void copiarLogs(k)} className="rounded-md border seam bg-bench-1 px-2.5 py-1 text-[12px] text-ink-2 hover:border-trace/40 hover:text-trace-hi">{rr}</button>
@@ -1474,6 +1487,12 @@ function AbaLogs() {
             {copiado && <span role="status" className="ml-1 text-[12px] text-ok">{copiado}</span>}
           </div>
         </div>
+        {cru ? (
+          <div className="max-h-[70vh] overflow-auto bg-[#0f141b] px-5 py-3 font-[family-name:var(--font-code)] text-[12px] leading-relaxed text-[#d6dde8]">
+            {eventos.map((e) => <div key={e.id} className="whitespace-pre-wrap break-all border-b border-white/[0.06] py-1.5">{linhaCrua(e)}</div>)}
+            {dados && !dados.eventos.length && <div className="py-6 text-center text-[#8793a4]">Nenhum evento com esses filtros.</div>}
+          </div>
+        ) : (<>
         <div className="hidden grid-cols-[76px_128px_minmax(0,1fr)_170px_150px] gap-4 border-b seam bg-bench-2 px-5 py-2 text-[11.5px] font-medium uppercase tracking-wide text-ink-4 md:grid">
           <span>Hora</span><span>Categoria</span><span>Evento</span><span>Pessoa</span><span>Aparelho</span>
         </div>
@@ -1490,7 +1509,7 @@ function AbaLogs() {
                   <span className="code pt-px text-[12px] text-ink-3" title={quandoFoi(e.em, agora)}>{hora(e.em)}</span>
                   <span className="md:order-none"><span className={`inline-flex rounded px-1.5 py-0.5 text-[11.5px] font-medium ring-1 ring-inset ${COR_CATEGORIA[cat]}`}>{cat}</span></span>
                   <span className={`col-span-2 md:col-span-1 ${cat === 'Venda' ? 'font-semibold text-ink-1' : 'text-ink-1'}`}>{frase(e)}</span>
-                  <span className="col-span-2 truncate text-ink-3 md:col-span-1">{e.usuario_id ? <span className="text-ink-2">{quem(e)}</span> : <span className="text-ink-4">Visitante</span>}</span>
+                  <span className="col-span-2 truncate text-ink-3 md:col-span-1">{e.usuario_id ? <span className="text-ink-2">{quem(e)}</span> : <span className="text-ink-4">Visitante <span className="code text-ink-3">{e.visitante ? e.visitante.slice(0, 8) : 'sem id'}</span></span>}</span>
                   <span className="col-span-2 truncate text-[12.5px] text-ink-4 md:col-span-1">{e.aparelho}</span>
                 </button>
                 {aberto === e.id && (
@@ -1502,6 +1521,7 @@ function AbaLogs() {
                     </dl>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button type="button" onClick={() => void copiarTexto(linhaLog(e), 'Log copiado')} className="inline-flex items-center gap-1.5 rounded-md border seam bg-bench-1 px-2.5 py-1 text-[12px] text-ink-2 hover:text-trace-hi"><Copy size={12} /> Copiar este log</button>
+                      {!e.usuario_id && e.visitante && <button type="button" onClick={() => { setQ(e.visitante!); setAberto(null) }} className="inline-flex items-center gap-1.5 rounded-md border seam bg-bench-1 px-2.5 py-1 text-[12px] text-ink-2 hover:text-trace-hi"><Search size={12} /> Ver tudo deste visitante</button>}
                       {e.usuario_id && <button type="button" onClick={() => setUsuario({ id: e.usuario_id!, nome: e.nome ?? '' })} className="inline-flex items-center gap-1.5 rounded-md border seam bg-bench-1 px-2.5 py-1 text-[12px] text-ink-2 hover:text-trace-hi"><Search size={12} /> Ver tudo desta pessoa</button>}
                     </div>
                   </div>
@@ -1512,6 +1532,7 @@ function AbaLogs() {
           {dados && !dados.eventos.length && <li className="px-5 py-10 text-center text-ink-4">Nenhum evento com esses filtros.</li>}
           {!dados && !erro && Array.from({ length: 6 }, (_, i) => <li key={i} className="border-b border-ink-1/[0.05] px-5 py-3"><div className="h-4 w-2/3 rounded bg-ink-1/[0.06]" /></li>)}
         </ul>
+        </>)}
         {(dados?.eventos.length ?? 0) > mostrar && (
           <button type="button" onClick={() => setMostrar((n) => n + 100)} className="w-full py-3 text-[13px] text-trace-hi hover:bg-ink-1/[0.02]">Mostrar mais</button>
         )}

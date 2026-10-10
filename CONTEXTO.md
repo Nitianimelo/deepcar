@@ -123,6 +123,13 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-10 · Logs: id do visitante e modo "Cru"
+- Pedido do dono (visitantes se confundiam): coluna Pessoa mostra "Visitante <8 primeiros caracteres do id>"; o
+  detalhe mostra o id inteiro e "Ver tudo deste visitante" (filtra pela busca, que já procura `eventos_uso.visitante`).
+- Chave "Formatado / Cru" nos Logs ao vivo: no Cru cada linha é o registro em JSON (id, em, tipo, usuario_id, nome,
+  email, plano, visitante, aparelho, rota, detalhe), mascarado se "Dados pessoais ocultos" estiver ligado; os botões
+  de copiar copiam nesse formato (uma linha JSON por evento).
+
 ### 2026-10-10 · Botão de tema claro/escuro no /admin
 - Pedido do dono. Botão "Escuro"/"Claro" no fim da barra de abas (`Admin.tsx`): claro é o padrão; a escolha fica em
   `localStorage` `deepcar.admin.tema`. Escuro = sem `.tema-claro` (tokens normais do site) e logo claro; etiquetas de
