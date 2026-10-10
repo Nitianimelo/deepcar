@@ -195,11 +195,11 @@ function Hero() {
         <div id="plataforma" className="max-w-[560px]">
           <Reveal as="p" index={0} className="code text-[12px] uppercase tracking-[0.24em] text-trace-hi">Plataforma Deepcar</Reveal>
           <Reveal as="h1" index={1} className="mt-4 text-[clamp(2.4rem,5.2vw,4.2rem)] font-semibold leading-[1.02] tracking-[-0.025em]">
-            Inteligência automotiva para a sua oficina.
+            O manual técnico que você precisa em segundos.
           </Reveal>
-          <Reveal as="p" index={2} className="mt-6 max-w-[48ch] text-[17px] leading-relaxed text-ink-2">
-            Informações técnicas de mais de 15 mil modelos de veículos: só precisa digitar a placa do carro.
-            Injeção eletrônica, elétrica, ABS e câmbio. No celular, no tablet ou no computador da sua oficina.
+          <Reveal as="p" index={2} className="mt-6 max-w-[50ch] text-[17px] leading-relaxed text-ink-2">
+            Chega de perder tempo procurando PDFs. Acesse esquemas elétricos e informações técnicas de mais de 20 mil
+            modelos de veículos, com cobertura de 98% da frota nacional. Tudo pela placa, direto no aplicativo.
           </Reveal>
           <Reveal index={3} className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <a href="#planos" onClick={() => pegarOferta('topo')} className="btn-cta btn-cta-grande inline-flex items-center justify-center gap-2 px-6">

@@ -123,6 +123,23 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-10 · Busca de carros tolerante, sem pulo no celular, e hero nova
+- **Pedido do dono:** "gol g5" não achava nada; no celular a busca pulava para a dobra seguinte; hero nova.
+- **Busca (`src/components/landing/BuscaCarro.tsx`, `buscarCarros`):** palavras que não existem em nenhum diagrama
+  ("titanium", "power") são ignoradas com aviso; palavras de ligação ("motor", "do", "carro") saem; gerações do Gol/
+  Parati/Saveiro/Voyage viram anos (G5 = 2008 a 2012 etc.); ano filtra pela fabricação e, se zerar, é ignorado com aviso;
+  se ainda zerar, tira as últimas palavras. Ordem: palavra inteira > começo de palavra > pedaço ("gol" antes de "golf"),
+  depois quem começou a ser fabricado dentro da faixa, mais perto do início, e o mais novo. Cartão mostra marca, anos
+  em destaque, modelo e motor em até 2 linhas e os sistemas; "Mostrar mais" de 12 em 12.
+- **Pulo no celular:** a área de resultados guarda altura (min 70vh no celular) com algo digitado, o campo sobe para
+  baixo do menu fixo ao focar, e escolher/voltar leva os resultados para a vista.
+- **Hero:** "O manual técnico que você precisa em segundos." + "Chega de perder tempo procurando PDFs. Acesse esquemas
+  elétricos e informações técnicas de mais de 20 mil modelos de veículos, com cobertura de 98% da frota nacional. Tudo
+  pela placa, direto no aplicativo."
+- **Verificação:** build ok, lint 10; iPhone 13 simulado com o catálogo real: gol g5 (2008 a 2012 primeiro), gol g4 2010,
+  ecosport 2019 (9), ecosport titanium (38, aviso), gol 1.6 power, onix plus ltz, hb20 2015, s10 2.8, strada 1.4; rolagem
+  parada ao digitar e ao escolher.
+
 ### 2026-10-10 · Logs: coluna "Origem" (UTM do evento)
 - Pedido do dono: uma coluna, não um quadro. Origem = a UTM do endereço em que o evento aconteceu (`origemDaRota`,
   traduzida: "Anúncio Meta · criativo 3 · 42s", "WhatsApp · link mandado pelo CRM"); sem UTM fica em branco (app
