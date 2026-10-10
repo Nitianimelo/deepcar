@@ -123,6 +123,11 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-10 · Botão de tema claro/escuro no /admin
+- Pedido do dono. Botão "Escuro"/"Claro" no fim da barra de abas (`Admin.tsx`): claro é o padrão; a escolha fica em
+  `localStorage` `deepcar.admin.tema`. Escuro = sem `.tema-claro` (tokens normais do site) e logo claro; etiquetas de
+  categoria dos logs com tons claros no escuro (`[.tema-escuro_&]:`).
+
 ### 2026-10-10 · Vendas da Cakto nos logs, logs em tabela e /admin em cinza-claro
 - **Pedido do dono:** a 1ª venda do funil novo (Full mensal R$ 20,89, Pix, anúncio criativo 3) não apareceu nos logs;
   logs "parecendo IA"; cor cinza mais clara.

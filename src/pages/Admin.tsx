@@ -2,7 +2,7 @@
 // Toda a autorização é do servidor (api/admin/*): aqui a checagem só evita mostrar a tela.
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { Activity, BadgeDollarSign, Bell, Check, Copy, Eye, EyeOff, KeyRound, Layers, Link2, Loader2, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
+import { Activity, BadgeDollarSign, Bell, Check, Copy, Eye, EyeOff, KeyRound, Layers, Link2, Loader2, MessageCircle, MonitorSmartphone, Moon, Plus, RefreshCw, Search, Sun, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
 import { useSessao } from '../lib/auth'
 import { rotuloPlano, tempoRestante } from '../lib/plano'
 import { mascararWhatsapp, SENHA_MINIMA } from '../lib/validacao'
@@ -125,15 +125,20 @@ function teste(ate: string | null) {
 export default function Admin() {
   const { session, conferindo } = useSessao()
   const [aba, setAba] = useState<'usuarios' | 'planos' | 'assinaturas' | 'avisos' | 'logs' | 'chaves'>('usuarios')
+  // claro (padrão desde 10/10/2026) ou escuro, lembrado neste navegador
+  const [escuro, setEscuro] = useState(() => { try { return localStorage.getItem('deepcar.admin.tema') === 'escuro' } catch { return false } })
+  function trocarTema() {
+    setEscuro((v) => { try { localStorage.setItem('deepcar.admin.tema', v ? 'claro' : 'escuro') } catch { /* modo anônimo */ } return !v })
+  }
 
   if (!session) return conferindo ? <div aria-busy="true" className="min-h-screen" /> : <Navigate to="/login" replace />
   if (session.papel !== 'admin') return <Navigate to="/app" replace />
 
   return (
-    <div className="tema-claro schematic-grid min-h-screen bg-pit text-ink-1">
+    <div className={`${escuro ? 'tema-escuro' : 'tema-claro'} schematic-grid min-h-screen bg-pit text-ink-1`}>
       <header className="flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b seam bg-bench-1 px-4 py-3 sm:px-8">
         <div className="flex items-center gap-4">
-          <Link to="/app"><img src="/brand/logo-h.png" alt="Deepcar" className="w-32" draggable={false} /></Link>
+          <Link to="/app"><img src={escuro ? '/brand/logo-h-light.png' : '/brand/logo-h.png'} alt="Deepcar" className="w-32" draggable={false} /></Link>
           <span className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Administração</span>
         </div>
         <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border seam bg-bench-2 p-1">
@@ -147,6 +152,11 @@ export default function Admin() {
               <Icone size={15} /> {rotulo}
             </button>
           ))}
+          <span className="mx-1 h-5 w-px flex-none bg-ink-1/10" aria-hidden />
+          <button type="button" onClick={trocarTema} title={escuro ? 'Usar o tema claro' : 'Usar o tema escuro'} aria-label={escuro ? 'Usar o tema claro' : 'Usar o tema escuro'}
+            className="inline-flex flex-none items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] text-ink-3 hover:text-ink-1">
+            {escuro ? <Sun size={15} /> : <Moon size={15} />} {escuro ? 'Claro' : 'Escuro'}
+          </button>
         </div>
       </header>
 
@@ -1156,8 +1166,8 @@ function categoria(e: EventoUso): Categoria {
 }
 const COR_CATEGORIA: Record<Categoria, string> = {
   Venda: 'bg-ok/12 text-ok ring-ok/25', Checkout: 'bg-warn/12 text-warn ring-warn/25', Conta: 'bg-trace/10 text-trace-hi ring-trace/20',
-  'Página de vendas': 'bg-violet-500/10 text-violet-700 ring-violet-500/20', Plataforma: 'bg-ink-1/[0.05] text-ink-3 ring-ink-1/10',
-  App: 'bg-sky-500/10 text-sky-700 ring-sky-500/20', Contato: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20', Erro: 'bg-fault/10 text-fault ring-fault/20',
+  'Página de vendas': 'bg-violet-500/10 text-violet-700 ring-violet-500/20 [.tema-escuro_&]:text-violet-300', Plataforma: 'bg-ink-1/[0.05] text-ink-3 ring-ink-1/10',
+  App: 'bg-sky-500/10 text-sky-700 ring-sky-500/20 [.tema-escuro_&]:text-sky-300', Contato: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 [.tema-escuro_&]:text-emerald-300', Erro: 'bg-fault/10 text-fault ring-fault/20',
 }
 
 // "Ocultar dados pessoais" (para gravar a tela): nome vira iniciais, e-mail e placa ficam mascarados.
