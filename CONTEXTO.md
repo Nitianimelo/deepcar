@@ -123,6 +123,10 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Logs: nomes que não confundem
+- Dono achou confuso "Página 886" × "Entraram na página 342". `pagina` agora é "Telas abertas (site e app)" (toda tela,
+  toda vez); o funil diz "Visitantes da página" e "(cada aparelho conta 1 vez)"; "Eventos no período" mostra vezes · pessoas.
+
 ### 2026-10-09 · /admin → Logs com visual de painel (para gravar a tela)
 - Pedido do dono: tela de logs mais bonita e profissional para um reels. Só front (`src/pages/Admin.tsx`, `AbaLogs`),
   mesma API. Título "Atividade" com selo "Ao vivo" (atualiza sozinho a cada 30 s, "atualizado há X"); 5 números no

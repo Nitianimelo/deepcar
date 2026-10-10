@@ -1040,7 +1040,7 @@ type ResumoLogs = {
 
 const NOMES_EVENTO: Record<string, string> = {
   whatsapp: 'Chamou no WhatsApp', viu_secao: 'Viu seção da página de vendas', tour_passo: 'Passo do tour (página de vendas)', busca_landing: 'Buscou carro na página de vendas', escolheu_carro: 'Escolheu carro na página de vendas', carro_para_planos: 'Foi aos planos pelo carro', pegar_oferta: 'Clicou em Pegar oferta', compra_apple: 'Assinou pela App Store', push_diag: 'Notificações (diagnóstico)', rolou: 'Rolou a página de vendas', saiu_landing: 'Saiu da página de vendas', app_aberto: 'Abriu o app Android', compra_play: 'Assinou pela Google Play',
-  pagina: 'Página', busca: 'Busca', placa: 'Placa encontrada', placa_erro: 'Placa com erro', esquema: 'Esquema',
+  pagina: 'Telas abertas (site e app)', busca: 'Busca', placa: 'Placa encontrada', placa_erro: 'Placa com erro', esquema: 'Esquema',
   viu_planos: 'Viu os planos', clicou_assinar: 'Clicou em assinar', cadastro: 'Cadastrou', cadastro_erro: 'Erro no cadastro',
   login: 'Entrou', login_erro: 'Erro ao entrar', compartilhou: 'Compartilhou', navegador_interno: 'Navegador do Instagram/Facebook',
 }
@@ -1127,7 +1127,7 @@ function AbaLogs() {
   const tipoN = (k: string) => r?.porTipo.find((t) => t.tipo === k)
   const visitas = (r?.secoes ?? []).reduce((a, l) => a + l.visitantes, 0) || (r?.leitura ?? []).reduce((a, l) => a + l.visitantes, 0)
   const funil = r?.secoes?.length
-    ? ([['Entraram na página', 'visitantes'], ['Viram o tour', 'tour'], ['Procuraram o carro', 'busca'], ['Viram os planos', 'planos'], ['Leram o FAQ', 'faq'], ['Tocaram em Pegar oferta', 'oferta'], ['Clicaram em assinar', 'assinar']] as const)
+    ? ([['Visitantes da página', 'visitantes'], ['Viram o tour', 'tour'], ['Procuraram o carro', 'busca'], ['Viram os planos', 'planos'], ['Leram o FAQ', 'faq'], ['Tocaram em Pegar oferta', 'oferta'], ['Clicaram em assinar', 'assinar']] as const)
         .map(([rotulo, k]) => ({ rotulo, n: r.secoes!.reduce((a, l) => a + l[k], 0) }))
     : []
   const maiorTipo = Math.max(1, ...(r?.porTipo ?? []).map((t) => t.n))
@@ -1214,7 +1214,7 @@ function AbaLogs() {
             {!!funil.length && (
               <section className={`${cartao} lg:col-span-3`}>
                 <div className="flex items-baseline justify-between gap-3">
-                  <h2 className={rotulo}>Página de vendas · até onde chegam</h2>
+                  <h2 className={rotulo}>Página de vendas · até onde chegam <span className="normal-case tracking-normal">(cada aparelho conta 1 vez)</span></h2>
                   <span className="text-[12px] text-ink-4">{pct(funil[funil.length - 1].n, funil[0].n)}% clicam em assinar</span>
                 </div>
                 <ul className="mt-4 space-y-2.5">
@@ -1234,7 +1234,7 @@ function AbaLogs() {
               </section>
             )}
             <section className={`${cartao} ${funil.length ? 'lg:col-span-2' : 'lg:col-span-5'}`}>
-              <h2 className={rotulo}>Eventos no período</h2>
+              <div className="flex items-baseline justify-between gap-3"><h2 className={rotulo}>Eventos no período</h2><span className="text-[12px] text-ink-4">vezes · pessoas</span></div>
               <ul className="mt-4 space-y-2">
                 {r.porTipo.slice(0, 9).map((t) => {
                   const [Icone, cor] = ICONE_EVENTO[t.tipo] ?? [Activity, 'text-ink-3 bg-white/[0.06]']
@@ -1242,7 +1242,7 @@ function AbaLogs() {
                     <li key={t.tipo} className="flex items-center gap-3 text-[13px]">
                       <span className={`grid h-7 w-7 flex-none place-items-center rounded-md ${cor}`}><Icone size={14} /></span>
                       <span className="min-w-0 flex-1">
-                        <span className="flex justify-between gap-2"><span className="truncate text-ink-2">{NOMES_EVENTO[t.tipo] ?? t.tipo}</span><span className="tabular-nums text-ink-1">{t.n}</span></span>
+                        <span className="flex justify-between gap-2"><span className="truncate text-ink-2">{NOMES_EVENTO[t.tipo] ?? t.tipo}</span><span className="tabular-nums text-ink-1">{t.n} <span className="text-ink-4">· {t.pessoas}</span></span></span>
                         <span className="mt-1 block h-1 overflow-hidden rounded-full bg-well"><span className="block h-full rounded-full bg-ink-4/70" style={{ width: `${(100 * t.n) / maiorTipo}%` }} /></span>
                       </span>
                     </li>
