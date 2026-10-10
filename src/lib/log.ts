@@ -41,7 +41,8 @@ function ligar() {
 export function registrar(tipo: string, detalhe?: Record<string, unknown>) {
   try {
     ligar()
-    fila.push({ tipo, detalhe, rota: location.pathname + location.search, em: new Date().toISOString() })
+    // a rota nunca leva o código do link de senha (/redefinir-senha?t=…)
+    fila.push({ tipo, detalhe, rota: (location.pathname + location.search).replace(/([?&]t=)[^&]+/, '$1oculto'), em: new Date().toISOString() })
     if (fila.length >= 40) enviar(false)
     else agendar()
   } catch { /* nunca quebra a tela */ }

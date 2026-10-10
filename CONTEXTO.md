@@ -123,6 +123,17 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · Logs explícitos: cada evento em frase, números com unidade
+- Dono achou a aba confusa ("8 3%" na tabela por aparelho). `src/pages/Admin.tsx`: `fraseEvento()` escreve o que a
+  pessoa fez ("Consultou a placa X: VW Gol 2000", "Saiu da página de vendas depois de 84 segundos, tendo descido até
+  28% dela", "Abriu o esquema … mas o teste grátis já tinha acabado"); `nomeTela()`/`nomeEsquema()` traduzem rotas e
+  ids; `origemDaRota()` mostra "veio de: Anúncio Meta · criativo 6". Cartão: frase, quem · aparelho · data, dados
+  técnicos rotulados (e-mail, plano da conta, id da conta/aparelho, endereço, tipo, nº do log). Cópia: uma linha por
+  evento `quando | quem | aparelho | o que fez | dados`. Resumo com títulos e explicação em cada cartão e unidades
+  ("85 pessoas (25%)", "886 vezes · 210 pessoas").
+- **Segurança:** a rota de `/redefinir-senha?t=…` gravava o código do link de senha no log. `src/lib/log.ts` agora troca
+  o `t=` por `oculto` antes de gravar; a tela esconde o código dos registros antigos (`semToken`).
+
 ### 2026-10-09 · Logs: "Logs ao vivo" técnico e botões de copiar
 - Pedido do dono: o feed virou "Logs ao vivo", cada cartão com tudo o que o log tem (nome do evento + código do tipo,
   #id, data/hora com segundos, quem, e-mail, plano, conta, visitante, aparelho, rota e cada campo do `detalhe`).

@@ -1043,24 +1043,99 @@ const NOMES_EVENTO: Record<string, string> = {
   pagina: 'Telas abertas (site e app)', busca: 'Busca', placa: 'Placa encontrada', placa_erro: 'Placa com erro', esquema: 'Esquema',
   viu_planos: 'Viu os planos', clicou_assinar: 'Clicou em assinar', cadastro: 'Cadastrou', cadastro_erro: 'Erro no cadastro',
   login: 'Entrou', login_erro: 'Erro ao entrar', compartilhou: 'Compartilhou', navegador_interno: 'Navegador do Instagram/Facebook',
+  esqueci_senha: 'Pediu senha nova', senha_redefinida: 'Criou senha nova', senha_criada_compra: 'Criou a senha depois de pagar',
 }
 
-/** Uma linha legível do detalhe de cada tipo de evento. */
-function resumoEvento(e: EventoUso) {
-  const d = (e.detalhe ?? {}) as Record<string, string | number | null>
-  switch (e.tipo) {
-    case 'pagina': return e.rota ?? ''
-    case 'busca': return `"${d.termo}" · ${d.resultados} resultado(s)`
-    case 'placa': return `${d.placa} · ${[d.marca, d.modelo, d.ano].filter(Boolean).join(' ')}`
-    case 'placa_erro': return `${d.placa} · ${d.erro}`
-    case 'esquema': return `${String(d.id ?? '').split('/').slice(1).join(' / ')} · ${d.estado}`
-    case 'viu_planos': return String(d.onde ?? '')
-    case 'clicou_assinar': return `${d.plano} ${d.ciclo}`
-    case 'navegador_interno': return `${d.app} · ${d.so} · ${d.acao}`
-    case 'rolou': return `${d.pct}% da página`
-    case 'saiu_landing': return `${d.segundos} s · rolou ${d.rolou}%`
-    default: return d.erro ? String(d.erro) : e.rota ?? ''
+// ── Aba Logs (09/10/2026): cada evento vira uma frase em português ("Consultou a placa…"), sem código solto. ──
+
+/** Nome de uma tela pelo caminho, para "Abriu a tela …". */
+function nomeTela(rota: string | null) {
+  const caminho = String(rota ?? '').split('?')[0]
+  if (caminho === '/' || caminho === '') return 'a página de vendas'
+  const fixas: Record<string, string> = {
+    '/cadastro': 'a tela de cadastro', '/login': 'a tela de entrar', '/app': 'o início da plataforma', '/app/conta': 'Minha conta',
+    '/app/busca': 'a busca da plataforma', '/obrigado': 'a página de obrigado (depois de pagar)', '/esqueci-senha': 'a tela "Esqueci a senha"',
+    '/redefinir-senha': 'a tela de criar senha', '/privacidade': 'a política de privacidade', '/suporte': 'a página de suporte',
+    '/excluir-conta': 'a tela de excluir conta', '/admin': 'o painel do administrador',
   }
+  if (fixas[caminho]) return fixas[caminho]
+  if (caminho.startsWith('/app/veiculo/')) return `a ficha da placa ${caminho.split('/')[3] ?? ''}`
+  if (caminho.startsWith('/app/esquema/')) return `o esquema ${nomeEsquema(caminho.replace('/app/esquema/', ''))}`
+  if (caminho.startsWith('/c/')) return 'um esquema recebido por link'
+  const secao = (Object.keys(SECTION_META) as SectionKey[]).find((k) => caminho.replace('/app/', '').replace('/', '-') === k)
+  return secao ? `a lista de ${SECTION_META[secao].titulo}` : caminho
+}
+
+/** "eletrica/fiat/fiorino-1-4-8v-evo-flex-de-2014-a-2021" → "Fiat Fiorino 1.4 8v Evo Flex de 2014 a 2021 (Elétrica · Leve)". */
+function nomeEsquema(id: string) {
+  const [secao, marca, modelo] = String(id).split('/')
+  const bonito = (t = '') => t.replace(/(\d)-(\d)/g, '$1.$2').replace(/-/g, ' ').replace(/\b\w+/g, (w) => (/^(de|a|em|diante|e|ate)$/.test(w) ? w : w[0].toUpperCase() + w.slice(1)))
+  const meta = SECTION_META[secao as SectionKey]
+  return `${bonito(marca)} ${bonito(modelo)}${meta ? ` (${meta.titulo})` : ''}`.trim()
+}
+
+const SECOES_PAGINA: Record<string, string> = {
+  topo: 'o topo (oferta e chamada principal)', 'como-funciona': 'o tour "Como funciona"', 'seu-carro': 'a busca "Veja se tem o seu carro"',
+  cobertura: 'a parte de cobertura (montadoras e placa)', 'por-que': 'a comparação Deepcar × manual em PDF', planos: 'os planos e preços', faq: 'as perguntas frequentes (FAQ)',
+}
+const ACOES_NAVEGADOR: Record<string, string> = {
+  mostrado: 'Viu o aviso para sair do navegador do', abrir_safari: 'Tocou em "Abrir no Safari" no aviso do navegador do',
+  abrir_chrome: 'Tocou em "Abrir no Chrome" no aviso do navegador do', baixar_app: 'Tocou em "Baixar o app" no aviso do navegador do',
+  copiou_link: 'Copiou o link no aviso do navegador do', continuou_aqui: 'Fechou o aviso e continuou no navegador do',
+}
+const ONDE_OFERTA: Record<string, string> = { faixa: 'na faixa laranja do topo', cabecalho: 'no cabeçalho', topo: 'no topo da página' }
+const ESTADO_ESQUEMA: Record<string, string> = {
+  liberado: '', teste_encerrado: ', mas o teste grátis já tinha acabado (abriu borrado, com o convite para assinar)',
+  fora_do_plano: ', mas esse sistema não está no plano dele (abriu borrado)', recusado: ', mas o teste grátis acabou nesse momento (abriu borrado)',
+}
+
+/** O que a pessoa fez, numa frase. */
+function fraseEvento(e: EventoUso) {
+  const d = (e.detalhe ?? {}) as Record<string, string | number | null | string[]>
+  const n = Number(d.resultados ?? 0)
+  const resultados = n === 0 ? 'nenhum resultado' : n === 1 ? '1 resultado' : `${n} resultados`
+  switch (e.tipo) {
+    case 'pagina': return `Abriu ${nomeTela(e.rota)}`
+    case 'rolou': return `Rolou até ${d.pct}% da página de vendas`
+    case 'saiu_landing': return `Saiu da página de vendas depois de ${d.segundos} segundos, tendo descido até ${d.rolou}% dela`
+    case 'viu_secao': return `Chegou até ${SECOES_PAGINA[String(d.secao)] ?? d.secao} na página de vendas`
+    case 'tour_passo': return `Passou para o passo ${d.passo} de 7 do tour "Como funciona"`
+    case 'busca_landing': return `Procurou "${d.termo}" na busca de carros da página de vendas: ${resultados}`
+    case 'escolheu_carro': return `Escolheu o carro ${d.carro} na busca da página de vendas`
+    case 'carro_para_planos': return 'Foi do carro escolhido para os planos'
+    case 'pegar_oferta': return `Tocou em "Pegar oferta" ${ONDE_OFERTA[String(d.onde)] ?? `(${d.onde})`}`
+    case 'clicou_assinar': return `Clicou para assinar o plano ${String(d.plano ?? '').replace(/^\w/, (l) => l.toUpperCase())} ${d.ciclo ?? ''} e foi para o pagamento`
+    case 'viu_planos': return d.onde === 'conta' ? 'Viu os planos na aba "Plano" da conta' : `Viu os planos na mensagem "${d.onde}"`
+    case 'cadastro': return 'Criou uma conta'
+    case 'cadastro_erro': return `Tentou criar uma conta e deu erro: ${d.erro}`
+    case 'login': return 'Entrou na conta'
+    case 'login_erro': return `Tentou entrar e deu erro: ${d.erro}${d.email ? ` (digitou ${d.email})` : ''}`
+    case 'esqueci_senha': return 'Pediu o link para criar uma senha nova'
+    case 'senha_redefinida': return 'Criou uma senha nova pelo link do e-mail'
+    case 'senha_criada_compra': return 'Criou a senha depois de pagar (a conta foi criada na compra)'
+    case 'placa': return `Consultou a placa ${d.placa}: ${[d.marca, d.modelo, d.ano].filter(Boolean).join(' ')}`
+    case 'placa_erro': return `Tentou consultar a placa ${d.placa} e deu erro: ${d.erro}`
+    case 'busca': return `Buscou "${d.termo}" na plataforma: ${resultados}`
+    case 'esquema': return `Abriu o esquema ${nomeEsquema(String(d.id ?? ''))}${ESTADO_ESQUEMA[String(d.estado)] ?? ''}`
+    case 'compartilhou': return 'Compartilhou um esquema por link'
+    case 'whatsapp': return `Tocou no botão do WhatsApp${d.onde ? ` (em ${nomeTela(String(d.onde))})` : ''}`
+    case 'navegador_interno': return `${ACOES_NAVEGADOR[String(d.acao)] ?? `Aviso do navegador (${d.acao}) do`} ${d.app} (${d.so === 'ios' ? 'iPhone' : 'Android'})`
+    case 'app_aberto': return 'Abriu o app Android'
+    case 'compra_play': return 'Assinou pelo app Android (Google Play)'
+    case 'compra_apple': return 'Assinou pelo app do iPhone (App Store)'
+    case 'push_diag': return `Notificações do app: etapa "${d.etapa}" — ${d.info}`
+    default: return NOMES_EVENTO[e.tipo] ?? e.tipo
+  }
+}
+
+/** De qual anúncio a pessoa veio, lido da UTM da própria rota (página de vendas). */
+function origemDaRota(rota: string | null) {
+  const qs = String(rota ?? '').split('?')[1]
+  if (!qs) return null
+  const p = new URLSearchParams(qs)
+  const fonte = p.get('utm_source')
+  if (!fonte) return p.get('fbclid') ? 'Facebook/Instagram (sem campanha)' : null
+  return [fonte === 'facebook' ? 'Anúncio Meta' : fonte, p.get('utm_content')].filter(Boolean).join(' · ')
 }
 
 /** Ícone e cor de cada tipo de evento no feed. */
@@ -1073,13 +1148,20 @@ const ICONE_EVENTO: Record<string, [typeof Activity, string]> = {
   compra_apple: [BadgeDollarSign, 'text-ok bg-ok/15'], whatsapp: [MessageCircle, 'text-whatsapp bg-whatsapp/15'], app_aberto: [Smartphone, 'text-trace-hi bg-trace/15'],
   rolou: [ArrowDown, 'text-ink-3 bg-white/[0.06]'], saiu_landing: [LogOut, 'text-ink-3 bg-white/[0.06]'], tour_passo: [Layers, 'text-ink-3 bg-white/[0.06]'],
   escolheu_carro: [Car, 'text-trace-hi bg-trace/15'], carro_para_planos: [CreditCard, 'text-warn bg-warn/15'], compartilhou: [Link2, 'text-trace-hi bg-trace/15'],
+  esqueci_senha: [KeyRound, 'text-warn bg-warn/15'], senha_redefinida: [KeyRound, 'text-ok bg-ok/15'], senha_criada_compra: [KeyRound, 'text-ok bg-ok/15'],
+  navegador_interno: [MonitorSmartphone, 'text-warn bg-warn/15'], push_diag: [Bell, 'text-ink-3 bg-white/[0.06]'],
 }
 
-// "Ocultar dados pessoais" (09/10/2026, para gravar a tela): nome vira iniciais, e-mail e placa ficam mascarados.
+// "Ocultar dados pessoais" (para gravar a tela): nome vira iniciais, e-mail e placa ficam mascarados.
 const mascaraNome = (n: string | null) => (n ?? '').trim().split(/\s+/).filter(Boolean).map((p) => p[0].toUpperCase() + '•'.repeat(Math.min(5, Math.max(2, p.length - 1)))).join(' ')
 const mascaraEmail = (e: string | null) => { const [u, d] = String(e ?? '').split('@'); return d ? `${u.slice(0, 1)}•••••@${d}` : '' }
-const mascaraPlaca = (t: string) => t.replace(/\b([A-Z]{3})-?[0-9][0-9A-Z][0-9]{2}\b/g, '$1-••••')
+const mascaraTexto = (t: string) => t
+  .replace(/\b([A-Z]{3})-?[0-9][0-9A-Z][0-9]{2}\b/g, '$1-••••')
+  .replace(/([\w.+-])[\w.+-]*@([\w-]+\.[\w.]+)/g, '$1•••••@$2')
+// código do link de senha nunca aparece (registros antigos guardaram a rota com ?t=…)
+const semToken = (t: string) => t.replace(/([?&]t=)[^&\s]+/g, '$1(oculto)')
 
+const dataHora = (iso: string) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')
 function quandoFoi(iso: string, agora: number) {
   const s = Math.max(0, Math.round((agora - new Date(iso).getTime()) / 1000))
   if (s < 60) return 'agora'
@@ -1087,12 +1169,12 @@ function quandoFoi(iso: string, agora: number) {
   if (s < 86400) return `há ${Math.floor(s / 3600)} h`
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
-
-const dataHora = (iso: string) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')
+const vezes = (n: number) => (n === 1 ? '1 vez' : `${n.toLocaleString('pt-BR')} vezes`)
+const pessoas = (n: number) => (n === 1 ? '1 pessoa' : `${n.toLocaleString('pt-BR')} pessoas`)
 
 function lerOcultar() { try { return localStorage.getItem('deepcar.admin.ocultar') !== '0' } catch { return true } }
 
-/** O que cada pessoa faz no site e no app (eventos_uso), para achar onde o cadastro trava. Atualiza sozinho a cada 30 s. */
+/** O que cada pessoa faz no site e no app (eventos_uso). Atualiza sozinho a cada 30 s. */
 function AbaLogs() {
   const [dias, setDias] = useState(7)
   const [tipo, setTipo] = useState('')
@@ -1105,6 +1187,7 @@ function AbaLogs() {
   const [agora, setAgora] = useState(() => Date.now())
   const [atualizado, setAtualizado] = useState<number | null>(null)
   const [mostrar, setMostrar] = useState(40)
+  const [copiado, setCopiado] = useState('')
 
   const carregar = useCallback(async () => {
     try {
@@ -1122,28 +1205,26 @@ function AbaLogs() {
     setOcultar((v) => { try { localStorage.setItem('deepcar.admin.ocultar', v ? '0' : '1') } catch { /* modo anônimo */ } return !v })
   }
   const nome = (n: string | null) => (ocultar ? mascaraNome(n) : n ?? '')
-  const detalhe = (e: EventoUso) => (ocultar ? mascaraPlaca(resumoEvento(e)) : resumoEvento(e))
-  const [copiado, setCopiado] = useState('')
-  const texto = (v: string) => (ocultar ? mascaraPlaca(v) : v)
-  /** Tudo o que o log tem, em pares campo → valor (o que aparece no cartão e vai na cópia). */
+  const texto = (v: string) => (ocultar ? mascaraTexto(semToken(v)) : semToken(v))
+  const quem = (e: EventoUso) => (e.usuario_id ? nome(e.nome) || 'Conta sem nome' : 'Visitante sem conta')
+  const frase = (e: EventoUso) => texto(fraseEvento(e))
+
+  /** Os dados técnicos do log, em pares campo → valor (cartão e cópia). */
   function camposLog(e: EventoUso): [string, string][] {
     const c: [string, string][] = []
     if (e.usuario_id) {
-      c.push(['quem', nome(e.nome)])
       if (e.email) c.push(['e-mail', ocultar ? mascaraEmail(e.email) : e.email])
-      if (e.plano) c.push(['plano', e.plano])
-      c.push(['conta', ocultar ? `${e.usuario_id.slice(0, 4)}…` : e.usuario_id])
+      if (e.plano) c.push(['plano da conta', e.plano === 'free' ? 'teste grátis' : rotuloPlano(e.plano)])
+      c.push(['id da conta', ocultar ? `${e.usuario_id.slice(0, 4)}…` : e.usuario_id])
     }
-    if (e.visitante) c.push(['visitante', ocultar ? `${e.visitante.slice(0, 6)}…` : e.visitante])
-    if (e.aparelho) c.push(['aparelho', e.aparelho])
-    if (e.rota) c.push(['rota', texto(e.rota)])
-    for (const [k, v] of Object.entries(e.detalhe ?? {})) {
-      if (v == null || v === '') continue
-      c.push([k, texto(typeof v === 'object' ? JSON.stringify(v) : String(v))])
-    }
+    if (e.visitante) c.push(['id do aparelho', ocultar ? `${e.visitante.slice(0, 6)}…` : e.visitante])
+    const origem = origemDaRota(e.rota)
+    if (origem) c.push(['veio de', origem])
+    if (e.rota) c.push(['endereço', texto(e.rota.split('?')[0])])
+    c.push(['tipo', e.tipo], ['log', `#${e.id}`])
     return c
   }
-  const linhaLog = (e: EventoUso) => [dataHora(e.em), e.tipo, NOMES_EVENTO[e.tipo] ?? e.tipo, ...camposLog(e).map(([k, v]) => `${k}=${v}`)].join(' | ')
+  const linhaLog = (e: EventoUso) => [dataHora(e.em), quem(e), e.aparelho ?? '', frase(e), ...camposLog(e).map(([k, v]) => `${k}: ${v}`)].join(' | ')
   async function copiarTexto(t: string, aviso: string) {
     try { await navigator.clipboard.writeText(t) } catch {
       const area = document.createElement('textarea'); area.value = t; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove()
@@ -1151,11 +1232,11 @@ function AbaLogs() {
     setCopiado(aviso); setTimeout(() => setCopiado(''), 2500)
   }
   async function copiarLogs(janela: '1h' | '24h' | 'hoje' | 'tudo') {
-    const agoraMs = agora // relógio da tela (atualiza a cada 5 s)
-    const inicioHoje = new Date(); inicioHoje.setHours(0, 0, 0, 0)
-    const desde = janela === '1h' ? agoraMs - 3_600_000 : janela === '24h' ? agoraMs - 86_400_000 : janela === 'hoje' ? inicioHoje.getTime() : 0
+    const inicioHoje = new Date(agora); inicioHoje.setHours(0, 0, 0, 0)
+    const desde = janela === '1h' ? agora - 3_600_000 : janela === '24h' ? agora - 86_400_000 : janela === 'hoje' ? inicioHoje.getTime() : 0
     const lista = (dados?.eventos ?? []).filter((e) => new Date(e.em).getTime() >= desde)
-    const cab = `Deepcar · logs (${{ '1h': 'última hora', '24h': 'últimas 24 h', hoje: 'hoje', tudo: `últimos ${dias === 1 ? 'hoje' : `${dias} dias`}` }[janela]}) · ${lista.length} eventos · copiado em ${dataHora(new Date().toISOString())}`
+    const nomeJanela = { '1h': 'última hora', '24h': 'últimas 24 h', hoje: 'hoje', tudo: dias === 1 ? 'hoje' : `últimos ${dias} dias` }[janela]
+    const cab = `Deepcar · logs (${nomeJanela}) · ${lista.length} eventos · copiado em ${dataHora(new Date(agora).toISOString())}\nformato: quando | quem | aparelho | o que fez | dados técnicos`
     await copiarTexto([cab, ...lista.map(linhaLog)].join('\n'), `${lista.length} logs copiados`)
   }
 
@@ -1163,22 +1244,23 @@ function AbaLogs() {
   const tipoN = (k: string) => r?.porTipo.find((t) => t.tipo === k)
   const visitas = (r?.secoes ?? []).reduce((a, l) => a + l.visitantes, 0) || (r?.leitura ?? []).reduce((a, l) => a + l.visitantes, 0)
   const funil = r?.secoes?.length
-    ? ([['Visitantes da página', 'visitantes'], ['Viram o tour', 'tour'], ['Procuraram o carro', 'busca'], ['Viram os planos', 'planos'], ['Leram o FAQ', 'faq'], ['Tocaram em Pegar oferta', 'oferta'], ['Clicaram em assinar', 'assinar']] as const)
+    ? ([['Abriram a página de vendas', 'visitantes'], ['Viram o tour "Como funciona"', 'tour'], ['Chegaram na busca do carro', 'busca'], ['Chegaram nos planos e preços', 'planos'], ['Chegaram no FAQ', 'faq'], ['Tocaram em "Pegar oferta"', 'oferta'], ['Clicaram para assinar', 'assinar']] as const)
         .map(([rotulo, k]) => ({ rotulo, n: r.secoes!.reduce((a, l) => a + l[k], 0) }))
     : []
   const maiorTipo = Math.max(1, ...(r?.porTipo ?? []).map((t) => t.n))
   const porAparelho = (r?.secoes ?? []).map((l) => ({ ...l, ...(r?.leitura?.find((x) => x.so === l.so) ?? {}) }))
   const pct = (n: number, de: number) => (de ? Math.round((100 * n) / de) : 0)
 
-  const KPIS: [string, number | string, string, typeof Activity, string][] = [
-    ['Visitas na página de vendas', visitas, 'aparelhos diferentes', Eye, 'text-trace-hi bg-trace/15'],
-    ['Cadastros', tipoN('cadastro')?.pessoas ?? 0, 'contas novas', UserPlus, 'text-ok bg-ok/15'],
-    ['Placas consultadas', tipoN('placa')?.n ?? 0, `${tipoN('placa')?.pessoas ?? 0} pessoas`, Car, 'text-trace-hi bg-trace/15'],
-    ['Esquemas abertos', tipoN('esquema')?.n ?? 0, `${tipoN('esquema')?.pessoas ?? 0} pessoas`, Zap, 'text-warn bg-warn/15'],
-    ['Clicaram em assinar', tipoN('clicou_assinar')?.pessoas ?? 0, `${tipoN('clicou_assinar')?.n ?? 0} cliques`, CreditCard, 'text-ok bg-ok/15'],
+  const KPIS: [string, number, string, typeof Activity, string][] = [
+    ['Pessoas na página de vendas', visitas, 'aparelhos diferentes que abriram a página', Eye, 'text-trace-hi bg-trace/15'],
+    ['Contas criadas', tipoN('cadastro')?.pessoas ?? 0, 'cadastros novos no período', UserPlus, 'text-ok bg-ok/15'],
+    ['Placas consultadas', tipoN('placa')?.n ?? 0, `por ${pessoas(tipoN('placa')?.pessoas ?? 0)}`, Car, 'text-trace-hi bg-trace/15'],
+    ['Esquemas abertos', tipoN('esquema')?.n ?? 0, `por ${pessoas(tipoN('esquema')?.pessoas ?? 0)}`, Zap, 'text-warn bg-warn/15'],
+    ['Foram para o pagamento', tipoN('clicou_assinar')?.pessoas ?? 0, `pessoas · ${vezes(tipoN('clicou_assinar')?.n ?? 0)} no total`, CreditCard, 'text-ok bg-ok/15'],
   ]
   const cartao = 'rounded-2xl border seam bg-bench-1/90 p-5 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]'
-  const rotulo = 'code text-[11px] uppercase tracking-[0.18em] text-ink-4'
+  const rotulo = 'text-[15px] font-semibold text-ink-1'
+  const explica = 'mt-1 text-[12.5px] leading-snug text-ink-4'
 
   return (
     <>
@@ -1191,7 +1273,7 @@ function AbaLogs() {
               Ao vivo
             </span>
           </div>
-          <p className="mt-1.5 text-ink-3">O que as pessoas fazem no site e nos apps, em tempo real.{atualizado && <span className="text-ink-4"> · atualizado {quandoFoi(new Date(atualizado).toISOString(), agora)}</span>}</p>
+          <p className="mt-1.5 text-ink-3">Tudo o que as pessoas fazem no site e nos apps.{atualizado && <span className="text-ink-4"> Atualizado {quandoFoi(new Date(atualizado).toISOString(), agora)}; atualiza sozinho a cada 30 segundos.</span>}</p>
         </div>
         <div className="flex items-center gap-2">
           <button type="button" onClick={alternarOcultar} aria-pressed={ocultar} className={`inline-flex h-10 items-center gap-2 rounded-lg border px-3.5 text-[13px] ${ocultar ? 'border-trace/40 bg-trace/10 text-ink-1' : 'seam text-ink-3 hover:text-ink-1'}`}>
@@ -1205,27 +1287,27 @@ function AbaLogs() {
         <div className="flex rounded-lg bg-well p-1">
           {[1, 7, 30, 90].map((d) => (
             <button key={d} type="button" onClick={() => setDias(d)} className={`rounded-md px-3.5 py-1.5 text-[13px] transition-colors ${dias === d ? 'bg-bench-3 font-medium text-ink-1 shadow' : 'text-ink-3 hover:text-ink-1'}`}>
-              {d === 1 ? 'Hoje' : `${d} dias`}
+              {d === 1 ? 'Hoje' : `Últimos ${d} dias`}
             </button>
           ))}
         </div>
         <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="field h-9 w-auto py-0 text-[13px]">
-          <option value="">Todos os eventos</option>
+          <option value="">Todos os tipos de evento</option>
           {Object.entries(NOMES_EVENTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
         <select value={aparelho} onChange={(e) => setAparelho(e.target.value)} className="field h-9 w-auto py-0 text-[13px]">
           <option value="">Site e apps</option>
           <option value="site">Só o site</option>
-          <option value="android">App Android</option>
-          <option value="ios">App iPhone</option>
+          <option value="android">Só o app Android</option>
+          <option value="ios">Só o app iPhone</option>
         </select>
         <label className="relative w-full sm:ml-auto sm:w-auto">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-          <input className="field h-9 w-full pl-8 text-[13px] sm:w-56" placeholder="Nome ou e-mail" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="field h-9 w-full pl-8 text-[13px] sm:w-56" placeholder="Procurar pessoa (nome ou e-mail)" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
         {usuario && (
           <button type="button" onClick={() => setUsuario(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-trace/40 bg-trace/10 px-3 py-1.5 text-[13px] text-ink-1">
-            Só {nome(usuario.nome)} <X size={13} />
+            Mostrando só {nome(usuario.nome)} <X size={13} />
           </button>
         )}
       </div>
@@ -1236,12 +1318,12 @@ function AbaLogs() {
           <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
             {KPIS.map(([titulo, valor, sub, Icone, cor], i) => (
               <div key={titulo} className={`${cartao} surge last:col-span-2 lg:last:col-span-1`} style={{ ['--i' as string]: i }}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[12.5px] leading-tight text-ink-3">{titulo}</span>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-[13px] font-medium leading-tight text-ink-2">{titulo}</span>
                   <span className={`grid h-8 w-8 flex-none place-items-center rounded-lg ${cor}`}><Icone size={16} /></span>
                 </div>
                 <p className="mt-3 text-[32px] font-semibold leading-none tracking-tight tabular-nums text-ink-1">{valor.toLocaleString('pt-BR')}</p>
-                <p className="mt-1.5 text-[12px] text-ink-4">{sub}</p>
+                <p className="mt-1.5 text-[12px] leading-snug text-ink-4">{sub}</p>
               </div>
             ))}
           </div>
@@ -1249,20 +1331,20 @@ function AbaLogs() {
           <div className="mt-3 grid gap-3 lg:grid-cols-5">
             {!!funil.length && (
               <section className={`${cartao} lg:col-span-3`}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <h2 className={rotulo}>Página de vendas · até onde chegam <span className="normal-case tracking-normal">(cada aparelho conta 1 vez)</span></h2>
-                  <span className="text-[12px] text-ink-4">{pct(funil[funil.length - 1].n, funil[0].n)}% clicam em assinar</span>
-                </div>
-                <ul className="mt-4 space-y-2.5">
+                <h2 className={rotulo}>Até onde as pessoas chegam na página de vendas</h2>
+                <p className={explica}>Cada pessoa conta uma vez. A porcentagem é sobre quem abriu a página.</p>
+                <ul className="mt-4 space-y-3">
                   {funil.map((f, i) => {
                     const w = funil[0].n ? Math.max(2, (100 * f.n) / funil[0].n) : 0
                     return (
-                      <li key={f.rotulo} className="grid grid-cols-[118px_1fr_70px] items-center gap-3 text-[13px] sm:grid-cols-[190px_1fr_84px]">
-                        <span className="truncate text-ink-2">{f.rotulo}</span>
-                        <span className="h-7 overflow-hidden rounded-md bg-well">
-                          <span className="block h-full rounded-md bg-gradient-to-r from-trace to-trace-hi/80 transition-[width] duration-700" style={{ width: `${w}%`, opacity: 1 - i * 0.08 }} />
+                      <li key={f.rotulo} className="text-[13px]">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="text-ink-2">{f.rotulo}</span>
+                          <span className="tabular-nums text-ink-1">{pessoas(f.n)}{i > 0 && <span className="text-ink-4"> ({pct(f.n, funil[0].n)}%)</span>}</span>
+                        </div>
+                        <span className="mt-1.5 block h-2.5 overflow-hidden rounded-full bg-well">
+                          <span className="block h-full rounded-full bg-gradient-to-r from-trace to-trace-hi/80 transition-[width] duration-700" style={{ width: `${w}%`, opacity: 1 - i * 0.07 }} />
                         </span>
-                        <span className="text-right tabular-nums text-ink-1">{f.n} <span className="text-ink-4">{i ? `${pct(f.n, funil[0].n)}%` : ''}</span></span>
                       </li>
                     )
                   })}
@@ -1270,15 +1352,16 @@ function AbaLogs() {
               </section>
             )}
             <section className={`${cartao} ${funil.length ? 'lg:col-span-2' : 'lg:col-span-5'}`}>
-              <div className="flex items-baseline justify-between gap-3"><h2 className={rotulo}>Eventos no período</h2><span className="text-[12px] text-ink-4">vezes · pessoas</span></div>
-              <ul className="mt-4 space-y-2">
+              <h2 className={rotulo}>O que mais aconteceu</h2>
+              <p className={explica}>Quantas vezes cada coisa aconteceu e quantas pessoas diferentes fizeram.</p>
+              <ul className="mt-4 space-y-2.5">
                 {r.porTipo.slice(0, 9).map((t) => {
                   const [Icone, cor] = ICONE_EVENTO[t.tipo] ?? [Activity, 'text-ink-3 bg-white/[0.06]']
                   return (
                     <li key={t.tipo} className="flex items-center gap-3 text-[13px]">
                       <span className={`grid h-7 w-7 flex-none place-items-center rounded-md ${cor}`}><Icone size={14} /></span>
                       <span className="min-w-0 flex-1">
-                        <span className="flex justify-between gap-2"><span className="truncate text-ink-2">{NOMES_EVENTO[t.tipo] ?? t.tipo}</span><span className="tabular-nums text-ink-1">{t.n} <span className="text-ink-4">· {t.pessoas}</span></span></span>
+                        <span className="flex justify-between gap-2"><span className="truncate text-ink-2">{NOMES_EVENTO[t.tipo] ?? t.tipo}</span><span className="flex-none text-[12px] tabular-nums text-ink-3">{vezes(t.n)} · {pessoas(t.pessoas)}</span></span>
                         <span className="mt-1 block h-1 overflow-hidden rounded-full bg-well"><span className="block h-full rounded-full bg-ink-4/70" style={{ width: `${(100 * t.n) / maiorTipo}%` }} /></span>
                       </span>
                     </li>
@@ -1291,35 +1374,39 @@ function AbaLogs() {
 
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <section className={cartao}>
-              <h2 className={rotulo}>Clicaram em assinar</h2>
-              <ul className="mt-3 space-y-2 text-[13.5px]">
+              <h2 className={rotulo}>Quem foi para o pagamento</h2>
+              <p className={explica}>Pessoas com conta que clicaram em assinar, e se assinaram.</p>
+              <ul className="mt-3 space-y-2 text-[13px]">
                 {r.assinar.slice(0, 8).map((a) => (
                   <li key={a.id} className="flex items-center justify-between gap-3">
                     <button type="button" onClick={() => setUsuario({ id: a.id, nome: a.nome })} className="truncate text-left text-ink-1 hover:text-trace-hi">{nome(a.nome)}</button>
-                    <span className={`flex-none rounded-full px-2 py-0.5 text-[11.5px] ${a.plano === 'free' ? 'bg-warn/15 text-warn' : 'bg-ok/15 text-ok'}`}>{a.plano === 'free' ? 'não assinou' : rotuloPlano(a.plano)} · {a.cliques}x</span>
+                    <span className={`flex-none rounded-full px-2 py-0.5 text-[11.5px] ${a.plano === 'free' ? 'bg-warn/15 text-warn' : 'bg-ok/15 text-ok'}`}>{a.plano === 'free' ? 'ainda não assinou' : `assinou o ${rotuloPlano(a.plano)}`} · {vezes(a.cliques)}</span>
                   </li>
                 ))}
-                {!r.assinar.length && <li className="text-ink-4">Ninguém no período.</li>}
+                {!r.assinar.length && <li className="text-ink-4">Ninguém com conta no período.</li>}
               </ul>
             </section>
             <section className={cartao}>
-              <h2 className={rotulo}>Buscas sem resultado</h2>
+              <h2 className={rotulo}>Buscas que não acharam nada</h2>
+              <p className={explica}>O que procuraram e não encontrou nenhum esquema.</p>
               <ul className="mt-3 flex flex-wrap gap-1.5 text-[12.5px]">
-                {r.semResultado.slice(0, 18).map((b) => <li key={b.termo} className="rounded-full border seam bg-bench-2 px-2.5 py-1 text-ink-2">{b.termo}{b.n > 1 && <span className="text-ink-4"> · {b.n}</span>}</li>)}
+                {r.semResultado.slice(0, 18).map((b) => <li key={b.termo} className="rounded-full border seam bg-bench-2 px-2.5 py-1 text-ink-2">"{b.termo}"{b.n > 1 && <span className="text-ink-4"> · {vezes(b.n)}</span>}</li>)}
                 {!r.semResultado.length && <li className="text-ink-4">Nenhuma.</li>}
               </ul>
             </section>
             <section className={cartao}>
-              <h2 className={rotulo}>Placas com erro</h2>
-              <ul className="mt-3 space-y-1.5 text-[13.5px]">
-                {r.placasErro.slice(0, 8).map((p) => <li key={p.erro} className="flex justify-between gap-3"><span className="truncate text-ink-2">{p.erro}</span><span className="tabular-nums text-ink-3">{p.n}x</span></li>)}
-                {!r.placasErro.length && <li className="text-ink-4">Nenhuma.</li>}
+              <h2 className={rotulo}>Erros ao consultar placa</h2>
+              <p className={explica}>Por que a consulta de placa falhou.</p>
+              <ul className="mt-3 space-y-1.5 text-[13px]">
+                {r.placasErro.slice(0, 8).map((p) => <li key={p.erro} className="flex justify-between gap-3"><span className="text-ink-2">{p.erro}</span><span className="flex-none tabular-nums text-ink-3">{vezes(p.n)}</span></li>)}
+                {!r.placasErro.length && <li className="text-ink-4">Nenhum.</li>}
               </ul>
             </section>
             <section className={cartao}>
-              <h2 className={rotulo}>Navegador do Instagram/Facebook</h2>
-              <ul className="mt-3 space-y-1.5 text-[13.5px]">
-                {r.navegador.slice(0, 8).map((n) => <li key={`${n.so}${n.acao}`} className="flex justify-between gap-3"><span className="truncate text-ink-2">{n.so} · {n.acao}</span><span className="tabular-nums text-ink-3">{n.n}</span></li>)}
+              <h2 className={rotulo}>Quem veio pelo Instagram/Facebook</h2>
+              <p className={explica}>O que fizeram no aviso para sair do navegador do app (dentro da plataforma).</p>
+              <ul className="mt-3 space-y-1.5 text-[13px]">
+                {r.navegador.slice(0, 8).map((n) => <li key={`${n.so}${n.acao}`} className="flex justify-between gap-3"><span className="text-ink-2">{n.so === 'ios' ? 'iPhone' : n.so === 'android' ? 'Android' : n.so}: {(ACOES_NAVEGADOR[n.acao] ?? n.acao).replace(/ do$/, '').replace(/^\w/, (l) => l.toLowerCase())}</span><span className="flex-none tabular-nums text-ink-3">{vezes(n.n)}</span></li>)}
                 {!r.navegador.length && <li className="text-ink-4">Nada no período.</li>}
               </ul>
             </section>
@@ -1327,18 +1414,20 @@ function AbaLogs() {
 
           {!!porAparelho.length && (
             <section className={`${cartao} mt-3 overflow-x-auto`}>
-              <h2 className={rotulo}>Página de vendas por aparelho</h2>
-              <table className="mt-3 w-full min-w-[760px] text-left text-[13px]">
+              <h2 className={rotulo}>Página de vendas, separada por aparelho</h2>
+              <p className={explica}>Em cada coluna: quantas pessoas daquele aparelho chegaram ali e, entre parênteses, a porcentagem sobre quem abriu a página nesse aparelho.</p>
+              <table className="mt-3 w-full min-w-[820px] text-left text-[13px]">
                 <thead className="text-[12px] text-ink-4"><tr>
-                  {['Aparelho', 'Visitas', 'Tempo (mediana)', 'Viu o tour', 'Viu a busca', 'Viu os planos', 'Pegar oferta', 'Clicou em assinar'].map((h) => <th key={h} className="pb-2 font-medium">{h}</th>)}
+                  {['Aparelho', 'Abriram a página', 'Tempo típico na página', 'Viram o tour', 'Chegaram na busca', 'Chegaram nos planos', 'Pegar oferta', 'Clicaram para assinar'].map((h) => <th key={h} className="pb-2 pr-3 font-medium">{h}</th>)}
                 </tr></thead>
                 <tbody className="tabular-nums">
                   {porAparelho.map((l) => (
                     <tr key={l.so} className="border-t seam-soft">
-                      <td className="py-2 font-medium text-ink-1">{l.so}</td><td className="text-ink-1">{l.visitantes}</td>
-                      <td className="text-ink-2">{'segundos_mediana' in l && l.segundos_mediana != null ? `${l.segundos_mediana} s` : '—'}</td>
+                      <td className="py-2.5 pr-3 font-medium text-ink-1">{l.so}</td>
+                      <td className="pr-3 text-ink-1">{pessoas(l.visitantes)}</td>
+                      <td className="pr-3 text-ink-2">{'segundos_mediana' in l && l.segundos_mediana != null ? `${l.segundos_mediana} segundos` : '—'}</td>
                       {([l.tour, l.busca, l.planos, l.oferta, l.assinar]).map((n, i) => (
-                        <td key={i} className="text-ink-2">{n} <span className="text-[11.5px] text-ink-4">{pct(n, l.visitantes)}%</span></td>
+                        <td key={i} className="pr-3 text-ink-2">{pessoas(n)} <span className="text-ink-4">({pct(n, l.visitantes)}%)</span></td>
                       ))}
                     </tr>
                   ))}
@@ -1351,15 +1440,17 @@ function AbaLogs() {
 
       <section className={`${cartao} mt-3 !p-0`}>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b seam px-5 py-4">
-          <div className="flex items-center gap-2.5">
-            <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok/70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-ok" /></span>
-            <h2 className={rotulo}>Logs ao vivo</h2>
-            <span className="code text-[11px] text-ink-4">{dados?.eventos.length ?? 0} carregados</span>
+          <div>
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok/70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-ok" /></span>
+              <h2 className={rotulo}>Logs ao vivo</h2>
+            </div>
+            <p className={explica}>Cada coisa que alguém fez, da mais recente para a mais antiga ({dados?.eventos.length ?? 0} carregadas).</p>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            <Copy size={14} className="mr-0.5 text-ink-4" />
-            {([['1h', 'Última hora'], ['24h', 'Últimas 24 h'], ['hoje', 'Hoje'], ['tudo', 'Tudo']] as const).map(([k, r]) => (
-              <button key={k} type="button" onClick={() => void copiarLogs(k)} className="rounded-md border seam px-2.5 py-1 text-[12px] text-ink-3 hover:border-trace/40 hover:text-ink-1">{r}</button>
+            <span className="mr-1 inline-flex items-center gap-1.5 text-[12px] text-ink-4"><Copy size={13} /> Copiar:</span>
+            {([['1h', 'Última hora'], ['24h', 'Últimas 24 h'], ['hoje', 'Hoje'], ['tudo', 'Tudo']] as const).map(([k, rr]) => (
+              <button key={k} type="button" onClick={() => void copiarLogs(k)} className="rounded-md border seam px-2.5 py-1 text-[12px] text-ink-3 hover:border-trace/40 hover:text-ink-1">{rr}</button>
             ))}
             {copiado && <span role="status" className="ml-1 text-[12px] text-ok">{copiado}</span>}
           </div>
@@ -1367,33 +1458,30 @@ function AbaLogs() {
         <ul className="divide-y divide-white/[0.05]">
           {(dados?.eventos ?? []).slice(0, mostrar).map((e, i) => {
             const [Icone, cor] = ICONE_EVENTO[e.tipo] ?? [Activity, 'text-ink-3 bg-white/[0.06]']
-            const campos = camposLog(e)
             return (
-              <li key={e.id} className={`group px-5 py-3.5 transition-colors hover:bg-white/[0.02] ${i < 12 ? 'surge' : ''}`} style={i < 12 ? { ['--i' as string]: i } : undefined}>
+              <li key={e.id} className={`group px-5 py-4 transition-colors hover:bg-white/[0.02] ${i < 12 ? 'surge' : ''}`} style={i < 12 ? { ['--i' as string]: i } : undefined}>
                 <div className="flex items-start gap-3.5">
                   <span className={`mt-0.5 grid h-9 w-9 flex-none place-items-center rounded-xl ${cor}`}><Icone size={16} /></span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="text-[13.5px] font-medium text-ink-1">{NOMES_EVENTO[e.tipo] ?? e.tipo}</span>
-                      <span className="code rounded bg-white/[0.06] px-1.5 py-0.5 text-[11px] text-ink-3">{e.tipo}</span>
-                      <span className="code text-[11px] text-ink-4">#{e.id}</span>
-                      <span className="ml-auto code text-[11.5px] tabular-nums text-ink-3" title={e.em}>{dataHora(e.em)} <span className="text-ink-4">· {quandoFoi(e.em, agora)}</span></span>
-                    </div>
-                    <p className="mt-0.5 text-[13px] text-ink-2">{detalhe(e) || <span className="text-ink-4">sem detalhe</span>}</p>
-                    <dl className="mt-2 flex flex-wrap gap-1.5 code text-[11px]">
-                      {campos.map(([k, v]) => (
+                    <p className="text-[14px] leading-snug text-ink-1">{frase(e)}</p>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] text-ink-3">
+                      {e.usuario_id
+                        ? <button type="button" onClick={() => setUsuario({ id: e.usuario_id!, nome: e.nome ?? '' })} className="font-medium text-trace-hi hover:underline">{quem(e)}</button>
+                        : <span>{quem(e)}</span>}
+                      {e.aparelho && <><span className="text-ink-4">·</span><span>{e.aparelho}</span></>}
+                      <span className="text-ink-4">·</span>
+                      <span className="tabular-nums" title={e.em}>{dataHora(e.em)} <span className="text-ink-4">({quandoFoi(e.em, agora)})</span></span>
+                    </p>
+                    <dl className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+                      {camposLog(e).map(([k, v]) => (
                         <div key={k} className="flex max-w-full items-baseline gap-1 rounded-md border border-white/[0.06] bg-well/70 px-1.5 py-0.5">
-                          <dt className="text-ink-4">{k}</dt>
-                          <dd className="truncate text-ink-2">
-                            {k === 'conta' && e.usuario_id
-                              ? <button type="button" onClick={() => setUsuario({ id: e.usuario_id!, nome: e.nome ?? '' })} className="text-trace-hi hover:underline">{v}</button>
-                              : v}
-                          </dd>
+                          <dt className="text-ink-4">{k}:</dt>
+                          <dd className="code truncate text-ink-2">{v}</dd>
                         </div>
                       ))}
                     </dl>
                   </div>
-                  <button type="button" onClick={() => void copiarTexto(linhaLog(e), '1 log copiado')} aria-label="Copiar este log" className="flex-none rounded-md p-1.5 text-ink-4 opacity-60 hover:bg-white/[0.05] hover:text-ink-1 group-hover:opacity-100"><Copy size={14} /></button>
+                  <button type="button" onClick={() => void copiarTexto(linhaLog(e), '1 log copiado')} aria-label="Copiar este log" title="Copiar este log" className="flex-none rounded-md p-1.5 text-ink-4 opacity-60 hover:bg-white/[0.05] hover:text-ink-1 group-hover:opacity-100"><Copy size={14} /></button>
                 </div>
               </li>
             )
@@ -1405,7 +1493,7 @@ function AbaLogs() {
           <button type="button" onClick={() => setMostrar((n) => n + 60)} className="w-full border-t seam py-3 text-[13px] text-trace-hi hover:bg-white/[0.02]">Mostrar mais</button>
         )}
       </section>
-      <p className="mt-2 text-[12px] text-ink-4">Até 400 eventos mais recentes do filtro e do período escolhido (os botões de copiar usam esses). O registro guarda 120 dias. Com "Dados pessoais ocultos" ligado, a cópia sai mascarada.</p>
+      <p className="mt-2 text-[12px] text-ink-4">A tela carrega os 400 eventos mais recentes do período e dos filtros escolhidos; os botões de copiar usam esses. O registro guarda 120 dias. Com "Dados pessoais ocultos" ligado, a cópia também sai mascarada.</p>
     </>
   )
 }
