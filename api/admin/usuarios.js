@@ -166,16 +166,9 @@ async function logs(req, res) {
   const busca = q ? `%${q}%` : null
   // aparelho: '' (tudo), 'site', 'android' (app Android), 'ios' (app iPhone)
   const aparelho = ['site', 'android', 'ios'].includes(req.query.aparelho) ? req.query.aparelho : ''
-  const [eventos, porTipo, semResultado, placasErro, assinar, navegador, leitura, secoes, vendas, origens, vendasOrigem] = await Promise.all([
-    // origem: a primeira visita com campanha (UTM ou fbclid) da mesma pessoa (aparelho ou conta); senão a do cadastro
-    sql`select e.id, e.tipo, e.detalhe, e.rota, e.aparelho, e.em, e.visitante, u.id as usuario_id, u.nome, u.email, u.plano,
-               o.rota as origem_rota, u.origem as origem_conta
+  const [eventos, porTipo, semResultado, placasErro, assinar, navegador, leitura, secoes, vendas] = await Promise.all([
+    sql`select e.id, e.tipo, e.detalhe, e.rota, e.aparelho, e.em, e.visitante, u.id as usuario_id, u.nome, u.email, u.plano
           from eventos_uso e left join usuarios u on u.id = e.usuario_id
-          left join lateral (
-            select x.rota from eventos_uso x
-             where x.rota ~ '[?&](utm_source|fbclid)='
-               and ((e.visitante is not null and x.visitante = e.visitante) or (e.usuario_id is not null and x.usuario_id = e.usuario_id))
-             order by x.em limit 1) o on true
          where e.em > now() - make_interval(days => ${dias})
            and (${tipo}::text = '' or e.tipo = ${tipo})
            and (${usuario}::uuid is null or e.usuario_id = ${usuario}::uuid)
@@ -226,21 +219,6 @@ async function logs(req, res) {
           from vis v group by v.so order by 2 desc`,
     sql`select count(*)::int n, coalesce(sum((detalhe->>'valor')::numeric), 0)::float total from eventos_uso
          where tipo in ('compra', 'compra_play', 'compra_apple') and em > now() - make_interval(days => ${dias})`,
-    // de onde vêm as visitas da página de vendas: a 1ª abertura de cada pessoa no período, pela campanha do link
-    sql`with e as (select coalesce(usuario_id::text, visitante) quem, tipo, rota, em from eventos_uso
-                    where em > now() - make_interval(days => ${dias})),
-             vis as (select quem, (array_agg(rota order by em))[1] rota from e
-                      where tipo = 'pagina' and (rota = '/' or rota like '/?%') group by quem)
-        select substring(rota from '[?&]utm_source=([^&]*)') fonte, substring(rota from '[?&]utm_medium=([^&]*)') meio,
-               substring(rota from '[?&]utm_content=([^&]*)') conteudo, rota ~ '[?&]fbclid=' fbclid,
-               count(*)::int visitantes,
-               count(*) filter (where exists (select 1 from e x where x.quem = vis.quem and x.tipo = 'clicou_assinar'))::int assinar
-          from vis group by 1, 2, 3, 4 order by 5 desc`,
-    // vendas pela campanha do link do checkout (a própria venda guarda as UTMs)
-    sql`select substring(rota from '[?&]utm_source=([^&]*)') fonte, substring(rota from '[?&]utm_medium=([^&]*)') meio,
-               substring(rota from '[?&]utm_content=([^&]*)') conteudo, count(*)::int n,
-               coalesce(sum((detalhe->>'valor')::numeric), 0)::float total
-          from eventos_uso where tipo = 'compra' and em > now() - make_interval(days => ${dias}) group by 1, 2, 3`,
   ])
-  return res.status(200).json({ dias, eventos, resumo: { porTipo, semResultado, placasErro, assinar, navegador, leitura, secoes, vendas: vendas[0], origens, vendasOrigem } })
+  return res.status(200).json({ dias, eventos, resumo: { porTipo, semResultado, placasErro, assinar, navegador, leitura, secoes, vendas: vendas[0] } })
 }

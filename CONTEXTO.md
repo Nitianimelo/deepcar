@@ -123,15 +123,12 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
-### 2026-10-10 · Logs: de onde veio cada visita (db/022)
-- Pedido do dono. `?acao=logs`: cada evento traz `origem_rota` (1ª visita com UTM/fbclid da mesma pessoa, por id do
-  visitante ou conta; `db/022` índice `eventos_uso (visitante, em)`, **aplicada no Neon antes do push**) e
-  `origem_conta` (`usuarios.origem` do cadastro). Resumo novo: `origens` (1ª abertura da página de vendas de cada
-  pessoa no período, por utm_source/medium/content + fbclid, com quantos clicaram em assinar) e `vendasOrigem` (vendas
-  pelas UTMs do link do checkout).
-- Tela: coluna "Pessoa · origem" ("via Anúncio Meta · criativo 3 · 42s", "via WhatsApp · link mandado pelo CRM",
-  só quando há origem: app Android e plataforma sem visita com campanha antes ficam sem), campo Origem no detalhe e na cópia, e o quadro "De onde vêm as visitas" (visitas,
-  clicaram para assinar, vendas em R$, por origem). `rotuloOrigem()` traduz as UTMs.
+### 2026-10-10 · Logs: coluna "Origem" (UTM do evento)
+- Pedido do dono: uma coluna, não um quadro. Origem = a UTM do endereço em que o evento aconteceu (`origemDaRota`,
+  traduzida: "Anúncio Meta · criativo 3 · 42s", "WhatsApp · link mandado pelo CRM"); sem UTM fica em branco (app
+  Android/iPhone, plataforma de quem já entrou). O detalhe mostra também as UTMs cruas. A venda guarda as UTMs do link
+  do checkout. Uma primeira versão deduzia a origem pela 1ª visita da pessoa e tinha o quadro "De onde vêm as visitas":
+  saiu no mesmo dia. Ficou o índice `db/022` (`eventos_uso (visitante, em)`, aplicado; ajuda a busca por visitante).
 
 ### 2026-10-10 · Logs: id do visitante e modo "Cru"
 - Pedido do dono (visitantes se confundiam): coluna Pessoa mostra "Visitante <8 primeiros caracteres do id>"; o

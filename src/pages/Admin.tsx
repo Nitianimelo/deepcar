@@ -1037,10 +1037,7 @@ function AbaAvisos() {
 }
 
 type EventoUso = { id: number; tipo: string; detalhe: Record<string, unknown> | null; rota: string | null; aparelho: string | null; em: string
-  visitante: string | null; usuario_id: string | null; nome: string | null; email: string | null; plano: Plano | null
-  /** 1ª visita com campanha da mesma pessoa, e a origem guardada no cadastro (api/admin/usuarios.js ?acao=logs) */
-  origem_rota?: string | null; origem_conta?: Record<string, string> | null }
-type Origem = { fonte: string | null; meio: string | null; conteudo: string | null }
+  visitante: string | null; usuario_id: string | null; nome: string | null; email: string | null; plano: Plano | null }
 type ResumoLogs = {
   porTipo: { tipo: string; n: number; pessoas: number }[]
   semResultado: { termo: string; n: number }[]
@@ -1050,8 +1047,6 @@ type ResumoLogs = {
   leitura?: { so: string; visitantes: number; rolou_metade: number; segundos_mediana: number | null; abriu_cadastro: number; cadastrou: number }[]
   secoes?: { so: string; visitantes: number; tour: number; busca: number; planos: number; faq: number; oferta: number; assinar: number }[]
   vendas?: { n: number; total: number }
-  origens?: (Origem & { fbclid: boolean; visitantes: number; assinar: number })[]
-  vendasOrigem?: (Origem & { n: number; total: number })[]
 }
 
 const NOMES_EVENTO: Record<string, string> = {
@@ -1168,12 +1163,14 @@ function origemDaRota(rota: string | null | undefined) {
   const p = new URLSearchParams(qs)
   return rotuloOrigem({ fonte: p.get('utm_source'), meio: p.get('utm_medium'), conteudo: p.get('utm_content'), fbclid: !!p.get('fbclid') })
 }
-/** De onde a pessoa daquele log veio: a campanha do próprio log, a 1ª visita com campanha, ou a do cadastro.
- *  null = não se sabe (app Android e plataforma sem visita com campanha antes): a tela não mostra nada. */
-function origemDe(e: EventoUso): string | null {
-  const c = e.origem_conta
-  return origemDaRota(e.rota) ?? origemDaRota(e.origem_rota)
-    ?? (c ? rotuloOrigem({ fonte: c.utm_source, meio: c.utm_medium, conteudo: c.utm_content, fbclid: !!c.fbclid }) : null)
+/** Origem do evento = a UTM do endereço em que ele aconteceu. Sem UTM (app, plataforma de quem já entrou) = vazio. */
+const origemDe = (e: EventoUso) => origemDaRota(e.rota)
+/** As UTMs como vieram no link, para o detalhe do log. */
+function utmsDe(rota: string | null): [string, string][] {
+  const qs = String(rota ?? '').split('?')[1]
+  if (!qs) return []
+  const p = new URLSearchParams(qs)
+  return ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].filter((k) => p.get(k)).map((k) => [k, p.get(k)!])
 }
 
 /** Categoria de cada evento: a etiqueta da coluna "Categoria" nos logs. */
@@ -1276,7 +1273,7 @@ function AbaLogs() {
     if (e.visitante) c.push(['ID do visitante', e.visitante])
     if (e.aparelho) c.push(['Aparelho', e.aparelho])
     const origem = origemDe(e)
-    if (origem) c.push(['Origem', origem])
+    if (origem) c.push(['Origem', origem], ...utmsDe(e.rota))
     if (e.rota) c.push(['Endereço', texto(e.rota.split('?')[0])])
     for (const [k, v] of Object.entries(e.detalhe ?? {})) {
       if (v == null || v === '') continue
@@ -1315,14 +1312,6 @@ function AbaLogs() {
     : []
   const porAparelho = (r?.secoes ?? []).map((l) => ({ ...l, ...(r?.leitura?.find((x) => x.so === l.so) ?? {}) }))
   const pct = (n: number, de: number) => (de ? Math.round((100 * n) / de) : 0)
-  // visitas e vendas juntas por origem (mesmo rótulo); sem campanha vira "Direto"
-  const origens = (() => {
-    const m = new Map<string, { rotulo: string; visitantes: number; assinar: number; vendas: number; total: number }>()
-    const linha = (rotulo: string) => m.get(rotulo) ?? m.set(rotulo, { rotulo, visitantes: 0, assinar: 0, vendas: 0, total: 0 }).get(rotulo)!
-    for (const o of r?.origens ?? []) { const l = linha(rotuloOrigem(o) ?? 'Direto (sem campanha)'); l.visitantes += o.visitantes; l.assinar += o.assinar }
-    for (const v of r?.vendasOrigem ?? []) { const l = linha(rotuloOrigem(v) ?? 'Direto (sem campanha)'); l.vendas += v.n; l.total += v.total }
-    return [...m.values()].sort((a, b) => b.vendas - a.vendas || b.visitantes - a.visitantes)
-  })()
   const periodo = dias === 1 ? 'hoje' : `nos últimos ${dias} dias`
 
   const KPIS: [string, string, string][] = [
@@ -1436,28 +1425,6 @@ function AbaLogs() {
             </section>
           </div>
 
-          {!!origens.length && (
-            <section className={`${cartao} mt-3 overflow-x-auto p-5`}>
-              <h2 className={titulo}>De onde vêm as visitas</h2>
-              <p className={explica}>Pessoas que abriram a página de vendas, pela campanha do link da 1ª visita no período; e as vendas pela campanha do link do pagamento.</p>
-              <table className="mt-3 w-full min-w-[640px] text-left text-[13px]">
-                <thead className="text-[12px] text-ink-4"><tr className="border-b border-ink-1/[0.08]">
-                  {['Origem', 'Visitas', 'Clicaram para assinar', 'Vendas'].map((h, i) => <th key={h} className={`pb-2 font-medium ${i ? 'text-right' : ''}`}>{h}</th>)}
-                </tr></thead>
-                <tbody className="tabular-nums">
-                  {origens.map((o) => (
-                    <tr key={o.rotulo} className="border-b border-ink-1/[0.05] last:border-0">
-                      <td className="py-2.5 pr-3 text-ink-1">{o.rotulo}</td>
-                      <td className="text-right text-ink-1">{pessoas(o.visitantes)}</td>
-                      <td className="text-right text-ink-2">{o.visitantes ? <>{pessoas(o.assinar)} <span className="text-ink-4">({pct(o.assinar, o.visitantes)}%)</span></> : '—'}</td>
-                      <td className={`text-right ${o.vendas ? 'font-medium text-ok' : 'text-ink-4'}`}>{o.vendas ? `${o.vendas} · ${reais(o.total)}` : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-          )}
-
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <section className={`${cartao} p-5`}>
               <h2 className={titulo}>Quem foi ao pagamento</h2>
@@ -1549,8 +1516,8 @@ function AbaLogs() {
             {dados && !dados.eventos.length && <div className="py-6 text-center text-[#8793a4]">Nenhum evento com esses filtros.</div>}
           </div>
         ) : (<>
-        <div className="hidden grid-cols-[76px_128px_minmax(0,1fr)_220px_140px] gap-4 border-b seam bg-bench-2 px-5 py-2 text-[11.5px] font-medium uppercase tracking-wide text-ink-4 md:grid">
-          <span>Hora</span><span>Categoria</span><span>Evento</span><span>Pessoa · origem</span><span>Aparelho</span>
+        <div className="hidden grid-cols-[76px_120px_minmax(0,1fr)_160px_180px_130px] gap-4 border-b seam bg-bench-2 px-5 py-2 text-[11.5px] font-medium uppercase tracking-wide text-ink-4 md:grid">
+          <span>Hora</span><span>Categoria</span><span>Evento</span><span>Pessoa</span><span>Origem</span><span>Aparelho</span>
         </div>
         <ul>
           {eventos.map((e, i) => {
@@ -1561,14 +1528,14 @@ function AbaLogs() {
               <li key={e.id}>
                 {novoDia && <div className="border-b seam bg-bench-2/70 px-5 py-1.5 text-[12px] font-medium text-ink-3">{dia}</div>}
                 <button type="button" onClick={() => setAberto(aberto === e.id ? null : e.id)} aria-expanded={aberto === e.id}
-                  className={`grid w-full grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-1 border-b border-ink-1/[0.05] px-5 py-2.5 text-left text-[13px] hover:bg-ink-1/[0.025] md:grid-cols-[76px_128px_minmax(0,1fr)_220px_140px] md:gap-4 ${cat === 'Venda' ? 'bg-ok/[0.06]' : ''} ${aberto === e.id ? 'bg-ink-1/[0.03]' : ''}`}>
+                  className={`grid w-full grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-1 border-b border-ink-1/[0.05] px-5 py-2.5 text-left text-[13px] hover:bg-ink-1/[0.025] md:grid-cols-[76px_120px_minmax(0,1fr)_160px_180px_130px] md:gap-4 ${cat === 'Venda' ? 'bg-ok/[0.06]' : ''} ${aberto === e.id ? 'bg-ink-1/[0.03]' : ''}`}>
                   <span className="code pt-px text-[12px] text-ink-3" title={quandoFoi(e.em, agora)}>{hora(e.em)}</span>
                   <span className="md:order-none"><span className={`inline-flex rounded px-1.5 py-0.5 text-[11.5px] font-medium ring-1 ring-inset ${COR_CATEGORIA[cat]}`}>{cat}</span></span>
                   <span className={`col-span-2 md:col-span-1 ${cat === 'Venda' ? 'font-semibold text-ink-1' : 'text-ink-1'}`}>{frase(e)}</span>
                   <span className="col-span-2 min-w-0 text-ink-3 md:col-span-1">
                     <span className="block truncate">{e.usuario_id ? <span className="text-ink-2">{quem(e)}</span> : <span className="text-ink-4">Visitante <span className="code text-ink-3">{e.visitante ? e.visitante.slice(0, 8) : 'sem id'}</span></span>}</span>
-                    {origemDe(e) && <span className="block truncate text-[12px] text-ink-4" title={origemDe(e)!}>via {origemDe(e)}</span>}
                   </span>
+                  <span className="col-span-2 truncate text-[12.5px] text-ink-3 md:col-span-1" title={origemDe(e) ?? ''}>{origemDe(e) ?? ''}</span>
                   <span className="col-span-2 truncate text-[12.5px] text-ink-4 md:col-span-1">{e.aparelho}</span>
                 </button>
                 {aberto === e.id && (
