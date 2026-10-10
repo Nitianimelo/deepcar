@@ -2,7 +2,7 @@
 // Toda a autorização é do servidor (api/admin/*): aqui a checagem só evita mostrar a tela.
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { Activity, ArrowDown, BadgeDollarSign, Bell, Car, Check, Copy, CreditCard, Eye, EyeOff, FileText, KeyRound, Layers, Link2, Loader2, LogIn, LogOut, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Smartphone, Timer, Trash2, TriangleAlert, UserPlus, Users, Wand2, X, Zap } from 'lucide-react'
+import { Activity, BadgeDollarSign, Bell, Check, Copy, Eye, EyeOff, KeyRound, Layers, Link2, Loader2, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
 import { useSessao } from '../lib/auth'
 import { rotuloPlano, tempoRestante } from '../lib/plano'
 import { mascararWhatsapp, SENHA_MINIMA } from '../lib/validacao'
@@ -130,10 +130,10 @@ export default function Admin() {
   if (session.papel !== 'admin') return <Navigate to="/app" replace />
 
   return (
-    <div className="schematic-grid min-h-screen">
-      <header className="flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b seam px-4 py-3 sm:px-8">
+    <div className="tema-claro schematic-grid min-h-screen bg-pit text-ink-1">
+      <header className="flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b seam bg-bench-1 px-4 py-3 sm:px-8">
         <div className="flex items-center gap-4">
-          <Link to="/app"><img src="/brand/logo-h-light.png" alt="Deepcar" className="w-32" draggable={false} /></Link>
+          <Link to="/app"><img src="/brand/logo-h.png" alt="Deepcar" className="w-32" draggable={false} /></Link>
           <span className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Administração</span>
         </div>
         <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border seam bg-bench-2 p-1">
@@ -1036,10 +1036,11 @@ type ResumoLogs = {
   navegador: { so: string; acao: string; n: number }[]
   leitura?: { so: string; visitantes: number; rolou_metade: number; segundos_mediana: number | null; abriu_cadastro: number; cadastrou: number }[]
   secoes?: { so: string; visitantes: number; tour: number; busca: number; planos: number; faq: number; oferta: number; assinar: number }[]
+  vendas?: { n: number; total: number }
 }
 
 const NOMES_EVENTO: Record<string, string> = {
-  whatsapp: 'Chamou no WhatsApp', viu_secao: 'Viu seção da página de vendas', tour_passo: 'Passo do tour (página de vendas)', busca_landing: 'Buscou carro na página de vendas', escolheu_carro: 'Escolheu carro na página de vendas', carro_para_planos: 'Foi aos planos pelo carro', pegar_oferta: 'Clicou em Pegar oferta', compra_apple: 'Assinou pela App Store', push_diag: 'Notificações (diagnóstico)', rolou: 'Rolou a página de vendas', saiu_landing: 'Saiu da página de vendas', app_aberto: 'Abriu o app Android', compra_play: 'Assinou pela Google Play',
+  compra: 'Venda (pagamento aprovado)', whatsapp: 'Chamou no WhatsApp', viu_secao: 'Viu seção da página de vendas', tour_passo: 'Passo do tour (página de vendas)', busca_landing: 'Buscou carro na página de vendas', escolheu_carro: 'Escolheu carro na página de vendas', carro_para_planos: 'Foi aos planos pelo carro', pegar_oferta: 'Clicou em Pegar oferta', compra_apple: 'Assinou pela App Store', push_diag: 'Notificações (diagnóstico)', rolou: 'Rolou a página de vendas', saiu_landing: 'Saiu da página de vendas', app_aberto: 'Abriu o app Android', compra_play: 'Assinou pela Google Play',
   pagina: 'Telas abertas (site e app)', busca: 'Busca', placa: 'Placa encontrada', placa_erro: 'Placa com erro', esquema: 'Esquema',
   viu_planos: 'Viu os planos', clicou_assinar: 'Clicou em assinar', cadastro: 'Cadastrou', cadastro_erro: 'Erro no cadastro',
   login: 'Entrou', login_erro: 'Erro ao entrar', compartilhou: 'Compartilhou', navegador_interno: 'Navegador do Instagram/Facebook',
@@ -1121,6 +1122,7 @@ function fraseEvento(e: EventoUso) {
     case 'whatsapp': return `Tocou no botão do WhatsApp${d.onde ? ` (em ${nomeTela(String(d.onde))})` : ''}`
     case 'navegador_interno': return `${ACOES_NAVEGADOR[String(d.acao)] ?? `Aviso do navegador (${d.acao}) do`} ${d.app} (${d.so === 'ios' ? 'iPhone' : 'Android'})`
     case 'app_aberto': return 'Abriu o app Android'
+    case 'compra': return `Pagamento aprovado: plano ${String(d.plano ?? '').replace(/^\w/, (l) => l.toUpperCase())} ${d.ciclo ?? ''}${d.valor != null ? `, ${Number(d.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}` : ''}${d.metodo ? ` (${d.metodo === 'pix' ? 'Pix' : d.metodo === 'credit_card' ? 'cartão' : d.metodo})` : ''}`
     case 'compra_play': return 'Assinou pelo app Android (Google Play)'
     case 'compra_apple': return 'Assinou pelo app do iPhone (App Store)'
     case 'push_diag': return `Notificações do app: etapa "${d.etapa}" — ${d.info}`
@@ -1138,18 +1140,24 @@ function origemDaRota(rota: string | null) {
   return [fonte === 'facebook' ? 'Anúncio Meta' : fonte, p.get('utm_content')].filter(Boolean).join(' · ')
 }
 
-/** Ícone e cor de cada tipo de evento no feed. */
-const ICONE_EVENTO: Record<string, [typeof Activity, string]> = {
-  pagina: [FileText, 'text-ink-3 bg-white/[0.06]'], busca: [Search, 'text-trace-hi bg-trace/15'], busca_landing: [Search, 'text-trace-hi bg-trace/15'],
-  placa: [Car, 'text-ok bg-ok/15'], placa_erro: [TriangleAlert, 'text-fault bg-fault/15'], esquema: [Zap, 'text-trace-hi bg-trace/15'],
-  viu_planos: [Eye, 'text-warn bg-warn/15'], viu_secao: [Eye, 'text-ink-3 bg-white/[0.06]'], clicou_assinar: [CreditCard, 'text-ok bg-ok/15'],
-  pegar_oferta: [CreditCard, 'text-warn bg-warn/15'], cadastro: [UserPlus, 'text-ok bg-ok/15'], cadastro_erro: [TriangleAlert, 'text-fault bg-fault/15'],
-  login: [LogIn, 'text-trace-hi bg-trace/15'], login_erro: [TriangleAlert, 'text-fault bg-fault/15'], compra_play: [BadgeDollarSign, 'text-ok bg-ok/15'],
-  compra_apple: [BadgeDollarSign, 'text-ok bg-ok/15'], whatsapp: [MessageCircle, 'text-whatsapp bg-whatsapp/15'], app_aberto: [Smartphone, 'text-trace-hi bg-trace/15'],
-  rolou: [ArrowDown, 'text-ink-3 bg-white/[0.06]'], saiu_landing: [LogOut, 'text-ink-3 bg-white/[0.06]'], tour_passo: [Layers, 'text-ink-3 bg-white/[0.06]'],
-  escolheu_carro: [Car, 'text-trace-hi bg-trace/15'], carro_para_planos: [CreditCard, 'text-warn bg-warn/15'], compartilhou: [Link2, 'text-trace-hi bg-trace/15'],
-  esqueci_senha: [KeyRound, 'text-warn bg-warn/15'], senha_redefinida: [KeyRound, 'text-ok bg-ok/15'], senha_criada_compra: [KeyRound, 'text-ok bg-ok/15'],
-  navegador_interno: [MonitorSmartphone, 'text-warn bg-warn/15'], push_diag: [Bell, 'text-ink-3 bg-white/[0.06]'],
+/** Categoria de cada evento: a etiqueta da coluna "Categoria" nos logs. */
+type Categoria = 'Venda' | 'Checkout' | 'Conta' | 'Página de vendas' | 'Plataforma' | 'App' | 'Contato' | 'Erro'
+const ERROS = new Set(['placa_erro', 'login_erro', 'cadastro_erro'])
+function categoria(e: EventoUso): Categoria {
+  if (ERROS.has(e.tipo)) return 'Erro'
+  if (['compra', 'compra_play', 'compra_apple'].includes(e.tipo)) return 'Venda'
+  if (['clicou_assinar', 'pegar_oferta', 'viu_planos', 'carro_para_planos'].includes(e.tipo)) return 'Checkout'
+  if (['cadastro', 'login', 'esqueci_senha', 'senha_redefinida', 'senha_criada_compra'].includes(e.tipo)) return 'Conta'
+  if (['rolou', 'saiu_landing', 'viu_secao', 'tour_passo', 'busca_landing', 'escolheu_carro'].includes(e.tipo)) return 'Página de vendas'
+  if (e.tipo === 'pagina' && /^\/(\?|$)/.test(e.rota ?? '')) return 'Página de vendas'
+  if (['app_aberto', 'push_diag', 'navegador_interno'].includes(e.tipo)) return 'App'
+  if (e.tipo === 'whatsapp') return 'Contato'
+  return 'Plataforma'
+}
+const COR_CATEGORIA: Record<Categoria, string> = {
+  Venda: 'bg-ok/12 text-ok ring-ok/25', Checkout: 'bg-warn/12 text-warn ring-warn/25', Conta: 'bg-trace/10 text-trace-hi ring-trace/20',
+  'Página de vendas': 'bg-violet-500/10 text-violet-700 ring-violet-500/20', Plataforma: 'bg-ink-1/[0.05] text-ink-3 ring-ink-1/10',
+  App: 'bg-sky-500/10 text-sky-700 ring-sky-500/20', Contato: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/20', Erro: 'bg-fault/10 text-fault ring-fault/20',
 }
 
 // "Ocultar dados pessoais" (para gravar a tela): nome vira iniciais, e-mail e placa ficam mascarados.
@@ -1162,6 +1170,7 @@ const mascaraTexto = (t: string) => t
 const semToken = (t: string) => t.replace(/([?&]t=)[^&\s]+/g, '$1(oculto)')
 
 const dataHora = (iso: string) => new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')
+const hora = (iso: string) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 function quandoFoi(iso: string, agora: number) {
   const s = Math.max(0, Math.round((agora - new Date(iso).getTime()) / 1000))
   if (s < 60) return 'agora'
@@ -1169,12 +1178,19 @@ function quandoFoi(iso: string, agora: number) {
   if (s < 86400) return `há ${Math.floor(s / 3600)} h`
   return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
+function nomeDia(iso: string, agora: number) {
+  const d = new Date(iso); const hoje = new Date(agora); const ontem = new Date(agora - 86_400_000)
+  const igual = (a: Date, b: Date) => a.toDateString() === b.toDateString()
+  const data = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' })
+  return igual(d, hoje) ? `Hoje · ${data}` : igual(d, ontem) ? `Ontem · ${data}` : data.replace(/^\w/, (l) => l.toUpperCase())
+}
 const vezes = (n: number) => (n === 1 ? '1 vez' : `${n.toLocaleString('pt-BR')} vezes`)
 const pessoas = (n: number) => (n === 1 ? '1 pessoa' : `${n.toLocaleString('pt-BR')} pessoas`)
+const reais = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 function lerOcultar() { try { return localStorage.getItem('deepcar.admin.ocultar') !== '0' } catch { return true } }
 
-/** O que cada pessoa faz no site e no app (eventos_uso). Atualiza sozinho a cada 30 s. */
+/** O que cada pessoa faz no site e nos apps (eventos_uso), mais as vendas. Atualiza sozinho a cada 30 s. */
 function AbaLogs() {
   const [dias, setDias] = useState(7)
   const [tipo, setTipo] = useState('')
@@ -1186,8 +1202,9 @@ function AbaLogs() {
   const [ocultar, setOcultar] = useState(lerOcultar)
   const [agora, setAgora] = useState(() => Date.now())
   const [atualizado, setAtualizado] = useState<number | null>(null)
-  const [mostrar, setMostrar] = useState(40)
+  const [mostrar, setMostrar] = useState(60)
   const [copiado, setCopiado] = useState('')
+  const [aberto, setAberto] = useState<number | null>(null)
 
   const carregar = useCallback(async () => {
     try {
@@ -1206,25 +1223,30 @@ function AbaLogs() {
   }
   const nome = (n: string | null) => (ocultar ? mascaraNome(n) : n ?? '')
   const texto = (v: string) => (ocultar ? mascaraTexto(semToken(v)) : semToken(v))
-  const quem = (e: EventoUso) => (e.usuario_id ? nome(e.nome) || 'Conta sem nome' : 'Visitante sem conta')
+  const quem = (e: EventoUso) => (e.usuario_id ? nome(e.nome) || 'Conta sem nome' : 'Visitante')
   const frase = (e: EventoUso) => texto(fraseEvento(e))
 
-  /** Os dados técnicos do log, em pares campo → valor (cartão e cópia). */
+  /** Os dados técnicos do log, em pares campo → valor (detalhe aberto e cópia). */
   function camposLog(e: EventoUso): [string, string][] {
-    const c: [string, string][] = []
+    const c: [string, string][] = [['Data e hora', dataHora(e.em)], ['Categoria', categoria(e)], ['Tipo', e.tipo], ['Nº do log', String(e.id)]]
     if (e.usuario_id) {
-      if (e.email) c.push(['e-mail', ocultar ? mascaraEmail(e.email) : e.email])
-      if (e.plano) c.push(['plano da conta', e.plano === 'free' ? 'teste grátis' : rotuloPlano(e.plano)])
-      c.push(['id da conta', ocultar ? `${e.usuario_id.slice(0, 4)}…` : e.usuario_id])
-    }
-    if (e.visitante) c.push(['id do aparelho', ocultar ? `${e.visitante.slice(0, 6)}…` : e.visitante])
+      c.push(['Pessoa', nome(e.nome) || '—'])
+      if (e.email) c.push(['E-mail', ocultar ? mascaraEmail(e.email) : e.email])
+      if (e.plano) c.push(['Plano atual', e.plano === 'free' ? 'Teste grátis' : rotuloPlano(e.plano)])
+      c.push(['ID da conta', ocultar ? `${e.usuario_id.slice(0, 8)}…` : e.usuario_id])
+    } else c.push(['Pessoa', 'Visitante sem conta'])
+    if (e.visitante) c.push(['ID do aparelho', ocultar ? `${e.visitante.slice(0, 8)}…` : e.visitante])
+    if (e.aparelho) c.push(['Aparelho', e.aparelho])
     const origem = origemDaRota(e.rota)
-    if (origem) c.push(['veio de', origem])
-    if (e.rota) c.push(['endereço', texto(e.rota.split('?')[0])])
-    c.push(['tipo', e.tipo], ['log', `#${e.id}`])
+    if (origem) c.push(['Origem', origem])
+    if (e.rota) c.push(['Endereço', texto(e.rota.split('?')[0])])
+    for (const [k, v] of Object.entries(e.detalhe ?? {})) {
+      if (v == null || v === '') continue
+      c.push([`detalhe.${k}`, texto(typeof v === 'object' ? JSON.stringify(v) : String(v))])
+    }
     return c
   }
-  const linhaLog = (e: EventoUso) => [dataHora(e.em), quem(e), e.aparelho ?? '', frase(e), ...camposLog(e).map(([k, v]) => `${k}: ${v}`)].join(' | ')
+  const linhaLog = (e: EventoUso) => [dataHora(e.em), categoria(e), quem(e), e.aparelho ?? '', frase(e), ...camposLog(e).slice(4).map(([k, v]) => `${k}: ${v}`)].join(' | ')
   async function copiarTexto(t: string, aviso: string) {
     try { await navigator.clipboard.writeText(t) } catch {
       const area = document.createElement('textarea'); area.value = t; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove()
@@ -1236,7 +1258,7 @@ function AbaLogs() {
     const desde = janela === '1h' ? agora - 3_600_000 : janela === '24h' ? agora - 86_400_000 : janela === 'hoje' ? inicioHoje.getTime() : 0
     const lista = (dados?.eventos ?? []).filter((e) => new Date(e.em).getTime() >= desde)
     const nomeJanela = { '1h': 'última hora', '24h': 'últimas 24 h', hoje: 'hoje', tudo: dias === 1 ? 'hoje' : `últimos ${dias} dias` }[janela]
-    const cab = `Deepcar · logs (${nomeJanela}) · ${lista.length} eventos · copiado em ${dataHora(new Date(agora).toISOString())}\nformato: quando | quem | aparelho | o que fez | dados técnicos`
+    const cab = `Deepcar · logs (${nomeJanela}) · ${lista.length} eventos · copiado em ${dataHora(new Date(agora).toISOString())}\nformato: quando | categoria | quem | aparelho | o que fez | dados técnicos`
     await copiarTexto([cab, ...lista.map(linhaLog)].join('\n'), `${lista.length} logs copiados`)
   }
 
@@ -1247,55 +1269,54 @@ function AbaLogs() {
     ? ([['Abriram a página de vendas', 'visitantes'], ['Viram o tour "Como funciona"', 'tour'], ['Chegaram na busca do carro', 'busca'], ['Chegaram nos planos e preços', 'planos'], ['Chegaram no FAQ', 'faq'], ['Tocaram em "Pegar oferta"', 'oferta'], ['Clicaram para assinar', 'assinar']] as const)
         .map(([rotulo, k]) => ({ rotulo, n: r.secoes!.reduce((a, l) => a + l[k], 0) }))
     : []
-  const maiorTipo = Math.max(1, ...(r?.porTipo ?? []).map((t) => t.n))
   const porAparelho = (r?.secoes ?? []).map((l) => ({ ...l, ...(r?.leitura?.find((x) => x.so === l.so) ?? {}) }))
   const pct = (n: number, de: number) => (de ? Math.round((100 * n) / de) : 0)
+  const periodo = dias === 1 ? 'hoje' : `nos últimos ${dias} dias`
 
-  const KPIS: [string, number, string, typeof Activity, string][] = [
-    ['Pessoas na página de vendas', visitas, 'aparelhos diferentes que abriram a página', Eye, 'text-trace-hi bg-trace/15'],
-    ['Contas criadas', tipoN('cadastro')?.pessoas ?? 0, 'cadastros novos no período', UserPlus, 'text-ok bg-ok/15'],
-    ['Placas consultadas', tipoN('placa')?.n ?? 0, `por ${pessoas(tipoN('placa')?.pessoas ?? 0)}`, Car, 'text-trace-hi bg-trace/15'],
-    ['Esquemas abertos', tipoN('esquema')?.n ?? 0, `por ${pessoas(tipoN('esquema')?.pessoas ?? 0)}`, Zap, 'text-warn bg-warn/15'],
-    ['Foram para o pagamento', tipoN('clicou_assinar')?.pessoas ?? 0, `pessoas · ${vezes(tipoN('clicou_assinar')?.n ?? 0)} no total`, CreditCard, 'text-ok bg-ok/15'],
+  const KPIS: [string, string, string][] = [
+    ['Visitantes da página', (visitas).toLocaleString('pt-BR'), 'aparelhos diferentes'],
+    ['Contas criadas', String(tipoN('cadastro')?.pessoas ?? 0), 'cadastros novos'],
+    ['Foram ao pagamento', String(tipoN('clicou_assinar')?.pessoas ?? 0), `pessoas · ${vezes(tipoN('clicou_assinar')?.n ?? 0)}`],
+    ['Vendas', String(r?.vendas?.n ?? 0), reais(r?.vendas?.total ?? 0)],
+    ['Placas consultadas', String(tipoN('placa')?.n ?? 0), `por ${pessoas(tipoN('placa')?.pessoas ?? 0)}`],
+    ['Esquemas abertos', String(tipoN('esquema')?.n ?? 0), `por ${pessoas(tipoN('esquema')?.pessoas ?? 0)}`],
   ]
-  const cartao = 'rounded-2xl border seam bg-bench-1/90 p-5 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]'
-  const rotulo = 'text-[15px] font-semibold text-ink-1'
-  const explica = 'mt-1 text-[12.5px] leading-snug text-ink-4'
+  const cartao = 'rounded-xl border seam bg-bench-1 shadow-[0_1px_2px_rgba(15,23,42,0.04)]'
+  const titulo = 'text-[14px] font-semibold text-ink-1'
+  const explica = 'mt-0.5 text-[12.5px] leading-snug text-ink-4'
 
+  const eventos = (dados?.eventos ?? []).slice(0, mostrar)
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-[28px] font-semibold tracking-tight">Atividade</h1>
-            <span className="inline-flex items-center gap-2 rounded-full border border-ok/30 bg-ok/10 px-2.5 py-1 text-[12px] font-medium text-ok">
-              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok/70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-ok" /></span>
-              Ao vivo
-            </span>
-          </div>
-          <p className="mt-1.5 text-ink-3">Tudo o que as pessoas fazem no site e nos apps.{atualizado && <span className="text-ink-4"> Atualizado {quandoFoi(new Date(atualizado).toISOString(), agora)}; atualiza sozinho a cada 30 segundos.</span>}</p>
+          <h1 className="text-[24px] font-semibold tracking-tight text-ink-1">Atividade</h1>
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 text-[13.5px] text-ink-3">
+            <span>Uso do site e dos apps, e as vendas.</span>
+            <span className="inline-flex items-center gap-1.5 text-ink-4"><span className="h-1.5 w-1.5 rounded-full bg-ok" />Atualização automática a cada 30 s{atualizado && ` · última ${hora(new Date(atualizado).toISOString())}`}</span>
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={alternarOcultar} aria-pressed={ocultar} className={`inline-flex h-10 items-center gap-2 rounded-lg border px-3.5 text-[13px] ${ocultar ? 'border-trace/40 bg-trace/10 text-ink-1' : 'seam text-ink-3 hover:text-ink-1'}`}>
-            {ocultar ? <EyeOff size={15} /> : <Eye size={15} />} {ocultar ? 'Dados pessoais ocultos' : 'Ocultar dados pessoais'}
+          <button type="button" onClick={alternarOcultar} aria-pressed={ocultar} className={`inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[13px] ${ocultar ? 'border-trace/40 bg-trace/10 text-trace-hi' : 'seam bg-bench-1 text-ink-3 hover:text-ink-1'}`}>
+            {ocultar ? <EyeOff size={14} /> : <Eye size={14} />} {ocultar ? 'Dados pessoais ocultos' : 'Ocultar dados pessoais'}
           </button>
-          <button type="button" onClick={() => void carregar()} className="btn-ghost inline-flex h-10 items-center gap-2"><RefreshCw size={15} /> Atualizar</button>
+          <button type="button" onClick={() => void carregar()} className="inline-flex h-9 items-center gap-2 rounded-lg border seam bg-bench-1 px-3 text-[13px] text-ink-2 hover:text-ink-1"><RefreshCw size={14} /> Atualizar</button>
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2 rounded-2xl border seam bg-bench-1/80 p-2">
-        <div className="flex rounded-lg bg-well p-1">
+      <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div className="flex rounded-lg border seam bg-bench-1 p-0.5">
           {[1, 7, 30, 90].map((d) => (
-            <button key={d} type="button" onClick={() => setDias(d)} className={`rounded-md px-3.5 py-1.5 text-[13px] transition-colors ${dias === d ? 'bg-bench-3 font-medium text-ink-1 shadow' : 'text-ink-3 hover:text-ink-1'}`}>
-              {d === 1 ? 'Hoje' : `Últimos ${d} dias`}
+            <button key={d} type="button" onClick={() => setDias(d)} className={`rounded-md px-3 py-1.5 text-[13px] ${dias === d ? 'bg-ink-1 font-medium text-bench-1' : 'text-ink-3 hover:text-ink-1'}`}>
+              {d === 1 ? 'Hoje' : `${d} dias`}
             </button>
           ))}
         </div>
-        <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="field h-9 w-auto py-0 text-[13px]">
-          <option value="">Todos os tipos de evento</option>
+        <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="field h-9 w-auto bg-bench-1 py-0 text-[13px]">
+          <option value="">Todos os eventos</option>
           {Object.entries(NOMES_EVENTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </select>
-        <select value={aparelho} onChange={(e) => setAparelho(e.target.value)} className="field h-9 w-auto py-0 text-[13px]">
+        <select value={aparelho} onChange={(e) => setAparelho(e.target.value)} className="field h-9 w-auto bg-bench-1 py-0 text-[13px]">
           <option value="">Site e apps</option>
           <option value="site">Só o site</option>
           <option value="android">Só o app Android</option>
@@ -1303,11 +1324,11 @@ function AbaLogs() {
         </select>
         <label className="relative w-full sm:ml-auto sm:w-auto">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-          <input className="field h-9 w-full pl-8 text-[13px] sm:w-56" placeholder="Procurar pessoa (nome ou e-mail)" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="field h-9 w-full bg-bench-1 pl-8 text-[13px] sm:w-64" placeholder="Procurar pessoa (nome ou e-mail)" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
         {usuario && (
-          <button type="button" onClick={() => setUsuario(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-trace/40 bg-trace/10 px-3 py-1.5 text-[13px] text-ink-1">
-            Mostrando só {nome(usuario.nome)} <X size={13} />
+          <button type="button" onClick={() => setUsuario(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-trace/40 bg-trace/10 px-3 py-1.5 text-[13px] text-trace-hi">
+            Só {nome(usuario.nome)} <X size={13} />
           </button>
         )}
       </div>
@@ -1315,117 +1336,108 @@ function AbaLogs() {
 
       {r && !usuario && (
         <>
-          <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
-            {KPIS.map(([titulo, valor, sub, Icone, cor], i) => (
-              <div key={titulo} className={`${cartao} surge last:col-span-2 lg:last:col-span-1`} style={{ ['--i' as string]: i }}>
-                <div className="flex items-start justify-between gap-2">
-                  <span className="text-[13px] font-medium leading-tight text-ink-2">{titulo}</span>
-                  <span className={`grid h-8 w-8 flex-none place-items-center rounded-lg ${cor}`}><Icone size={16} /></span>
-                </div>
-                <p className="mt-3 text-[32px] font-semibold leading-none tracking-tight tabular-nums text-ink-1">{valor.toLocaleString('pt-BR')}</p>
-                <p className="mt-1.5 text-[12px] leading-snug text-ink-4">{sub}</p>
+          <div className={`${cartao} mt-5 grid grid-cols-2 divide-ink-1/[0.07] sm:grid-cols-3 lg:grid-cols-6 lg:divide-x`}>
+            {KPIS.map(([t, v, sub]) => (
+              <div key={t} className="border-b border-ink-1/[0.07] px-5 py-4 lg:border-b-0">
+                <p className="text-[12.5px] text-ink-3">{t}</p>
+                <p className="mt-1.5 text-[26px] font-semibold leading-none tracking-tight tabular-nums text-ink-1">{v}</p>
+                <p className="mt-1.5 text-[12px] text-ink-4">{sub}</p>
               </div>
             ))}
           </div>
+          <p className="mt-1.5 text-[12px] text-ink-4">Números {periodo}.</p>
 
           <div className="mt-3 grid gap-3 lg:grid-cols-5">
             {!!funil.length && (
-              <section className={`${cartao} lg:col-span-3`}>
-                <h2 className={rotulo}>Até onde as pessoas chegam na página de vendas</h2>
+              <section className={`${cartao} p-5 lg:col-span-3`}>
+                <h2 className={titulo}>Até onde as pessoas chegam na página de vendas</h2>
                 <p className={explica}>Cada pessoa conta uma vez. A porcentagem é sobre quem abriu a página.</p>
-                <ul className="mt-4 space-y-3">
-                  {funil.map((f, i) => {
-                    const w = funil[0].n ? Math.max(2, (100 * f.n) / funil[0].n) : 0
-                    return (
-                      <li key={f.rotulo} className="text-[13px]">
-                        <div className="flex items-baseline justify-between gap-3">
-                          <span className="text-ink-2">{f.rotulo}</span>
-                          <span className="tabular-nums text-ink-1">{pessoas(f.n)}{i > 0 && <span className="text-ink-4"> ({pct(f.n, funil[0].n)}%)</span>}</span>
-                        </div>
-                        <span className="mt-1.5 block h-2.5 overflow-hidden rounded-full bg-well">
-                          <span className="block h-full rounded-full bg-gradient-to-r from-trace to-trace-hi/80 transition-[width] duration-700" style={{ width: `${w}%`, opacity: 1 - i * 0.07 }} />
-                        </span>
-                      </li>
-                    )
-                  })}
-                </ul>
+                <table className="mt-3 w-full text-[13px]">
+                  <tbody>
+                    {funil.map((f, i) => (
+                      <tr key={f.rotulo} className="border-t border-ink-1/[0.06] first:border-0">
+                        <td className="py-2 pr-3 text-ink-2">{f.rotulo}</td>
+                        <td className="w-[38%] py-2"><span className="block h-1.5 overflow-hidden rounded-full bg-ink-1/[0.06]"><span className="block h-full rounded-full bg-trace" style={{ width: `${funil[0].n ? Math.max(1.5, (100 * f.n) / funil[0].n) : 0}%` }} /></span></td>
+                        <td className="py-2 pl-3 text-right tabular-nums text-ink-1">{pessoas(f.n)}</td>
+                        <td className="w-12 py-2 text-right tabular-nums text-ink-4">{i ? `${pct(f.n, funil[0].n)}%` : ''}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </section>
             )}
-            <section className={`${cartao} ${funil.length ? 'lg:col-span-2' : 'lg:col-span-5'}`}>
-              <h2 className={rotulo}>O que mais aconteceu</h2>
-              <p className={explica}>Quantas vezes cada coisa aconteceu e quantas pessoas diferentes fizeram.</p>
-              <ul className="mt-4 space-y-2.5">
-                {r.porTipo.slice(0, 9).map((t) => {
-                  const [Icone, cor] = ICONE_EVENTO[t.tipo] ?? [Activity, 'text-ink-3 bg-white/[0.06]']
-                  return (
-                    <li key={t.tipo} className="flex items-center gap-3 text-[13px]">
-                      <span className={`grid h-7 w-7 flex-none place-items-center rounded-md ${cor}`}><Icone size={14} /></span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex justify-between gap-2"><span className="truncate text-ink-2">{NOMES_EVENTO[t.tipo] ?? t.tipo}</span><span className="flex-none text-[12px] tabular-nums text-ink-3">{vezes(t.n)} · {pessoas(t.pessoas)}</span></span>
-                        <span className="mt-1 block h-1 overflow-hidden rounded-full bg-well"><span className="block h-full rounded-full bg-ink-4/70" style={{ width: `${(100 * t.n) / maiorTipo}%` }} /></span>
-                      </span>
-                    </li>
-                  )
-                })}
-                {!r.porTipo.length && <li className="text-ink-4">Nada registrado ainda.</li>}
-              </ul>
+            <section className={`${cartao} p-5 ${funil.length ? 'lg:col-span-2' : 'lg:col-span-5'}`}>
+              <h2 className={titulo}>O que mais aconteceu</h2>
+              <p className={explica}>Vezes que aconteceu e pessoas diferentes.</p>
+              <table className="mt-3 w-full text-[13px]">
+                <tbody>
+                  {r.porTipo.slice(0, 10).map((t) => (
+                    <tr key={t.tipo} className="border-t border-ink-1/[0.06] first:border-0">
+                      <td className="py-2 pr-2 text-ink-2">{NOMES_EVENTO[t.tipo] ?? t.tipo}</td>
+                      <td className="py-2 text-right tabular-nums text-ink-1">{vezes(t.n)}</td>
+                      <td className="py-2 pl-3 text-right tabular-nums text-ink-4">{pessoas(t.pessoas)}</td>
+                    </tr>
+                  ))}
+                  {!r.porTipo.length && <tr><td className="py-2 text-ink-4">Nada registrado ainda.</td></tr>}
+                </tbody>
+              </table>
             </section>
           </div>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <section className={cartao}>
-              <h2 className={rotulo}>Quem foi para o pagamento</h2>
-              <p className={explica}>Pessoas com conta que clicaram em assinar, e se assinaram.</p>
+            <section className={`${cartao} p-5`}>
+              <h2 className={titulo}>Quem foi ao pagamento</h2>
+              <p className={explica}>Pessoas com conta que clicaram em assinar.</p>
               <ul className="mt-3 space-y-2 text-[13px]">
                 {r.assinar.slice(0, 8).map((a) => (
                   <li key={a.id} className="flex items-center justify-between gap-3">
                     <button type="button" onClick={() => setUsuario({ id: a.id, nome: a.nome })} className="truncate text-left text-ink-1 hover:text-trace-hi">{nome(a.nome)}</button>
-                    <span className={`flex-none rounded-full px-2 py-0.5 text-[11.5px] ${a.plano === 'free' ? 'bg-warn/15 text-warn' : 'bg-ok/15 text-ok'}`}>{a.plano === 'free' ? 'ainda não assinou' : `assinou o ${rotuloPlano(a.plano)}`} · {vezes(a.cliques)}</span>
+                    <span className={`flex-none text-[12px] ${a.plano === 'free' ? 'text-warn' : 'text-ok'}`}>{a.plano === 'free' ? 'não assinou' : `assinou ${rotuloPlano(a.plano)}`} · {vezes(a.cliques)}</span>
                   </li>
                 ))}
                 {!r.assinar.length && <li className="text-ink-4">Ninguém com conta no período.</li>}
               </ul>
             </section>
-            <section className={cartao}>
-              <h2 className={rotulo}>Buscas que não acharam nada</h2>
-              <p className={explica}>O que procuraram e não encontrou nenhum esquema.</p>
-              <ul className="mt-3 flex flex-wrap gap-1.5 text-[12.5px]">
-                {r.semResultado.slice(0, 18).map((b) => <li key={b.termo} className="rounded-full border seam bg-bench-2 px-2.5 py-1 text-ink-2">"{b.termo}"{b.n > 1 && <span className="text-ink-4"> · {vezes(b.n)}</span>}</li>)}
+            <section className={`${cartao} p-5`}>
+              <h2 className={titulo}>Buscas sem resultado</h2>
+              <p className={explica}>Procuraram e não acharam esquema.</p>
+              <ul className="mt-3 space-y-1.5 text-[13px]">
+                {r.semResultado.slice(0, 8).map((b) => <li key={b.termo} className="flex justify-between gap-3"><span className="truncate text-ink-2">"{b.termo}"</span><span className="flex-none tabular-nums text-ink-4">{vezes(b.n)}</span></li>)}
                 {!r.semResultado.length && <li className="text-ink-4">Nenhuma.</li>}
               </ul>
             </section>
-            <section className={cartao}>
-              <h2 className={rotulo}>Erros ao consultar placa</h2>
-              <p className={explica}>Por que a consulta de placa falhou.</p>
+            <section className={`${cartao} p-5`}>
+              <h2 className={titulo}>Erros na consulta de placa</h2>
+              <p className={explica}>Motivo e quantas vezes.</p>
               <ul className="mt-3 space-y-1.5 text-[13px]">
-                {r.placasErro.slice(0, 8).map((p) => <li key={p.erro} className="flex justify-between gap-3"><span className="text-ink-2">{p.erro}</span><span className="flex-none tabular-nums text-ink-3">{vezes(p.n)}</span></li>)}
+                {r.placasErro.slice(0, 8).map((p) => <li key={p.erro} className="flex justify-between gap-3"><span className="text-ink-2">{p.erro}</span><span className="flex-none tabular-nums text-ink-4">{vezes(p.n)}</span></li>)}
                 {!r.placasErro.length && <li className="text-ink-4">Nenhum.</li>}
               </ul>
             </section>
-            <section className={cartao}>
-              <h2 className={rotulo}>Quem veio pelo Instagram/Facebook</h2>
-              <p className={explica}>O que fizeram no aviso para sair do navegador do app (dentro da plataforma).</p>
+            <section className={`${cartao} p-5`}>
+              <h2 className={titulo}>Navegador do Instagram/Facebook</h2>
+              <p className={explica}>O que fizeram no aviso para sair dele.</p>
               <ul className="mt-3 space-y-1.5 text-[13px]">
-                {r.navegador.slice(0, 8).map((n) => <li key={`${n.so}${n.acao}`} className="flex justify-between gap-3"><span className="text-ink-2">{n.so === 'ios' ? 'iPhone' : n.so === 'android' ? 'Android' : n.so}: {(ACOES_NAVEGADOR[n.acao] ?? n.acao).replace(/ do$/, '').replace(/^\w/, (l) => l.toLowerCase())}</span><span className="flex-none tabular-nums text-ink-3">{vezes(n.n)}</span></li>)}
+                {r.navegador.slice(0, 8).map((n) => <li key={`${n.so}${n.acao}`} className="flex justify-between gap-3"><span className="text-ink-2">{n.so === 'ios' ? 'iPhone' : n.so === 'android' ? 'Android' : n.so}: {(ACOES_NAVEGADOR[n.acao] ?? n.acao).replace(/ no aviso do navegador do$| do$/, '').replace(/^\w/, (l) => l.toLowerCase())}</span><span className="flex-none tabular-nums text-ink-4">{vezes(n.n)}</span></li>)}
                 {!r.navegador.length && <li className="text-ink-4">Nada no período.</li>}
               </ul>
             </section>
           </div>
 
           {!!porAparelho.length && (
-            <section className={`${cartao} mt-3 overflow-x-auto`}>
-              <h2 className={rotulo}>Página de vendas, separada por aparelho</h2>
-              <p className={explica}>Em cada coluna: quantas pessoas daquele aparelho chegaram ali e, entre parênteses, a porcentagem sobre quem abriu a página nesse aparelho.</p>
+            <section className={`${cartao} mt-3 overflow-x-auto p-5`}>
+              <h2 className={titulo}>Página de vendas por aparelho</h2>
+              <p className={explica}>Pessoas daquele aparelho que chegaram em cada parte; entre parênteses, a porcentagem sobre quem abriu a página nesse aparelho.</p>
               <table className="mt-3 w-full min-w-[820px] text-left text-[13px]">
-                <thead className="text-[12px] text-ink-4"><tr>
-                  {['Aparelho', 'Abriram a página', 'Tempo típico na página', 'Viram o tour', 'Chegaram na busca', 'Chegaram nos planos', 'Pegar oferta', 'Clicaram para assinar'].map((h) => <th key={h} className="pb-2 pr-3 font-medium">{h}</th>)}
+                <thead className="text-[12px] text-ink-4"><tr className="border-b border-ink-1/[0.08]">
+                  {['Aparelho', 'Abriram a página', 'Tempo típico', 'Viram o tour', 'Chegaram na busca', 'Chegaram nos planos', 'Pegar oferta', 'Clicaram para assinar'].map((h) => <th key={h} className="pb-2 pr-3 font-medium">{h}</th>)}
                 </tr></thead>
                 <tbody className="tabular-nums">
                   {porAparelho.map((l) => (
-                    <tr key={l.so} className="border-t seam-soft">
+                    <tr key={l.so} className="border-b border-ink-1/[0.05] last:border-0">
                       <td className="py-2.5 pr-3 font-medium text-ink-1">{l.so}</td>
                       <td className="pr-3 text-ink-1">{pessoas(l.visitantes)}</td>
-                      <td className="pr-3 text-ink-2">{'segundos_mediana' in l && l.segundos_mediana != null ? `${l.segundos_mediana} segundos` : '—'}</td>
+                      <td className="pr-3 text-ink-2">{'segundos_mediana' in l && l.segundos_mediana != null ? `${l.segundos_mediana} s` : '—'}</td>
                       {([l.tour, l.busca, l.planos, l.oferta, l.assinar]).map((n, i) => (
                         <td key={i} className="pr-3 text-ink-2">{pessoas(n)} <span className="text-ink-4">({pct(n, l.visitantes)}%)</span></td>
                       ))}
@@ -1438,62 +1450,63 @@ function AbaLogs() {
         </>
       )}
 
-      <section className={`${cartao} mt-3 !p-0`}>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b seam px-5 py-4">
+      <section className={`${cartao} mt-3 overflow-hidden`}>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b seam px-5 py-3.5">
           <div>
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok/70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-ok" /></span>
-              <h2 className={rotulo}>Logs ao vivo</h2>
-            </div>
-            <p className={explica}>Cada coisa que alguém fez, da mais recente para a mais antiga ({dados?.eventos.length ?? 0} carregadas).</p>
+            <h2 className={titulo}>Logs ao vivo</h2>
+            <p className={explica}>{dados?.eventos.length ?? 0} eventos carregados, do mais recente ao mais antigo. Clique numa linha para ver os dados técnicos.</p>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 inline-flex items-center gap-1.5 text-[12px] text-ink-4"><Copy size={13} /> Copiar:</span>
-            {([['1h', 'Última hora'], ['24h', 'Últimas 24 h'], ['hoje', 'Hoje'], ['tudo', 'Tudo']] as const).map(([k, rr]) => (
-              <button key={k} type="button" onClick={() => void copiarLogs(k)} className="rounded-md border seam px-2.5 py-1 text-[12px] text-ink-3 hover:border-trace/40 hover:text-ink-1">{rr}</button>
+            <span className="mr-0.5 text-[12px] text-ink-4">Copiar:</span>
+            {([['1h', 'Última hora'], ['24h', '24 h'], ['hoje', 'Hoje'], ['tudo', 'Tudo']] as const).map(([k, rr]) => (
+              <button key={k} type="button" onClick={() => void copiarLogs(k)} className="rounded-md border seam bg-bench-1 px-2.5 py-1 text-[12px] text-ink-2 hover:border-trace/40 hover:text-trace-hi">{rr}</button>
             ))}
             {copiado && <span role="status" className="ml-1 text-[12px] text-ok">{copiado}</span>}
           </div>
         </div>
-        <ul className="divide-y divide-white/[0.05]">
-          {(dados?.eventos ?? []).slice(0, mostrar).map((e, i) => {
-            const [Icone, cor] = ICONE_EVENTO[e.tipo] ?? [Activity, 'text-ink-3 bg-white/[0.06]']
+        <div className="hidden grid-cols-[76px_128px_minmax(0,1fr)_170px_150px] gap-4 border-b seam bg-bench-2 px-5 py-2 text-[11.5px] font-medium uppercase tracking-wide text-ink-4 md:grid">
+          <span>Hora</span><span>Categoria</span><span>Evento</span><span>Pessoa</span><span>Aparelho</span>
+        </div>
+        <ul>
+          {eventos.map((e, i) => {
+            const cat = categoria(e)
+            const dia = nomeDia(e.em, agora)
+            const novoDia = i === 0 || nomeDia(eventos[i - 1].em, agora) !== dia
             return (
-              <li key={e.id} className={`group px-5 py-4 transition-colors hover:bg-white/[0.02] ${i < 12 ? 'surge' : ''}`} style={i < 12 ? { ['--i' as string]: i } : undefined}>
-                <div className="flex items-start gap-3.5">
-                  <span className={`mt-0.5 grid h-9 w-9 flex-none place-items-center rounded-xl ${cor}`}><Icone size={16} /></span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[14px] leading-snug text-ink-1">{frase(e)}</p>
-                    <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] text-ink-3">
-                      {e.usuario_id
-                        ? <button type="button" onClick={() => setUsuario({ id: e.usuario_id!, nome: e.nome ?? '' })} className="font-medium text-trace-hi hover:underline">{quem(e)}</button>
-                        : <span>{quem(e)}</span>}
-                      {e.aparelho && <><span className="text-ink-4">·</span><span>{e.aparelho}</span></>}
-                      <span className="text-ink-4">·</span>
-                      <span className="tabular-nums" title={e.em}>{dataHora(e.em)} <span className="text-ink-4">({quandoFoi(e.em, agora)})</span></span>
-                    </p>
-                    <dl className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+              <li key={e.id}>
+                {novoDia && <div className="border-b seam bg-bench-2/70 px-5 py-1.5 text-[12px] font-medium text-ink-3">{dia}</div>}
+                <button type="button" onClick={() => setAberto(aberto === e.id ? null : e.id)} aria-expanded={aberto === e.id}
+                  className={`grid w-full grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-1 border-b border-ink-1/[0.05] px-5 py-2.5 text-left text-[13px] hover:bg-ink-1/[0.025] md:grid-cols-[76px_128px_minmax(0,1fr)_170px_150px] md:gap-4 ${cat === 'Venda' ? 'bg-ok/[0.06]' : ''} ${aberto === e.id ? 'bg-ink-1/[0.03]' : ''}`}>
+                  <span className="code pt-px text-[12px] text-ink-3" title={quandoFoi(e.em, agora)}>{hora(e.em)}</span>
+                  <span className="md:order-none"><span className={`inline-flex rounded px-1.5 py-0.5 text-[11.5px] font-medium ring-1 ring-inset ${COR_CATEGORIA[cat]}`}>{cat}</span></span>
+                  <span className={`col-span-2 md:col-span-1 ${cat === 'Venda' ? 'font-semibold text-ink-1' : 'text-ink-1'}`}>{frase(e)}</span>
+                  <span className="col-span-2 truncate text-ink-3 md:col-span-1">{e.usuario_id ? <span className="text-ink-2">{quem(e)}</span> : <span className="text-ink-4">Visitante</span>}</span>
+                  <span className="col-span-2 truncate text-[12.5px] text-ink-4 md:col-span-1">{e.aparelho}</span>
+                </button>
+                {aberto === e.id && (
+                  <div className="border-b seam bg-bench-2/60 px-5 py-3.5">
+                    <dl className="grid gap-x-6 gap-y-1.5 text-[12.5px] sm:grid-cols-2 lg:grid-cols-3">
                       {camposLog(e).map(([k, v]) => (
-                        <div key={k} className="flex max-w-full items-baseline gap-1 rounded-md border border-white/[0.06] bg-well/70 px-1.5 py-0.5">
-                          <dt className="text-ink-4">{k}:</dt>
-                          <dd className="code truncate text-ink-2">{v}</dd>
-                        </div>
+                        <div key={k} className="flex min-w-0 gap-2"><dt className="w-28 flex-none text-ink-4">{k}</dt><dd className="code min-w-0 break-all text-ink-1">{v}</dd></div>
                       ))}
                     </dl>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button type="button" onClick={() => void copiarTexto(linhaLog(e), 'Log copiado')} className="inline-flex items-center gap-1.5 rounded-md border seam bg-bench-1 px-2.5 py-1 text-[12px] text-ink-2 hover:text-trace-hi"><Copy size={12} /> Copiar este log</button>
+                      {e.usuario_id && <button type="button" onClick={() => setUsuario({ id: e.usuario_id!, nome: e.nome ?? '' })} className="inline-flex items-center gap-1.5 rounded-md border seam bg-bench-1 px-2.5 py-1 text-[12px] text-ink-2 hover:text-trace-hi"><Search size={12} /> Ver tudo desta pessoa</button>}
+                    </div>
                   </div>
-                  <button type="button" onClick={() => void copiarTexto(linhaLog(e), '1 log copiado')} aria-label="Copiar este log" title="Copiar este log" className="flex-none rounded-md p-1.5 text-ink-4 opacity-60 hover:bg-white/[0.05] hover:text-ink-1 group-hover:opacity-100"><Copy size={14} /></button>
-                </div>
+                )}
               </li>
             )
           })}
           {dados && !dados.eventos.length && <li className="px-5 py-10 text-center text-ink-4">Nenhum evento com esses filtros.</li>}
-          {!dados && !erro && Array.from({ length: 6 }, (_, i) => <li key={i} className="px-5 py-3.5"><div className="skeleton h-12 rounded-lg" /></li>)}
+          {!dados && !erro && Array.from({ length: 6 }, (_, i) => <li key={i} className="border-b border-ink-1/[0.05] px-5 py-3"><div className="h-4 w-2/3 rounded bg-ink-1/[0.06]" /></li>)}
         </ul>
         {(dados?.eventos.length ?? 0) > mostrar && (
-          <button type="button" onClick={() => setMostrar((n) => n + 60)} className="w-full border-t seam py-3 text-[13px] text-trace-hi hover:bg-white/[0.02]">Mostrar mais</button>
+          <button type="button" onClick={() => setMostrar((n) => n + 100)} className="w-full py-3 text-[13px] text-trace-hi hover:bg-ink-1/[0.02]">Mostrar mais</button>
         )}
       </section>
-      <p className="mt-2 text-[12px] text-ink-4">A tela carrega os 400 eventos mais recentes do período e dos filtros escolhidos; os botões de copiar usam esses. O registro guarda 120 dias. Com "Dados pessoais ocultos" ligado, a cópia também sai mascarada.</p>
+      <p className="mt-2 text-[12px] text-ink-4">A tela carrega os 400 eventos mais recentes do período e dos filtros; os botões de copiar usam esses. O registro guarda 120 dias. Com "Dados pessoais ocultos" ligado, a cópia também sai mascarada.</p>
     </>
   )
 }

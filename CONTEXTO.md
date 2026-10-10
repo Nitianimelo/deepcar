@@ -123,6 +123,20 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-10 · Vendas da Cakto nos logs, logs em tabela e /admin em cinza-claro
+- **Pedido do dono:** a 1ª venda do funil novo (Full mensal R$ 20,89, Pix, anúncio criativo 3) não apareceu nos logs;
+  logs "parecendo IA"; cor cinza mais clara.
+- **Vendas:** `api/webhooks/cakto.js` grava em `eventos_uso` o tipo `compra` (plano, ciclo, valor, método, pedido,
+  loja `cakto`; rota `/checkout?<UTMs do link>`, aparelho "Pagamento · Cakto"), uma vez por pedido, junto do Purchase.
+  `normalizar` (api/_lib/cakto.js) passou a ler `paymentMethod` e só as UTMs do `checkoutUrl`. As vendas antigas da
+  Cakto foram copiadas para `eventos_uso` (data do pagamento). `?acao=logs` devolve `resumo.vendas` {n, total}
+  (compra, compra_play, compra_apple).
+- **Tela:** logs em tabela (Hora · Categoria · Evento · Pessoa · Aparelho), agrupados por dia, linha de venda em
+  destaque; clicar abre os dados técnicos (todos os campos, inclusive `detalhe.*`) com "Copiar este log" e "Ver tudo
+  desta pessoa". Sem ícones coloridos nem animações. Números do topo numa faixa só, com "Vendas" (quantidade e R$).
+- **Tema:** classe `.tema-claro` (src/index.css) troca os tokens de cor só dentro do /admin (fundo #eef0f3, cartões
+  brancos, texto grafite); logo escuro (`logo-h.png`). As cores fixas brancas do Admin.tsx viraram `ink-1/[x]`.
+
 ### 2026-10-09 · Logs explícitos: cada evento em frase, números com unidade
 - Dono achou a aba confusa ("8 3%" na tabela por aparelho). `src/pages/Admin.tsx`: `fraseEvento()` escreve o que a
   pessoa fez ("Consultou a placa X: VW Gol 2000", "Saiu da página de vendas depois de 84 segundos, tendo descido até

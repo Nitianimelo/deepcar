@@ -132,6 +132,16 @@ function idDoCheckout(sck, url) {
   return /^[\w-]{8,64}$/.test(String(v ?? '')) ? String(v) : null
 }
 
+/** Só as UTMs do link do checkout (nunca e-mail/nome/telefone que também vão no link). */
+function utmDoLink(url) {
+  try {
+    const p = new URL(String(url)).searchParams
+    const u = new URLSearchParams()
+    for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content']) if (p.get(k)) u.set(k, p.get(k))
+    return u.toString() || null
+  } catch { return null }
+}
+
 export function normalizar(corpo) {
   const d = corpo?.data ?? {}
   const assinatura = d.subscription ?? null
@@ -149,5 +159,8 @@ export function normalizar(corpo) {
     // rastreio (09/10/2026): o link do checkout volta inteiro; o `sck` dele é o id do clique em "Assinar" (db/020)
     checkout: idDoCheckout(d.sck, d.checkoutUrl),
     fbc: texto(d.fbc), fbp: texto(d.fbp),
+    // forma de pagamento e anúncio de origem (UTM do link do checkout), para o registro de uso (/admin → Logs)
+    metodo: texto(d.paymentMethod),
+    utm: utmDoLink(d.checkoutUrl),
   }
 }

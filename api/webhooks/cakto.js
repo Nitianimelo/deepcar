@@ -125,6 +125,12 @@ export default async function handler(req, res) {
           navegador,
           dados: { value: d.valor ?? undefined, currency: 'BRL', content_name: `${plano} ${ciclo}`, content_type: 'product' },
         })
+        // a venda também aparece no /admin → Logs (10/10/2026: só as compras dos apps apareciam). Uma vez por pedido.
+        await sql`insert into eventos_uso (usuario_id, visitante, tipo, detalhe, rota, aparelho)
+                  select ${r.usuarioId ?? null}, ${ck?.visitante ?? null}, 'compra',
+                         ${JSON.stringify({ plano, ciclo, valor: d.valor ?? null, metodo: d.metodo ?? null, pedido: d.pedidoId, loja: 'cakto' })}::jsonb,
+                         ${d.utm ? `/checkout?${d.utm}` : '/checkout'}, 'Pagamento · Cakto'
+                   where not exists (select 1 from eventos_uso where tipo = 'compra' and detalhe->>'pedido' = ${d.pedidoId})`
       }
       await concluir(id, r.estado === 'aplicado' ? 'aplicado' : r.estado === 'pendente' ? 'pendente' : 'ignorado', {
         plano, usuarioId: r.usuarioId, detalhe: r.detalhe ?? (ciclo === 'anual' ? 'anual' : null),

@@ -448,3 +448,30 @@ html:has(.landing) { scroll-behavior: smooth; }
 .comparativo .comparativo-linha { opacity: 0; transform: translateY(6px); transition: opacity .45s ease, transform .45s ease; transition-delay: calc(var(--i) * 70ms); }
 .comparativo.is-in .comparativo-linha { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .comparativo .comparativo-linha { opacity: 1; transform: none; transition: none; } }
+
+/* /admin em cinza-claro (10/10/2026, pedido do dono): troca os tokens dentro do painel, sem mexer no resto do site */
+.tema-claro {
+  --color-pit: #eef0f3;
+  --color-bench-1: #ffffff;
+  --color-bench-2: #f6f7f9;
+  --color-bench-3: #eceff3;
+  --color-well: #f4f5f7;
+  --color-ink-1: #111827;
+  --color-ink-2: #374151;
+  --color-ink-3: #4b5563;
+  --color-ink-4: #6b7280;
+  --color-trace: #2563eb;
+  --color-trace-hi: #1d4ed8;
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-fault: #dc2626;
+  --seam-1: rgba(17, 24, 39, 0.10);
+  --seam-2: rgba(17, 24, 39, 0.07);
+  --seam-3: rgba(17, 24, 39, 0.18);
+  color-scheme: light;
+}
+.tema-claro.schematic-grid {
+  background-image:
+    linear-gradient(to right, rgba(17,24,39,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17,24,39,0.03) 1px, transparent 1px);
+}

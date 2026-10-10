@@ -166,7 +166,7 @@ async function logs(req, res) {
   const busca = q ? `%${q}%` : null
   // aparelho: '' (tudo), 'site', 'android' (app Android), 'ios' (app iPhone)
   const aparelho = ['site', 'android', 'ios'].includes(req.query.aparelho) ? req.query.aparelho : ''
-  const [eventos, porTipo, semResultado, placasErro, assinar, navegador, leitura, secoes] = await Promise.all([
+  const [eventos, porTipo, semResultado, placasErro, assinar, navegador, leitura, secoes, vendas] = await Promise.all([
     sql`select e.id, e.tipo, e.detalhe, e.rota, e.aparelho, e.em, e.visitante, u.id as usuario_id, u.nome, u.email, u.plano
           from eventos_uso e left join usuarios u on u.id = e.usuario_id
          where e.em > now() - make_interval(days => ${dias})
@@ -217,6 +217,8 @@ async function logs(req, res) {
                count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'pegar_oferta'))::int oferta,
                count(*) filter (where exists (select 1 from e where e.quem = v.quem and e.tipo = 'clicou_assinar'))::int assinar
           from vis v group by v.so order by 2 desc`,
+    sql`select count(*)::int n, coalesce(sum((detalhe->>'valor')::numeric), 0)::float total from eventos_uso
+         where tipo in ('compra', 'compra_play', 'compra_apple') and em > now() - make_interval(days => ${dias})`,
   ])
-  return res.status(200).json({ dias, eventos, resumo: { porTipo, semResultado, placasErro, assinar, navegador, leitura, secoes } })
+  return res.status(200).json({ dias, eventos, resumo: { porTipo, semResultado, placasErro, assinar, navegador, leitura, secoes, vendas: vendas[0] } })
 }
