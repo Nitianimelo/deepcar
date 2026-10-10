@@ -2,7 +2,7 @@
 // Toda a autorização é do servidor (api/admin/*): aqui a checagem só evita mostrar a tela.
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { Activity, BadgeDollarSign, Bell, Check, Copy, Eye, EyeOff, KeyRound, Layers, Link2, Loader2, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Timer, Trash2, Users, Wand2, X } from 'lucide-react'
+import { Activity, ArrowDown, BadgeDollarSign, Bell, Car, Check, Copy, CreditCard, Eye, EyeOff, FileText, KeyRound, Layers, Link2, Loader2, LogIn, LogOut, MessageCircle, MonitorSmartphone, Plus, RefreshCw, Search, Smartphone, Timer, Trash2, TriangleAlert, UserPlus, Users, Wand2, X, Zap } from 'lucide-react'
 import { useSessao } from '../lib/auth'
 import { rotuloPlano, tempoRestante } from '../lib/plano'
 import { mascararWhatsapp, SENHA_MINIMA } from '../lib/validacao'
@@ -131,18 +131,18 @@ export default function Admin() {
 
   return (
     <div className="schematic-grid min-h-screen">
-      <header className="flex h-[68px] items-center justify-between gap-4 border-b seam px-5 sm:px-8">
+      <header className="flex min-h-[68px] flex-wrap items-center justify-between gap-3 border-b seam px-4 py-3 sm:px-8">
         <div className="flex items-center gap-4">
           <Link to="/app"><img src="/brand/logo-h-light.png" alt="Deepcar" className="w-32" draggable={false} /></Link>
           <span className="code text-[11px] uppercase tracking-[0.2em] text-ink-4">Administração</span>
         </div>
-        <div className="flex items-center gap-1 rounded-lg border seam bg-bench-2 p-1">
+        <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border seam bg-bench-2 p-1">
           {([['usuarios', 'Usuários', Users], ['planos', 'Planos', Layers], ['assinaturas', 'Assinaturas', BadgeDollarSign], ['avisos', 'Avisos no app', Bell], ['logs', 'Logs', Activity], ['chaves', 'Chaves de API', KeyRound]] as const).map(([k, rotulo, Icone]) => (
             <button
               key={k}
               type="button"
               onClick={() => setAba(k)}
-              className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-[13px] ${aba === k ? 'bg-bench-3 text-ink-1' : 'text-ink-3 hover:text-ink-1'}`}
+              className={`inline-flex flex-none items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] ${aba === k ? 'bg-bench-3 text-ink-1' : 'text-ink-3 hover:text-ink-1'}`}
             >
               <Icone size={15} /> {rotulo}
             </button>
@@ -150,7 +150,7 @@ export default function Admin() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
+      <main className="mx-auto max-w-6xl overflow-x-clip px-4 py-8 sm:px-8">
         {aba === 'usuarios' && <AbaUsuarios meuEmail={session.email} />}
         {aba === 'planos' && <AbaPlanos />}
         {aba === 'assinaturas' && <AbaAssinaturas />}
@@ -1063,7 +1063,34 @@ function resumoEvento(e: EventoUso) {
   }
 }
 
-/** O que cada pessoa faz no site e no app (eventos_uso), para achar onde o cadastro trava. */
+/** Ícone e cor de cada tipo de evento no feed. */
+const ICONE_EVENTO: Record<string, [typeof Activity, string]> = {
+  pagina: [FileText, 'text-ink-3 bg-white/[0.06]'], busca: [Search, 'text-trace-hi bg-trace/15'], busca_landing: [Search, 'text-trace-hi bg-trace/15'],
+  placa: [Car, 'text-ok bg-ok/15'], placa_erro: [TriangleAlert, 'text-fault bg-fault/15'], esquema: [Zap, 'text-trace-hi bg-trace/15'],
+  viu_planos: [Eye, 'text-warn bg-warn/15'], viu_secao: [Eye, 'text-ink-3 bg-white/[0.06]'], clicou_assinar: [CreditCard, 'text-ok bg-ok/15'],
+  pegar_oferta: [CreditCard, 'text-warn bg-warn/15'], cadastro: [UserPlus, 'text-ok bg-ok/15'], cadastro_erro: [TriangleAlert, 'text-fault bg-fault/15'],
+  login: [LogIn, 'text-trace-hi bg-trace/15'], login_erro: [TriangleAlert, 'text-fault bg-fault/15'], compra_play: [BadgeDollarSign, 'text-ok bg-ok/15'],
+  compra_apple: [BadgeDollarSign, 'text-ok bg-ok/15'], whatsapp: [MessageCircle, 'text-whatsapp bg-whatsapp/15'], app_aberto: [Smartphone, 'text-trace-hi bg-trace/15'],
+  rolou: [ArrowDown, 'text-ink-3 bg-white/[0.06]'], saiu_landing: [LogOut, 'text-ink-3 bg-white/[0.06]'], tour_passo: [Layers, 'text-ink-3 bg-white/[0.06]'],
+  escolheu_carro: [Car, 'text-trace-hi bg-trace/15'], carro_para_planos: [CreditCard, 'text-warn bg-warn/15'], compartilhou: [Link2, 'text-trace-hi bg-trace/15'],
+}
+
+// "Ocultar dados pessoais" (09/10/2026, para gravar a tela): nome vira iniciais, e-mail e placa ficam mascarados.
+const mascaraNome = (n: string | null) => (n ?? '').trim().split(/\s+/).filter(Boolean).map((p) => p[0].toUpperCase() + '•'.repeat(Math.min(5, Math.max(2, p.length - 1)))).join(' ')
+const mascaraEmail = (e: string | null) => { const [u, d] = String(e ?? '').split('@'); return d ? `${u.slice(0, 1)}•••••@${d}` : '' }
+const mascaraPlaca = (t: string) => t.replace(/\b([A-Z]{3})-?[0-9][0-9A-Z][0-9]{2}\b/g, '$1-••••')
+
+function quandoFoi(iso: string, agora: number) {
+  const s = Math.max(0, Math.round((agora - new Date(iso).getTime()) / 1000))
+  if (s < 60) return 'agora'
+  if (s < 3600) return `há ${Math.floor(s / 60)} min`
+  if (s < 86400) return `há ${Math.floor(s / 3600)} h`
+  return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+function lerOcultar() { try { return localStorage.getItem('deepcar.admin.ocultar') !== '0' } catch { return true } }
+
+/** O que cada pessoa faz no site e no app (eventos_uso), para achar onde o cadastro trava. Atualiza sozinho a cada 30 s. */
 function AbaLogs() {
   const [dias, setDias] = useState(7)
   const [tipo, setTipo] = useState('')
@@ -1072,34 +1099,80 @@ function AbaLogs() {
   const [aparelho, setAparelho] = useState('')
   const [dados, setDados] = useState<{ eventos: EventoUso[]; resumo: ResumoLogs } | null>(null)
   const [erro, setErro] = useState('')
+  const [ocultar, setOcultar] = useState(lerOcultar)
+  const [agora, setAgora] = useState(() => Date.now())
+  const [atualizado, setAtualizado] = useState<number | null>(null)
+  const [mostrar, setMostrar] = useState(40)
 
   const carregar = useCallback(async () => {
     try {
       const p = new URLSearchParams({ acao: 'logs', dias: String(dias), tipo, q, aparelho })
       if (usuario) p.set('usuario', usuario.id)
       setDados((await api(`/api/admin/usuarios?${p}`)) as { eventos: EventoUso[]; resumo: ResumoLogs }); setErro('')
+      setAtualizado(Date.now())
     } catch (e) { setErro(e instanceof Error ? e.message : 'Falha ao carregar.') }
   }, [dias, tipo, q, usuario, aparelho])
   useEffect(() => { const t = setTimeout(() => void carregar(), 300); return () => clearTimeout(t) }, [carregar])
+  useEffect(() => { const t = setInterval(() => void carregar(), 30_000); return () => clearInterval(t) }, [carregar])
+  useEffect(() => { const t = setInterval(() => setAgora(Date.now()), 5_000); return () => clearInterval(t) }, [])
+
+  function alternarOcultar() {
+    setOcultar((v) => { try { localStorage.setItem('deepcar.admin.ocultar', v ? '0' : '1') } catch { /* modo anônimo */ } return !v })
+  }
+  const nome = (n: string | null) => (ocultar ? mascaraNome(n) : n ?? '')
+  const email = (e: string | null) => (ocultar ? mascaraEmail(e) : e ?? '')
+  const detalhe = (e: EventoUso) => (ocultar ? mascaraPlaca(resumoEvento(e)) : resumoEvento(e))
 
   const r = dados?.resumo
-  const cartao = 'rounded-xl border seam bg-bench-2 p-4'
+  const tipoN = (k: string) => r?.porTipo.find((t) => t.tipo === k)
+  const visitas = (r?.secoes ?? []).reduce((a, l) => a + l.visitantes, 0) || (r?.leitura ?? []).reduce((a, l) => a + l.visitantes, 0)
+  const funil = r?.secoes?.length
+    ? ([['Entraram na página', 'visitantes'], ['Viram o tour', 'tour'], ['Procuraram o carro', 'busca'], ['Viram os planos', 'planos'], ['Leram o FAQ', 'faq'], ['Tocaram em Pegar oferta', 'oferta'], ['Clicaram em assinar', 'assinar']] as const)
+        .map(([rotulo, k]) => ({ rotulo, n: r.secoes!.reduce((a, l) => a + l[k], 0) }))
+    : []
+  const maiorTipo = Math.max(1, ...(r?.porTipo ?? []).map((t) => t.n))
+  const porAparelho = (r?.secoes ?? []).map((l) => ({ ...l, ...(r?.leitura?.find((x) => x.so === l.so) ?? {}) }))
+  const pct = (n: number, de: number) => (de ? Math.round((100 * n) / de) : 0)
+
+  const KPIS: [string, number | string, string, typeof Activity, string][] = [
+    ['Visitas na página de vendas', visitas, 'aparelhos diferentes', Eye, 'text-trace-hi bg-trace/15'],
+    ['Cadastros', tipoN('cadastro')?.pessoas ?? 0, 'contas novas', UserPlus, 'text-ok bg-ok/15'],
+    ['Placas consultadas', tipoN('placa')?.n ?? 0, `${tipoN('placa')?.pessoas ?? 0} pessoas`, Car, 'text-trace-hi bg-trace/15'],
+    ['Esquemas abertos', tipoN('esquema')?.n ?? 0, `${tipoN('esquema')?.pessoas ?? 0} pessoas`, Zap, 'text-warn bg-warn/15'],
+    ['Clicaram em assinar', tipoN('clicou_assinar')?.pessoas ?? 0, `${tipoN('clicou_assinar')?.n ?? 0} cliques`, CreditCard, 'text-ok bg-ok/15'],
+  ]
+  const cartao = 'rounded-2xl border seam bg-bench-1/90 p-5 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset]'
+  const rotulo = 'code text-[11px] uppercase tracking-[0.18em] text-ink-4'
+
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-[26px] font-semibold tracking-tight">Logs</h1>
-          <p className="mt-1 text-ink-3">O que as pessoas fazem no site e no app: páginas, buscas, placas, esquemas, planos e erros.</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-[28px] font-semibold tracking-tight">Atividade</h1>
+            <span className="inline-flex items-center gap-2 rounded-full border border-ok/30 bg-ok/10 px-2.5 py-1 text-[12px] font-medium text-ok">
+              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok/70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-ok" /></span>
+              Ao vivo
+            </span>
+          </div>
+          <p className="mt-1.5 text-ink-3">O que as pessoas fazem no site e nos apps, em tempo real.{atualizado && <span className="text-ink-4"> · atualizado {quandoFoi(new Date(atualizado).toISOString(), agora)}</span>}</p>
         </div>
-        <button type="button" onClick={() => void carregar()} className="btn-ghost inline-flex items-center gap-2"><RefreshCw size={15} /> Atualizar</button>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={alternarOcultar} aria-pressed={ocultar} className={`inline-flex h-10 items-center gap-2 rounded-lg border px-3.5 text-[13px] ${ocultar ? 'border-trace/40 bg-trace/10 text-ink-1' : 'seam text-ink-3 hover:text-ink-1'}`}>
+            {ocultar ? <EyeOff size={15} /> : <Eye size={15} />} {ocultar ? 'Dados pessoais ocultos' : 'Ocultar dados pessoais'}
+          </button>
+          <button type="button" onClick={() => void carregar()} className="btn-ghost inline-flex h-10 items-center gap-2"><RefreshCw size={15} /> Atualizar</button>
+        </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        {[1, 7, 30, 90].map((d) => (
-          <button key={d} type="button" onClick={() => setDias(d)} className={`rounded-lg border px-3 py-1.5 text-[13px] ${dias === d ? 'border-trace/50 bg-trace/15 text-ink-1' : 'seam text-ink-3'}`}>
-            {d === 1 ? 'Hoje' : `${d} dias`}
-          </button>
-        ))}
+      <div className="mt-6 flex flex-wrap items-center gap-2 rounded-2xl border seam bg-bench-1/80 p-2">
+        <div className="flex rounded-lg bg-well p-1">
+          {[1, 7, 30, 90].map((d) => (
+            <button key={d} type="button" onClick={() => setDias(d)} className={`rounded-md px-3.5 py-1.5 text-[13px] transition-colors ${dias === d ? 'bg-bench-3 font-medium text-ink-1 shadow' : 'text-ink-3 hover:text-ink-1'}`}>
+              {d === 1 ? 'Hoje' : `${d} dias`}
+            </button>
+          ))}
+        </div>
         <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="field h-9 w-auto py-0 text-[13px]">
           <option value="">Todos os eventos</option>
           {Object.entries(NOMES_EVENTO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -1110,127 +1183,171 @@ function AbaLogs() {
           <option value="android">App Android</option>
           <option value="ios">App iPhone</option>
         </select>
-        <label className="relative">
+        <label className="relative w-full sm:ml-auto sm:w-auto">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
-          <input className="field h-9 w-56 pl-8 text-[13px]" placeholder="Nome ou e-mail" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="field h-9 w-full pl-8 text-[13px] sm:w-56" placeholder="Nome ou e-mail" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
         {usuario && (
           <button type="button" onClick={() => setUsuario(null)} className="inline-flex items-center gap-1.5 rounded-lg border border-trace/40 bg-trace/10 px-3 py-1.5 text-[13px] text-ink-1">
-            Só {usuario.nome} <X size={13} />
+            Só {nome(usuario.nome)} <X size={13} />
           </button>
         )}
       </div>
       {erro && <p role="alert" className="mt-4 rounded-lg border border-fault/30 bg-fault/10 px-4 py-3 text-sm text-fault">{erro}</p>}
 
       {r && !usuario && (
-        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <section className={cartao}>
-            <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">No período</h2>
-            <ul className="mt-2 space-y-1 text-[13.5px]">
-              {r.porTipo.map((t) => <li key={t.tipo} className="flex justify-between gap-3"><span className="text-ink-2">{NOMES_EVENTO[t.tipo] ?? t.tipo}</span><span className="text-ink-3">{t.n} · {t.pessoas} pessoa(s)</span></li>)}
-              {!r.porTipo.length && <li className="text-ink-4">Nada registrado ainda.</li>}
-            </ul>
-          </section>
-          <section className={cartao}>
-            <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Clicaram em assinar</h2>
-            <ul className="mt-2 space-y-1.5 text-[13.5px]">
-              {r.assinar.map((a) => (
-                <li key={a.id} className="flex justify-between gap-3">
-                  <button type="button" onClick={() => setUsuario({ id: a.id, nome: a.nome })} className="truncate text-left text-trace hover:underline">{a.nome}</button>
-                  <span className={a.plano === 'free' ? 'text-warn' : 'text-ok'}>{a.plano === 'free' ? 'não assinou' : rotuloPlano(a.plano)} · {a.cliques}x</span>
-                </li>
-              ))}
-              {!r.assinar.length && <li className="text-ink-4">Ninguém no período.</li>}
-            </ul>
-          </section>
-          <section className={cartao}>
-            <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Buscas sem resultado</h2>
-            <ul className="mt-2 space-y-1 text-[13.5px]">
-              {r.semResultado.map((b) => <li key={b.termo} className="flex justify-between gap-3"><span className="truncate text-ink-2">{b.termo}</span><span className="text-ink-3">{b.n}x</span></li>)}
-              {!r.semResultado.length && <li className="text-ink-4">Nenhuma.</li>}
-            </ul>
-          </section>
-          <section className={cartao}>
-            <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Placas com erro</h2>
-            <ul className="mt-2 space-y-1 text-[13.5px]">
-              {r.placasErro.map((p) => <li key={p.erro} className="flex justify-between gap-3"><span className="truncate text-ink-2">{p.erro}</span><span className="text-ink-3">{p.n}x</span></li>)}
-              {!r.placasErro.length && <li className="text-ink-4">Nenhuma.</li>}
-            </ul>
-          </section>
-          {!!r.leitura?.length && (
-            <section className={`${cartao} md:col-span-2 xl:col-span-3`}>
-              <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Página de vendas por aparelho</h2>
-              <table className="mt-2 w-full text-left text-[13.5px]">
-                <thead className="text-ink-4"><tr><th className="py-1 font-medium">Aparelho</th><th className="font-medium">Visitas</th><th className="font-medium">Rolou metade</th><th className="font-medium">Tempo (mediana)</th><th className="font-medium">Abriu o cadastro</th><th className="font-medium">Cadastrou</th></tr></thead>
-                <tbody>
-                  {r.leitura.map((l) => (
+        <>
+          <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
+            {KPIS.map(([titulo, valor, sub, Icone, cor], i) => (
+              <div key={titulo} className={`${cartao} surge last:col-span-2 lg:last:col-span-1`} style={{ ['--i' as string]: i }}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[12.5px] leading-tight text-ink-3">{titulo}</span>
+                  <span className={`grid h-8 w-8 flex-none place-items-center rounded-lg ${cor}`}><Icone size={16} /></span>
+                </div>
+                <p className="mt-3 text-[32px] font-semibold leading-none tracking-tight tabular-nums text-ink-1">{valor.toLocaleString('pt-BR')}</p>
+                <p className="mt-1.5 text-[12px] text-ink-4">{sub}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3 grid gap-3 lg:grid-cols-5">
+            {!!funil.length && (
+              <section className={`${cartao} lg:col-span-3`}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h2 className={rotulo}>Página de vendas · até onde chegam</h2>
+                  <span className="text-[12px] text-ink-4">{pct(funil[funil.length - 1].n, funil[0].n)}% clicam em assinar</span>
+                </div>
+                <ul className="mt-4 space-y-2.5">
+                  {funil.map((f, i) => {
+                    const w = funil[0].n ? Math.max(2, (100 * f.n) / funil[0].n) : 0
+                    return (
+                      <li key={f.rotulo} className="grid grid-cols-[118px_1fr_70px] items-center gap-3 text-[13px] sm:grid-cols-[190px_1fr_84px]">
+                        <span className="truncate text-ink-2">{f.rotulo}</span>
+                        <span className="h-7 overflow-hidden rounded-md bg-well">
+                          <span className="block h-full rounded-md bg-gradient-to-r from-trace to-trace-hi/80 transition-[width] duration-700" style={{ width: `${w}%`, opacity: 1 - i * 0.08 }} />
+                        </span>
+                        <span className="text-right tabular-nums text-ink-1">{f.n} <span className="text-ink-4">{i ? `${pct(f.n, funil[0].n)}%` : ''}</span></span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            )}
+            <section className={`${cartao} ${funil.length ? 'lg:col-span-2' : 'lg:col-span-5'}`}>
+              <h2 className={rotulo}>Eventos no período</h2>
+              <ul className="mt-4 space-y-2">
+                {r.porTipo.slice(0, 9).map((t) => {
+                  const [Icone, cor] = ICONE_EVENTO[t.tipo] ?? [Activity, 'text-ink-3 bg-white/[0.06]']
+                  return (
+                    <li key={t.tipo} className="flex items-center gap-3 text-[13px]">
+                      <span className={`grid h-7 w-7 flex-none place-items-center rounded-md ${cor}`}><Icone size={14} /></span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex justify-between gap-2"><span className="truncate text-ink-2">{NOMES_EVENTO[t.tipo] ?? t.tipo}</span><span className="tabular-nums text-ink-1">{t.n}</span></span>
+                        <span className="mt-1 block h-1 overflow-hidden rounded-full bg-well"><span className="block h-full rounded-full bg-ink-4/70" style={{ width: `${(100 * t.n) / maiorTipo}%` }} /></span>
+                      </span>
+                    </li>
+                  )
+                })}
+                {!r.porTipo.length && <li className="text-ink-4">Nada registrado ainda.</li>}
+              </ul>
+            </section>
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <section className={cartao}>
+              <h2 className={rotulo}>Clicaram em assinar</h2>
+              <ul className="mt-3 space-y-2 text-[13.5px]">
+                {r.assinar.slice(0, 8).map((a) => (
+                  <li key={a.id} className="flex items-center justify-between gap-3">
+                    <button type="button" onClick={() => setUsuario({ id: a.id, nome: a.nome })} className="truncate text-left text-ink-1 hover:text-trace-hi">{nome(a.nome)}</button>
+                    <span className={`flex-none rounded-full px-2 py-0.5 text-[11.5px] ${a.plano === 'free' ? 'bg-warn/15 text-warn' : 'bg-ok/15 text-ok'}`}>{a.plano === 'free' ? 'não assinou' : rotuloPlano(a.plano)} · {a.cliques}x</span>
+                  </li>
+                ))}
+                {!r.assinar.length && <li className="text-ink-4">Ninguém no período.</li>}
+              </ul>
+            </section>
+            <section className={cartao}>
+              <h2 className={rotulo}>Buscas sem resultado</h2>
+              <ul className="mt-3 flex flex-wrap gap-1.5 text-[12.5px]">
+                {r.semResultado.slice(0, 18).map((b) => <li key={b.termo} className="rounded-full border seam bg-bench-2 px-2.5 py-1 text-ink-2">{b.termo}{b.n > 1 && <span className="text-ink-4"> · {b.n}</span>}</li>)}
+                {!r.semResultado.length && <li className="text-ink-4">Nenhuma.</li>}
+              </ul>
+            </section>
+            <section className={cartao}>
+              <h2 className={rotulo}>Placas com erro</h2>
+              <ul className="mt-3 space-y-1.5 text-[13.5px]">
+                {r.placasErro.slice(0, 8).map((p) => <li key={p.erro} className="flex justify-between gap-3"><span className="truncate text-ink-2">{p.erro}</span><span className="tabular-nums text-ink-3">{p.n}x</span></li>)}
+                {!r.placasErro.length && <li className="text-ink-4">Nenhuma.</li>}
+              </ul>
+            </section>
+            <section className={cartao}>
+              <h2 className={rotulo}>Navegador do Instagram/Facebook</h2>
+              <ul className="mt-3 space-y-1.5 text-[13.5px]">
+                {r.navegador.slice(0, 8).map((n) => <li key={`${n.so}${n.acao}`} className="flex justify-between gap-3"><span className="truncate text-ink-2">{n.so} · {n.acao}</span><span className="tabular-nums text-ink-3">{n.n}</span></li>)}
+                {!r.navegador.length && <li className="text-ink-4">Nada no período.</li>}
+              </ul>
+            </section>
+          </div>
+
+          {!!porAparelho.length && (
+            <section className={`${cartao} mt-3 overflow-x-auto`}>
+              <h2 className={rotulo}>Página de vendas por aparelho</h2>
+              <table className="mt-3 w-full min-w-[760px] text-left text-[13px]">
+                <thead className="text-[12px] text-ink-4"><tr>
+                  {['Aparelho', 'Visitas', 'Tempo (mediana)', 'Viu o tour', 'Viu a busca', 'Viu os planos', 'Pegar oferta', 'Clicou em assinar'].map((h) => <th key={h} className="pb-2 font-medium">{h}</th>)}
+                </tr></thead>
+                <tbody className="tabular-nums">
+                  {porAparelho.map((l) => (
                     <tr key={l.so} className="border-t seam-soft">
-                      <td className="py-1.5 text-ink-1">{l.so}</td><td>{l.visitantes}</td>
-                      <td>{l.rolou_metade} <span className="text-ink-4">({l.visitantes ? Math.round((100 * l.rolou_metade) / l.visitantes) : 0}%)</span></td>
-                      <td>{l.segundos_mediana ?? '—'}{l.segundos_mediana != null && ' s'}</td>
-                      <td>{l.abriu_cadastro} <span className="text-ink-4">({l.visitantes ? Math.round((100 * l.abriu_cadastro) / l.visitantes) : 0}%)</span></td>
-                      <td>{l.cadastrou}</td>
+                      <td className="py-2 font-medium text-ink-1">{l.so}</td><td className="text-ink-1">{l.visitantes}</td>
+                      <td className="text-ink-2">{'segundos_mediana' in l && l.segundos_mediana != null ? `${l.segundos_mediana} s` : '—'}</td>
+                      {([l.tour, l.busca, l.planos, l.oferta, l.assinar]).map((n, i) => (
+                        <td key={i} className="text-ink-2">{n} <span className="text-[11.5px] text-ink-4">{pct(n, l.visitantes)}%</span></td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </section>
           )}
-          {!!r.secoes?.length && (
-            <section className={`${cartao} md:col-span-2 xl:col-span-3`}>
-              <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Página de vendas: até onde a pessoa chega</h2>
-              <table className="mt-2 w-full text-left text-[13.5px]">
-                <thead className="text-ink-4"><tr>
-                  <th className="py-1 font-medium">Aparelho</th><th className="font-medium">Visitas</th><th className="font-medium">Viu o tour</th>
-                  <th className="font-medium">Viu a busca</th><th className="font-medium">Viu os planos</th><th className="font-medium">Viu o FAQ</th>
-                  <th className="font-medium">Pegar oferta</th><th className="font-medium">Clicou em assinar</th>
-                </tr></thead>
-                <tbody>
-                  {r.secoes.map((l) => {
-                    const pct = (n: number) => <>{n} <span className="text-ink-4">({l.visitantes ? Math.round((100 * n) / l.visitantes) : 0}%)</span></>
-                    return (
-                      <tr key={l.so} className="border-t seam-soft">
-                        <td className="py-1.5 text-ink-1">{l.so}</td><td>{l.visitantes}</td>
-                        <td>{pct(l.tour)}</td><td>{pct(l.busca)}</td><td>{pct(l.planos)}</td><td>{pct(l.faq)}</td><td>{pct(l.oferta)}</td><td>{pct(l.assinar)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </section>
-          )}
-          <section className={cartao}>
-            <h2 className="code text-[11px] uppercase tracking-[0.18em] text-ink-4">Navegador do Instagram/Facebook</h2>
-            <ul className="mt-2 space-y-1 text-[13.5px]">
-              {r.navegador.map((n) => <li key={`${n.so}${n.acao}`} className="flex justify-between gap-3"><span className="text-ink-2">{n.so} · {n.acao}</span><span className="text-ink-3">{n.n}</span></li>)}
-              {!r.navegador.length && <li className="text-ink-4">Nada no período.</li>}
-            </ul>
-          </section>
-        </div>
+        </>
       )}
 
-      <div className="mt-6 overflow-x-auto rounded-xl border seam">
-        <table className="w-full min-w-[820px] text-left text-[13px]">
-          <thead className="bg-bench-2 text-ink-4"><tr><th className="px-3 py-2 font-medium">Quando</th><th className="px-3 py-2 font-medium">Quem</th><th className="px-3 py-2 font-medium">Aparelho</th><th className="px-3 py-2 font-medium">Evento</th><th className="px-3 py-2 font-medium">Detalhe</th></tr></thead>
-          <tbody>
-            {(dados?.eventos ?? []).map((e) => (
-              <tr key={e.id} className="border-t seam-soft align-top">
-                <td className="whitespace-nowrap px-3 py-2 text-ink-3">{new Date(e.em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
-                <td className="px-3 py-2">
-                  {e.usuario_id
-                    ? <button type="button" onClick={() => setUsuario({ id: e.usuario_id!, nome: e.nome ?? '' })} className="text-left text-trace hover:underline">{e.nome}<span className="block text-[11.5px] text-ink-4">{e.email}</span></button>
-                    : <span className="text-ink-4">visitante {e.visitante?.slice(0, 6) ?? ''}</span>}
-                </td>
-                <td className="whitespace-nowrap px-3 py-2 text-ink-3">{e.aparelho}</td>
-                <td className="whitespace-nowrap px-3 py-2 text-ink-1">{NOMES_EVENTO[e.tipo] ?? e.tipo}</td>
-                <td className="px-3 py-2 text-ink-2">{resumoEvento(e)}</td>
-              </tr>
-            ))}
-            {dados && !dados.eventos.length && <tr><td colSpan={5} className="px-3 py-6 text-center text-ink-4">Nenhum evento com esses filtros.</td></tr>}
-          </tbody>
-        </table>
-      </div>
-      <p className="mt-2 text-[12px] text-ink-4">Mostra os 400 eventos mais recentes do filtro. O registro guarda 120 dias.</p>
+      <section className={`${cartao} mt-3 !p-0`}>
+        <div className="flex items-center justify-between gap-3 border-b seam px-5 py-4">
+          <h2 className={rotulo}>Acontecendo agora</h2>
+          <span className="text-[12px] text-ink-4">{dados?.eventos.length ?? 0} eventos mais recentes</span>
+        </div>
+        <ul className="divide-y divide-white/[0.05]">
+          {(dados?.eventos ?? []).slice(0, mostrar).map((e, i) => {
+            const [Icone, cor] = ICONE_EVENTO[e.tipo] ?? [Activity, 'text-ink-3 bg-white/[0.06]']
+            return (
+              <li key={e.id} className={`flex items-start gap-3.5 px-5 py-3 transition-colors hover:bg-white/[0.02] ${i < 12 ? 'surge' : ''}`} style={i < 12 ? { ['--i' as string]: i } : undefined}>
+                <span className={`mt-0.5 grid h-9 w-9 flex-none place-items-center rounded-xl ${cor}`}><Icone size={16} /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="flex flex-wrap items-baseline gap-x-2 text-[13.5px]">
+                    <span className="font-medium text-ink-1">{NOMES_EVENTO[e.tipo] ?? e.tipo}</span>
+                    <span className="truncate text-ink-3">{detalhe(e)}</span>
+                  </p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[12px] text-ink-4">
+                    {e.usuario_id
+                      ? <button type="button" onClick={() => setUsuario({ id: e.usuario_id!, nome: e.nome ?? '' })} className="text-trace-hi hover:underline">{nome(e.nome)}{!ocultar && e.email && <span className="text-ink-4"> · {email(e.email)}</span>}</button>
+                      : <span>Visitante {e.visitante?.slice(0, 4) ?? ''}</span>}
+                    {e.aparelho && <span className="rounded-md bg-white/[0.05] px-1.5 py-0.5 text-ink-3">{e.aparelho}</span>}
+                  </p>
+                </div>
+                <span className="flex-none whitespace-nowrap pt-0.5 text-[12px] tabular-nums text-ink-4" title={new Date(e.em).toLocaleString('pt-BR')}>{quandoFoi(e.em, agora)}</span>
+              </li>
+            )
+          })}
+          {dados && !dados.eventos.length && <li className="px-5 py-10 text-center text-ink-4">Nenhum evento com esses filtros.</li>}
+          {!dados && !erro && Array.from({ length: 6 }, (_, i) => <li key={i} className="px-5 py-3.5"><div className="skeleton h-9 rounded-lg" /></li>)}
+        </ul>
+        {(dados?.eventos.length ?? 0) > mostrar && (
+          <button type="button" onClick={() => setMostrar((n) => n + 60)} className="w-full border-t seam py-3 text-[13px] text-trace-hi hover:bg-white/[0.02]">Mostrar mais</button>
+        )}
+      </section>
+      <p className="mt-2 text-[12px] text-ink-4">Eventos mais recentes do filtro (até 400). O registro guarda 120 dias.</p>
     </>
   )
 }

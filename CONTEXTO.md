@@ -123,6 +123,18 @@ Regras de trabalho estão em `AGENTE.md`.
 
 ## Histórico (mais recente primeiro)
 
+### 2026-10-09 · /admin → Logs com visual de painel (para gravar a tela)
+- Pedido do dono: tela de logs mais bonita e profissional para um reels. Só front (`src/pages/Admin.tsx`, `AbaLogs`),
+  mesma API. Título "Atividade" com selo "Ao vivo" (atualiza sozinho a cada 30 s, "atualizado há X"); 5 números no
+  topo (visitas na página de vendas, cadastros, placas, esquemas, clicaram em assinar); funil da página de vendas em
+  barras (soma dos aparelhos); eventos do período com ícone e barra; cartões de assinar, buscas sem resultado (chips),
+  placas com erro e navegador do Instagram; tabela por aparelho (seções + tempo mediano); feed "Acontecendo agora" com
+  ícone por evento, tempo relativo e "Mostrar mais" (40 por vez).
+- **"Ocultar dados pessoais"** (ligado por padrão, lembrado no navegador `deepcar.admin.ocultar`): nomes viram
+  iniciais com pontos, e-mail some do feed, placa vira `ABC-••••`. Para gravar a tela sem expor clientes (LGPD).
+- Cabeçalho do /admin não estoura mais no celular (abas rolam de lado).
+- **Verificação:** build ok, lint 10; prints com dados simulados em 1440 e 390 px.
+
 ### 2026-10-09 · Pagou sem ter conta: a conta é criada na hora e a pessoa só cria a senha
 - **Pedido do dono:** mandar pelo CRM um link para quem fala no WhatsApp sem ter conta, em que a pessoa paga e já entra
   (antes eram dois caminhos: pagar e depois se cadastrar com o mesmo e-mail).
